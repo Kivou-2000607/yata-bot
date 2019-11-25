@@ -10,42 +10,79 @@ from discord.utils import get
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, **args):
+    def __init__(self, configs=None, **args):
         Bot.__init__(self, **args)
-        self.BOT_TOKEN = os.environ.get("BOT_TOKEN")
-        self.DATABASE_URL = os.environ.get("DATABASE_URL")
-        self.API_KEY = os.environ.get("API_KEY")
-        self.WATCHING = os.environ.get("WATCHING")
-        self.MODULES = json.loads(os.environ.get("MODULES", "[]"))
-        self.GUILD_ID = int(os.environ.get("GUILD_ID"))
-        self.FACTIONS = json.loads(os.environ.get("FACTIONS", "{}"))
-        self.FORCE_VERIF = bool(os.environ.get("FORCE_VERIF", False))
-        print(f"Init YataBot: BOT_TOKEN = {self.BOT_TOKEN}")
-        print(f"Init YataBot: API_KEY = {self.API_KEY}")
-        print(f"Init YataBot: FORCE_VERIF = {self.FORCE_VERIF}")
-        print(f"Init YataBot: DATABASE_URL = {self.DATABASE_URL}")
-        print(f"Init YataBot: WATCHING = {self.WATCHING}")
-        print("Init YataBot: MODULES = {}".format(", ".join(self.MODULES)))
-        print(f"Init YataBot: GUILD_ID = {self.GUILD_ID}")
-        print("Init YataBot: FACTIONS = {}".format(", ".join([f"{v} [{k}]" for k, v in self.FACTIONS.items()])))
-        print("---")
+        self.configs = configs
+        
+    def get_config(self, guild):
+        """ get_config: helper function
+            gets configuration for a guild
+        """
+        return self.configs.get(str(guild.id), dict({}))
+
+    def key(self, guild):
+        """ key: helper function
+            gets a random torn API key key for a guild
+        """
+        import random
+
+        # get configuration for the guild
+        config = self.get_config(guild)
+
+        #get all keys
+        keys = config.get("keys", False)
+
+        if keys:
+            # select a random key
+            return random.choice(keys)
+        else:
+            return False
 
     async def on_ready(self):
+        """ on_ready
+            loop over the bot guilds and do:
+                - get guild config
+                - create faction roles necessary
+                - create Verified role
+                TODO:
+                - create default channels (#readme, #verify-id, #dev-bot)
+                - send I'm back up message 
+                - change #dev-bot to #admin-bot
+        """
+        # loop over guilds
+        for guild in self.guilds:
+            print(f'Server {guild} [{guild.id}]')
+            config = self.get_config(guild)
 
-        # create faction roles
-        if len(self.FACTIONS):
-            guild = self.get_guild(self.GUILD_ID)
-            for k, v in self.FACTIONS.items():
+            # create faction roles
+            f = config.get("factions", dict({}))
+            for k, v in f.items():
                 role_name = f"{v} [{k}]"
                 if get(guild.roles, name=role_name) is None:
-                    print(f"Create role {role_name}")
+                    print(f"\tCreate role {role_name}")
                     await guild.create_role(name=role_name)
 
-        # change activity
-        if self.WATCHING is not None:
-            activity = discord.Activity(name=self.WATCHING, type=discord.ActivityType.watching)
-            await self.change_presence(activity=activity)
-            print(f'YataBot ready to "watch {activity.name}" as {self.user.name} [{self.user.id}]')
-        else:
-            print(f'YataBot ready as {self.user.name} [{self.user.id}]')
-        print("---")
+            # create verified role
+            role_name = "Verified"
+            if get(guild.roles, name=role_name) is None:
+                print(f"\tCreate role {role_name}")
+                await guild.create_role(name=role_name)
+            
+            # change activity
+            # a = config.get("activity", dict({}))
+            # if "watching" in a:
+            #    print(f'\twatching {a["watching"]}')
+            #    activity = discord.Activity(name=a["watching"], type=discord.ActivityType.watching)
+            #    await self.change_presence(activity=activity)
+            #elif "listening" in a:
+            #    print(f'\tlistening {a["listening"]}')
+            #    activity = discord.Activity(name=a["listening"], type=discord.ActivityType.listening)
+            #    await self.change_presence(activity=activity)
+            #elif "playing" in a:
+            #    print(f'\tplaying {a["playing"]}')
+            #    activity = discord.Activity(name=a["playing"], type=discord.ActivityType.playing)
+            #    await self.change_presence(activity=activity)
+
+        print("Ready...")
+
+

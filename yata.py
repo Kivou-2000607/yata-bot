@@ -1,5 +1,7 @@
 # import standard modules
 import os
+import json
+import psycopg2
 
 # import bot
 from bots.yata import YataBot
@@ -10,18 +12,23 @@ from cogs.loot import Loot
 from cogs.github import Github
 from cogs.misc import Misc
 
+# get configurations from YATA's database
+db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+con = psycopg2.connect(**db_cred)
+cur = con.cursor()
+cur.execute("SELECT * FROM bot_configuration WHERE id = 1;")
+_, token, configs = cur.fetchone()
+cur.close()
+con.close()
+
 # init yata bot
-bot = YataBot(command_prefix=os.environ.get("BOT_PREFIX", "!"))
+bot = YataBot(configs=json.loads(configs), command_prefix="$")
 
 # load classes
-if 'verify' in bot.MODULES:
-    bot.add_cog(Verify(bot))
-if 'loot' in bot.MODULES:
-    bot.add_cog(Loot(bot))
-if 'github' in bot.MODULES:
-    bot.add_cog(Github(bot))
-if 'misc' in bot.MODULES:
-    bot.add_cog(Misc(bot))
+bot.add_cog(Verify(bot))
+bot.add_cog(Loot(bot))
+# bot.add_cog(Github(bot))
+bot.add_cog(Misc(bot))
 
 # run bot
-bot.run(bot.BOT_TOKEN)
+bot.run(token)

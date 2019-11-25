@@ -1,6 +1,8 @@
 # # import standard modules
 import requests
 import os
+import json
+import psycopg2
 
 # import discord modules
 from discord import Webhook, RequestsWebhookAdapter
@@ -10,10 +12,27 @@ from discord import Embed
 import includes.formating as fmt
 
 
+
+
 class LootHook():
     def __init__(self):
-        self.ROLE_ID = os.environ.get("ROLE_ID")
-        self.HOOK_ID = os.environ.get("HOOK_ID")
+        
+        # get configurations from YATA's database
+        db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+        con = psycopg2.connect(**db_cred)
+        cur = con.cursor()
+        cur.execute("SELECT * FROM bot_configuration WHERE id = 1;")
+        _, _, configs = cur.fetchone()
+        cur.close()
+        con.close()
+
+        # create tokens
+        hooks = dict({})
+        for k, v in json.loads(configs).items():
+            if v.get("loot_hook") is not None and v.get("loot_hook") is not None:
+                hooks[v.get("loot_hook")] = v.get("loot_id")
+
+        self.hooks = hooks
 
     def notify(self):
 
@@ -38,7 +57,6 @@ class LootHook():
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
                 notification = "{} {}".format(npc["name"], "in " + fmt.s_to_ms(due) if due > 0 else "**NOW**")
-                # print(notification)
                 mentions.append(notification)
 
                 title = "**{}** is currently {}".format(npc["name"], ll[lvl])
@@ -56,10 +74,10 @@ class LootHook():
                 embed.set_thumbnail(url=url)
                 embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
                 embeds.append(embed)
-            # else:
-            #     print("No notifications: due = {}".format(due))
 
         if len(mentions):
-            webhook = Webhook.from_url(self.HOOK_ID, adapter=RequestsWebhookAdapter())
-            content = "<@&{}> Go for {}, equip Tear Gas or Smoke Grenade".format(self.ROLE_ID, " and ".join(mentions))
-            webhook.send(content, username='Loot', embeds=embeds)
+            # send notifications for all hooks
+            for k, v in self.hooks.items():
+                webhook = Webhook.from_url(k, adapter=RequestsWebhookAdapter())
+                content = "<@&{}> Go for {}, equip Tear Gas or Smoke Grenade".format(v, " and ".join(mentions))
+                webhook.send(content, username='Loot', embeds=embeds)

@@ -13,9 +13,8 @@ import includes.formating as fmt
 
 
 class Loot(commands.Cog):
-    def __init__(self, bot, loot_role="Looter"):
+    def __init__(self, bot):
         self.bot = bot
-        self.loot_role = loot_role
 
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
     async def loot(self, ctx):
@@ -89,7 +88,7 @@ class Loot(commands.Cog):
             return
 
         # Get Looter role
-        role = get(ctx.guild.roles, name=self.loot_role)
+        role = get(ctx.guild.roles, name="Looter")
 
         if role in ctx.author.roles:
             # remove Looter

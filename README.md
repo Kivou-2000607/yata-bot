@@ -1,2 +1,2 @@
 # yata-bot
-Discord bot linked with YATA
+Bot for YATA discord guild
