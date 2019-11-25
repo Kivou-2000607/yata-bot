@@ -1,0 +1,7 @@
+discord.py
+requests
+pytz
+PyGithub
+psycopg2
+asyncio
+asyncpg
