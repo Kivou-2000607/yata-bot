@@ -127,7 +127,8 @@ class Loot(commands.Cog):
 
     @tasks.loop(minutes=10)
     async def notify(self):
-
+        print("notify...")
+        
         # images and items
         thumbs = {
             '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
