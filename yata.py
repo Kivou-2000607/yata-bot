@@ -22,7 +22,7 @@ cur.close()
 con.close()
 
 # init yata bot
-bot = YataBot(configs=json.loads(configs), command_prefix="$")
+bot = YataBot(configs=json.loads(configs), command_prefix="!")
 
 # load classes
 bot.add_cog(Verify(bot))

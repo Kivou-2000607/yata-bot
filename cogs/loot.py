@@ -2,10 +2,13 @@
 import asyncio
 import aiohttp
 import time
+import json
 
 # import discord modules
 from discord.ext import commands
+from discord.ext import tasks
 from discord.utils import get
+from discord import Embed
 
 # import bot functions and classes
 import includes.checks as checks
@@ -15,10 +18,21 @@ import includes.formating as fmt
 class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.notify.start()
+
+    def cog_unload(self):
+        self.notify.cancel()
 
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
     async def loot(self, ctx):
         """Gives loot timing for each NPC"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("loot"):
+            await ctx.send(":x: Loot module not activated")
+            return
 
         # check role and channel
         ALLOWED_CHANNELS = ["loot"]
@@ -79,6 +93,13 @@ class Loot(commands.Cog):
     @commands.command()
     async def looter(self, ctx):
         """Add/remove @Looter role"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("loot"):
+            await ctx.send(":x: Loot module not activated")
+            return
 
         # check role and channel
         ALLOWED_CHANNELS = ["start-looting", "loot"]
@@ -103,3 +124,95 @@ class Loot(commands.Cog):
         await asyncio.sleep(10)
         await msg.delete()
         await ctx.message.delete()
+
+    @tasks.loop(minutes=10)
+    async def notify(self):
+
+        # images and items
+        thumbs = {
+            '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
+            '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
+            '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png"}
+        thumbd = "https://cdn.discordapp.com/app-icons/547341843788988416/32772ee397ec7c5d9cb85fd530c8f58e.png"
+        items = {
+            '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
+            '10': ["Snow Cannon", "Diamond Icicle"],
+            '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
+        itemd = "Nice item"
+
+        # YATA api
+        url = "https://yata.alwaysdata.net/loot/timings/"
+        # req = requests.get(url).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # loop over NPCs
+        mentions = []
+        embeds = []
+        nextDue = 999999999
+        allOut = True
+        for id, npc in req.items():
+            lvl = npc["levels"]["current"]
+            due = npc["timings"]["4"]["due"]
+            ts = npc["timings"]["4"]["ts"]
+
+            # used for computing time
+            nextDue = min(due, nextDue)
+            if lvl == 0:
+                allOut = False
+
+            ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
+            if due > -60 and due < 10 * 60:
+                notification = "{} {}".format(npc["name"], "in " + fmt.s_to_ms(due) if due > 0 else "**NOW**")
+                mentions.append(notification)
+
+                title = "**{}** is currently {}".format(npc["name"], ll[lvl])
+                msg = "{}".format("https://www.torn.com/profiles.php?XID={}".format(id))
+                embed = Embed(title=title, description=msg, color=550000)
+
+                if due < 0:
+                    embed.add_field(name='Loot level IV since', value='{}'.format(fmt.s_to_ms(abs(due))))
+                    embed.add_field(name='Date', value='{} TCT'.format(fmt.ts_to_datetime(npc["timings"]["4"]["ts"]).strftime("%y/%m/%d %H:%M:%S")))
+                else:
+                    embed.add_field(name='Loot {} in'.format(ll[lvl + 1]), value='{}'.format(fmt.s_to_ms(due)))
+                    embed.add_field(name='At', value='{} TCT'.format(fmt.ts_to_datetime(ts).strftime("%H:%M:%S")))
+
+                url = thumbs.get(id, thumbd)
+                embed.set_thumbnail(url=url)
+                embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
+                embeds.append(embed)
+
+        # iteration over all guilds
+        # for guildId in [int(k) for k, v in self.bot.configs.items() if v.get('loot') is not None]:
+        async for guild in self.bot.fetch_guilds(limit=5):
+            c = self.bot.get_config(guild)
+
+            # ignore non loot servers
+            if c.get('loot') is None:
+                continue
+
+            # get full guild (iterator doesn't return channels)
+            guild = self.bot.get_guild(guild.id)
+
+            # get channel
+            channel = get(guild.channels, name="loot")
+
+            # get role
+            role = get(guild.roles, name="Looter")
+
+            # loop of npcs to mentions
+            for m, e in zip(mentions, embeds):
+                await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smike Grenade', embed=e)
+
+        # get the sleeping time
+        # if all npc out -> next notification 5 minutes before next due
+        if allOut:
+            s = nextDue - 5 * 60
+            print(f"sleeping until 5 minutes before next due: {s/60} minutes.")
+            await asyncio.sleep(s)
+
+    @notify.before_loop
+    async def before_notify(self):
+        print('waiting...')
+        await self.bot.wait_until_ready()

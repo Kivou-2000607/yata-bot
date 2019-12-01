@@ -13,7 +13,7 @@ class YataBot(Bot):
     def __init__(self, configs=None, **args):
         Bot.__init__(self, **args)
         self.configs = configs
-        
+
     def get_config(self, guild):
         """ get_config: helper function
             gets configuration for a guild
@@ -22,14 +22,14 @@ class YataBot(Bot):
 
     def key(self, guild):
         """ key: helper function
-            gets a random torn API key key for a guild
+            gets a random torn API key for a guild
         """
         import random
 
         # get configuration for the guild
         config = self.get_config(guild)
 
-        #get all keys
+        # get all keys
         keys = config.get("keys", False)
 
         if keys:
@@ -46,7 +46,7 @@ class YataBot(Bot):
                 - create Verified role
                 TODO:
                 - create default channels (#readme, #verify-id, #dev-bot)
-                - send I'm back up message 
+                - send I'm back up message
                 - change #dev-bot to #admin-bot
         """
         # loop over guilds
@@ -55,34 +55,50 @@ class YataBot(Bot):
             config = self.get_config(guild)
 
             # create faction roles
-            f = config.get("factions", dict({}))
-            for k, v in f.items():
+            fac = config.get("factions", dict({}))
+            for k, v in fac.items():
                 role_name = f"{v} [{k}]"
                 if get(guild.roles, name=role_name) is None:
                     print(f"\tCreate role {role_name}")
                     await guild.create_role(name=role_name)
 
-            # create verified role
-            role_name = "Verified"
-            if get(guild.roles, name=role_name) is None:
-                print(f"\tCreate role {role_name}")
-                await guild.create_role(name=role_name)
-            
+            # create verified role and channels
+            if config.get("verify") is not None:
+                role_name = "Verified"
+                if get(guild.roles, name=role_name) is None:
+                    print(f"\tCreate role {role_name}")
+                    await guild.create_role(name=role_name)
+
+                for channel_name in ["verify-id", "admin"]:
+                    if get(guild.channels, name=channel_name) is None:
+                        print(f"\tCreate channel {channel_name}")
+                        await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+
+            # create Looter role
+            if config.get("loot") is not None:
+                for role_name in ["Looter"]:
+                    if get(guild.roles, name=role_name) is None:
+                        print(f"\tCreate role {role_name}")
+                        await guild.create_role(name=role_name)
+
+                for channel_name in ["start-looting", "loot"]:
+                    if get(guild.channels, name=channel_name) is None:
+                        print(f"\tCreate channel {channel_name}")
+                        await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+
             # change activity
             # a = config.get("activity", dict({}))
             # if "watching" in a:
             #    print(f'\twatching {a["watching"]}')
             #    activity = discord.Activity(name=a["watching"], type=discord.ActivityType.watching)
             #    await self.change_presence(activity=activity)
-            #elif "listening" in a:
+            # elif "listening" in a:
             #    print(f'\tlistening {a["listening"]}')
             #    activity = discord.Activity(name=a["listening"], type=discord.ActivityType.listening)
             #    await self.change_presence(activity=activity)
-            #elif "playing" in a:
+            # elif "playing" in a:
             #    print(f'\tplaying {a["playing"]}')
             #    activity = discord.Activity(name=a["playing"], type=discord.ActivityType.playing)
             #    await self.change_presence(activity=activity)
 
         print("Ready...")
-
-

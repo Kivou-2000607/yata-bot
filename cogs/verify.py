@@ -22,7 +22,13 @@ class Verify(commands.Cog):
         """Automatically verify member on join"""
         # get configuration for guild
         c = self.bot.get_config(member.guild)
-        key = self.bot.key(c)
+
+        # return if verify not active
+        if c.get("verify"):
+            return
+
+        # get key
+        key = self.bot.key(member.guild)
 
         # verify member when he join
         role = get(member.guild.roles, name="Verified")
@@ -51,6 +57,13 @@ class Verify(commands.Cog):
     @commands.command()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("verify"):
+            await ctx.send(":x: Verify module not activated")
+            return
 
         # check role and channel
         ALLOWED_CHANNELS = ["verify-id"]
@@ -59,9 +72,8 @@ class Verify(commands.Cog):
         else:
             return
 
-        # get guild configuration
-        c = self.bot.get_config(ctx.guild)
-        key = self.bot.key(c)
+        # get key
+        key = self.bot.key(ctx.guild)
 
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
@@ -80,17 +92,23 @@ class Verify(commands.Cog):
     @commands.command()
     async def verifyAll(self, ctx):
         """Verify all members based on discord ID"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("verify"):
+            await ctx.send(":x: Verify module not activated")
+            return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["dev-bot"]
+        ALLOWED_CHANNELS = ["admin"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
             return
 
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-        key = self.bot.key(c)
+        # get key
+        key = self.bot.key(ctx.guild)
 
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
@@ -133,7 +151,15 @@ class Verify(commands.Cog):
 
         # loop over bot guilds and lookup of the discord user
         for guild in self.bot.guilds:
-            print(guild)
+            await ctx.author.send(f'Verification for server **{guild}**')
+
+            # get configuration for guild
+            c = self.bot.get_config(guild)
+
+            # return if verify not active
+            if not c.get("verify"):
+                await ctx.author.send(":x: Verify module not activated")
+                continue
 
             # get verified role
             role = get(guild.roles, name="Verified")
@@ -145,7 +171,6 @@ class Verify(commands.Cog):
             if member is None:
                 continue
 
-            await ctx.author.send(f'Verification for server **{guild}**')
             # get system channel and send message
             welcome_channel = guild.system_channel
 
@@ -169,7 +194,7 @@ class Verify(commands.Cog):
             # assign Faction
             faction_name = "{faction_name} [{faction_id}]".format(**user['faction'])
             faction_role = get(guild.roles, name=faction_name)
-            
+
             # check if role exists in the guild
             if faction_role is None:
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
@@ -185,26 +210,33 @@ class Verify(commands.Cog):
     @commands.command()
     async def checkFactions(self, ctx):
         """Check faction role of members"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("verify"):
+            await ctx.send(":x: Verify module not activated")
+            return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["dev-bot"]
+        ALLOWED_CHANNELS = ["admin"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
             return
-    
+
         # Get all members
         members = ctx.guild.members
 
         # loop over factions
         for faction_id, faction_name in self.bot.FACTIONS.items():
-            
+
             # Get faction role
             faction_role_name = f'{faction_name} [{faction_id}]'
             faction_role = get(ctx.guild.roles, name=faction_role_name)
             await ctx.send(f'\n**Checking faction {faction_role.name}**')
-            
-           # try to parse Torn faction ID
+
+            # try to parse Torn faction ID
             match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
             if match is not None:
                 tornId = int(faction_role.name.split("[")[-1][:-1])
@@ -246,10 +278,17 @@ class Verify(commands.Cog):
                     await m.remove_roles(faction_role)
 
         await ctx.send(f"Done checking")
-        
+
     @commands.command()
     async def who(self, ctx, *args):
         """Gives verified discord user link"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if verify not active
+        if not c.get("verify"):
+            await ctx.send(":x: Verify module not activated")
+            return
 
         # check role and channel
         ALLOWED_ROLES = ["Verified"]
@@ -315,7 +354,6 @@ class Verify(commands.Cog):
 
         title = f'**{r.get("name")} [{r.get("player_id")}]** https://www.torn.com/profiles.php?XID={tornId}'
         msg = f'{r.get("rank")}  -  level {r.get("level")}  -  {r.get("age")} days old'
-
 
         embed = Embed(title=title, description=msg, color=550000)
 
