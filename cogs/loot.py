@@ -128,7 +128,7 @@ class Loot(commands.Cog):
     @tasks.loop(minutes=10)
     async def notify(self):
         print("notify...")
-        
+
         # images and items
         thumbs = {
             '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
@@ -208,10 +208,10 @@ class Loot(commands.Cog):
 
         # get the sleeping time
         # if all npc out -> next notification 5 minutes before next due
-        if allOut:
-            s = nextDue - 5 * 60
-            print(f"sleeping until 5 minutes before next due: {s/60} minutes.")
-            await asyncio.sleep(s)
+        # if allOut:
+        s = nextDue - 5 * 60
+        print(f"sleeping for {s/60} minutes.")
+        await asyncio.sleep(s)
 
     @notify.before_loop
     async def before_notify(self):
