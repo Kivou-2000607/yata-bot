@@ -44,7 +44,7 @@ class Verify(commands.Cog):
         await welcome_channel.send(message)
 
         # if not Automatically verified send private message
-        if not success and c.get("verification", False):
+        if not success and c["verify"].get("force", False):
             msg = [f'**Welcome to the {member.guild}\'s discord server {member} o/**']
             msg.append('This server requires that you verify your account in order to identify who you are in Torn.')
             msg.append('There is two ways to do that:')
