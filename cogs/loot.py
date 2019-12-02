@@ -86,7 +86,7 @@ class Loot(commands.Cog):
         await ctx.message.delete()
 
         def botMessages(message):
-            return message.author.id == self.bot.user.id
+            return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
         async for m in ctx.channel.history(limit=10, before=ctx.message).filter(botMessages):
             await m.delete()
 
@@ -125,21 +125,19 @@ class Loot(commands.Cog):
         await msg.delete()
         await ctx.message.delete()
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(seconds=5)
     async def notify(self):
-        print("notify...")
+        print("[LOOT] start task notify")
 
         # images and items
         thumbs = {
             '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
             '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
             '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png"}
-        thumbd = "https://cdn.discordapp.com/app-icons/547341843788988416/32772ee397ec7c5d9cb85fd530c8f58e.png"
         items = {
             '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
             '10': ["Snow Cannon", "Diamond Icicle"],
             '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
-        itemd = "Nice item"
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
@@ -151,17 +149,11 @@ class Loot(commands.Cog):
         # loop over NPCs
         mentions = []
         embeds = []
-        nextDue = 999999999
-        allOut = True
+        nextDue = []
         for id, npc in req.items():
             lvl = npc["levels"]["current"]
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
-
-            # used for computing time
-            nextDue = min(due, nextDue)
-            if lvl == 0:
-                allOut = False
 
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
@@ -179,10 +171,22 @@ class Loot(commands.Cog):
                     embed.add_field(name='Loot {} in'.format(ll[lvl + 1]), value='{}'.format(fmt.s_to_ms(due)))
                     embed.add_field(name='At', value='{} TCT'.format(fmt.ts_to_datetime(ts).strftime("%H:%M:%S")))
 
-                url = thumbs.get(id, thumbd)
+                url = thumbs.get(id, "?")
                 embed.set_thumbnail(url=url)
                 embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
                 embeds.append(embed)
+                print(f'[LOOT] {npc["name"]}: notify (due {due})')
+            elif due > 0:
+                # used for computing sleeping time
+                nextDue.append(due)
+                print(f'[LOOT] {npc["name"]}: ignore (due {due})')
+            else:
+                print(f'[LOOT] {npc["name"]}: ignore (due {due})')
+
+        # get the sleeping time (add 15 minutes if empty)
+        nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
+        s = nextDue[0] - 5 * 60
+        print(f"[LOOT] sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
         # for guildId in [int(k) for k, v in self.bot.configs.items() if v.get('loot') is not None]:
@@ -191,9 +195,11 @@ class Loot(commands.Cog):
 
             # ignore non loot servers
             if c.get('loot') is None:
+                print(f"[LOOT] guild {guild}: ignore.")
                 continue
+            print(f"[LOOT] guild {guild}: notify.")
 
-            # get full guild (iterator doesn't return channels)
+            # get full guild (async iterator doesn't return channels)
             guild = self.bot.get_guild(guild.id)
 
             # get channel
@@ -204,13 +210,12 @@ class Loot(commands.Cog):
 
             # loop of npcs to mentions
             for m, e in zip(mentions, embeds):
-                await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smike Grenade', embed=e)
+                print(f"[LOOT] guild {guild}: mention {m}.")
+                await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
 
-        # get the sleeping time
-        # if all npc out -> next notification 5 minutes before next due
-        # if allOut:
-        s = nextDue - 5 * 60
-        print(f"sleeping for {s/60} minutes.")
+            await get(guild.channels, name="admin").send(f"[LOOT] sleeping for {fmt.s_to_hms(s)} minutes.")
+
+        # sleeps
         await asyncio.sleep(s)
 
     @notify.before_loop
