@@ -96,7 +96,7 @@ class Loot(commands.Cog):
         # get configuration for guild
         c = self.bot.get_config(ctx.guild)
 
-        # return if verify not active
+        # return if loot not active
         if not c.get("loot"):
             await ctx.send(":x: Loot module not activated")
             return

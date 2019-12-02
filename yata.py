@@ -9,8 +9,9 @@ from bots.yata import YataBot
 # import cogs
 from cogs.verify import Verify
 from cogs.loot import Loot
-from cogs.github import Github
-from cogs.misc import Misc
+from cogs.stocks import Stocks
+# from cogs.github import Github
+# from cogs.misc import Misc
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
@@ -31,6 +32,7 @@ bot = YataBot(configs=json.loads(configs), command_prefix=prefix)
 # load classes
 bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
+bot.add_cog(Stocks(bot))
 # bot.add_cog(Github(bot))
 # bot.add_cog(Misc(bot))
 
