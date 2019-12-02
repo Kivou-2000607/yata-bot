@@ -45,9 +45,7 @@ class YataBot(Bot):
                 - create faction roles necessary
                 - create Verified role
                 TODO:
-                - create default channels (#readme, #verify-id, #dev-bot)
                 - send I'm back up message
-                - change #dev-bot to #admin-bot
         """
         # loop over guilds
         for guild in self.guilds:
@@ -64,41 +62,62 @@ class YataBot(Bot):
 
             # create verified role and channels
             if config.get("verify") is not None:
-                role_name = "Verified"
-                if get(guild.roles, name=role_name) is None:
-                    print(f"\tCreate role {role_name}")
-                    await guild.create_role(name=role_name)
+                role_verified = get(guild.roles, name="Verified")
+                if role_verified is None:
+                    print(f"\tCreate role Verified")
+                    role_verified = await guild.create_role(name="Verified")
 
-                for channel_name in ["verify-id", "admin"]:
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+                # for channel_name in ["verify-id", "admin"]:
+                # create admin channel
+                channel_name = "admin"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False)}
+                    channel_admin = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot", overwrites=overwrites)
+                    await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
 
-            # create Looter role
+                channel_name = "verify-id"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    channel_verif = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+                    await channel_verif.send(f"This channel is now the system channel")
+                    await channel_verif.send(f"If you haven't been assigned the {role_verified.mention} that's where you can type `!verify` or `!verify tornId` to verify another member")
+                    await guild.edit(system_channel=channel_verif)
+
             if config.get("loot") is not None:
-                for role_name in ["Looter"]:
-                    if get(guild.roles, name=role_name) is None:
-                        print(f"\tCreate role {role_name}")
-                        await guild.create_role(name=role_name)
+                # create Looter role
+                role_loot = get(guild.roles, name="Looter")
+                if role_loot is None:
+                    print(f"\tCreate role Looter")
+                    role_loot = await guild.create_role(name="Looter")
 
-                for channel_name in ["start-looting", "loot"]:
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+                # create loot channel
+                channel_name = "loot"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        role_loot: discord.PermissionOverwrite(read_messages=True)
+                        }
+                    channel_loot = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot", overwrites=overwrites)
+                    await channel_loot.send(f"{role_loot.mention} will reveive notification here")
+                    await channel_loot.send("Type `!loot` here to get the npc timings")
+                    await channel_loot.send(f"Type `!looter` to remove your {role_loot.mention} role")
 
-            # change activity
-            # a = config.get("activity", dict({}))
-            # if "watching" in a:
-            #    print(f'\twatching {a["watching"]}')
-            #    activity = discord.Activity(name=a["watching"], type=discord.ActivityType.watching)
-            #    await self.change_presence(activity=activity)
-            # elif "listening" in a:
-            #    print(f'\tlistening {a["listening"]}')
-            #    activity = discord.Activity(name=a["listening"], type=discord.ActivityType.listening)
-            #    await self.change_presence(activity=activity)
-            # elif "playing" in a:
-            #    print(f'\tplaying {a["playing"]}')
-            #    activity = discord.Activity(name=a["playing"], type=discord.ActivityType.playing)
-            #    await self.change_presence(activity=activity)
+                # create start-looting channel
+                channel_loot = get(guild.channels, name="loot")
+                channel_name = "start-looting"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=True),
+                        role_loot: discord.PermissionOverwrite(read_messages=False)
+                        }
+                    channel_slooting = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot", overwrites=overwrites)
+                    await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
+
+        # change activity
+        activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
+        await self.change_presence(activity=activity)
 
         print("Ready...")

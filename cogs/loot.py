@@ -213,7 +213,7 @@ class Loot(commands.Cog):
                 print(f"[LOOT] guild {guild}: mention {m}.")
                 await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
 
-            await get(guild.channels, name="admin").send(f"[LOOT] sleeping for {fmt.s_to_hms(s)} minutes.")
+            await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")
 
         # sleeps
         await asyncio.sleep(s)
