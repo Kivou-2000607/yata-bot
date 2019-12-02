@@ -20,12 +20,18 @@ class Github(commands.Cog):
     @commands.command()
     async def issues(self, ctx):
         """list issues"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if github not active
+        if not c.get("github"):
+            await ctx.send(":x: Github module not activated")
+            return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["bug-report", "issues", "github"]
-        # ALLOWED_ROLES = ["Verified"]
-        # if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
+        ALLOWED_CHANNELS = ["suggestions", "bug-report", "issues", "github"]
+        ALLOWED_ROLES = ["Verified"]
+        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
             return
@@ -34,9 +40,7 @@ class Github(commands.Cog):
         embeds = []
 
         # get repo
-        repo = Repository()
-
-        # repo.create_issue("Test", "couocu", "bug")
+        repo = Repository(**c["github"])
 
         # loop over issues
         for i in repo.get_issues():
@@ -70,9 +74,16 @@ class Github(commands.Cog):
     @commands.command()
     async def bug(self, ctx, *arg):
         """report a but"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if github not active
+        if not c.get("github"):
+            await ctx.send(":x: Github module not activated")
+            return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["bug-report", "suggestions", "issues", "github"]
+        ALLOWED_CHANNELS = ["suggestions", "bug-report", "issues", "github"]
         ALLOWED_ROLES = ["Verified"]
         if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
@@ -81,7 +92,7 @@ class Github(commands.Cog):
 
         try:
             # get repo
-            repo = Repository()
+            repo = Repository(**c["github"])
 
             if len(arg) == 0:
                 await ctx.send(f'You need to give a title to your bug: `!bug this is not working`')
@@ -95,6 +106,13 @@ class Github(commands.Cog):
     @commands.command()
     async def request(self, ctx, *arg):
         """make a request"""
+        # get configuration for guild
+        c = self.bot.get_config(ctx.guild)
+
+        # return if github not active
+        if not c.get("github"):
+            await ctx.send(":x: Github module not activated")
+            return
 
         # check role and channel
         ALLOWED_CHANNELS = ["suggestions", "bug-report", "issues", "github"]
@@ -106,7 +124,7 @@ class Github(commands.Cog):
 
         try:
             # get repo
-            repo = Repository()
+            repo = Repository(**c["github"])
 
             if len(arg) == 0:
                 await ctx.send(f'You need to give a title to your request: `!request I want that`')

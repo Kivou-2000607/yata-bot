@@ -10,8 +10,8 @@ from bots.yata import YataBot
 from cogs.verify import Verify
 from cogs.loot import Loot
 from cogs.stocks import Stocks
-# from cogs.github import Github
-# from cogs.misc import Misc
+from cogs.misc import Misc
+from cogs.github import Github
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
@@ -34,7 +34,7 @@ bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
 bot.add_cog(Misc(bot))
-# bot.add_cog(Github(bot))
+bot.add_cog(Github(bot))
 
 # run bot
 bot.run(token)

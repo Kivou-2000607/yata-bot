@@ -1,12 +1,13 @@
 # import standard modules
-# import os
-# from github import Github
+from github import Github
 
 
 class Repository():
-    def __init__(self):
-        self.github = Github(os.environ.get("GIT_TOKEN"))
-        self.repo = self.github.get_repo(os.environ.get("GIT_REPO"))
+    def __init__(self, token=None, repo=None):
+        print("repo", repo)
+        print("token", token)
+        self.github = Github(token)
+        self.repo = self.github.get_repo(repo)
 
     def get_issues(self):
         issues = self.repo.get_issues()

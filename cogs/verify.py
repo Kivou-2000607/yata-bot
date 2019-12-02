@@ -24,7 +24,7 @@ class Verify(commands.Cog):
         c = self.bot.get_config(member.guild)
 
         # return if verify not active
-        if c.get("verify"):
+        if not c.get("verify"):
             return
 
         # get key
