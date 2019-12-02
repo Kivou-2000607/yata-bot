@@ -18,10 +18,17 @@ class LootHook():
     def notify(self):
 
         # images and items
-        thumbs = {'4': "https://i.snipboard.io/hUlRLD.jpg", '15': "https://i.snipboard.io/U2v1QZ.jpg"}
+        thumbs = {
+            '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
+            '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
+            '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png"}
         thumbd = "https://cdn.discordapp.com/app-icons/547341843788988416/32772ee397ec7c5d9cb85fd530c8f58e.png"
-        items = {'4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"], '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
+        items = {
+            '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
+            '10': ["Snow Cannon", "Diamond Icicle"],
+            '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
         itemd = "Nice item"
+
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
