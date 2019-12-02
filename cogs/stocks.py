@@ -84,7 +84,7 @@ class Stocks(commands.Cog):
 
     @commands.command()
     async def tcb(self, ctx):
-        """Display information for the WSSB sharing group."""
+        """Display information for the TCB sharing group."""
         # get configuration for guild
         c = self.bot.get_config(ctx.guild)
 
