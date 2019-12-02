@@ -13,6 +13,7 @@ def s_to_hms(seconds, max_hours=24):
 
     return "{:02d}hrs {:02d}mins {:02d}s".format(hours, minutes, seconds)
 
+
 def s_to_ms(seconds):
     time = float(seconds)
     minutes = int(time // 60)

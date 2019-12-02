@@ -82,7 +82,6 @@ class Stocks(commands.Cog):
 
             await ctx.send(f"Here you go {ctx.author.display_name}, the list of education time left and WSSB owners:\n```\n{lst}```")
 
-
     @commands.command()
     async def tcb(self, ctx):
         """Display information for the WSSB sharing group."""
