@@ -75,6 +75,12 @@ class YataBot(Bot):
                     channel_admin = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot", overwrites=overwrites)
                     await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
 
+                # create admin channel
+                channel_name = "readme"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    channel_readme = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot")
+
                 channel_name = "verify-id"
                 if get(guild.channels, name=channel_name) is None:
                     print(f"\tCreate channel {channel_name}")

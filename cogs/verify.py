@@ -36,11 +36,16 @@ class Verify(commands.Cog):
 
         # get system channel and send message
         welcome_channel = member.guild.system_channel
+
         # get readme channel
         readme_channel = get(member.guild.channels, name="readme")
 
         # send welcome message
-        await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
+        try:
+            await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
+        except:
+            await welcome_channel.send(f"Welcome {member.mention}.")
+
         await welcome_channel.send(message)
 
         # if not Automatically verified send private message
@@ -51,6 +56,7 @@ class Verify(commands.Cog):
             msg.append(f'1 - You can go to the official discord server and get verified there: https://torn.com/discord, then come back in the {member.guild} server and type `!verify` in #verify-id.')
             msg.append('2 - Or you can type **in this channel** `!verifyKey YOURAPIKEY (16 random letters)` *(key cant be found here: https://www.torn.com/preferences.php#tab=api)*')
             msg.append(f'Either way, this process changes your nickname to your Torn name, gives you the {role} role and a role corresponding to your faction and you will have access to the main channels of the server.')
+            msg.append(f'If you change your name or faction you can repeat this verification whenever you want.')
 
             await member.send('\n'.join(msg))
 
@@ -151,6 +157,10 @@ class Verify(commands.Cog):
 
         # loop over bot guilds and lookup of the discord user
         for guild in self.bot.guilds:
+            # continue if author not in the guild
+            if ctx.author not in guild.members:
+                continue
+
             await ctx.author.send(f'Verification for server **{guild}**')
 
             # get configuration for guild
@@ -178,7 +188,7 @@ class Verify(commands.Cog):
             try:
                 nickname = "{} [{}]".format(user["name"], user["player_id"])
                 await member.edit(nick=nickname)
-                await ctx.author.send(f':white_check_mark: Your name as been chenged to {member.display_name}')
+                await ctx.author.send(f':white_check_mark: Your name as been changed to {member.display_name}')
             except BaseException:
                 await ctx.author.send(f':x: I don\'t have the permission to change your nickname.')
                 continue
