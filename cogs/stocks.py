@@ -4,7 +4,6 @@ import json
 
 # import discord modules
 from discord.ext import commands
-from discord import Embed
 from discord.utils import get
 
 # import bot functions and classes

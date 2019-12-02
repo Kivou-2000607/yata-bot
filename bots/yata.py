@@ -67,7 +67,6 @@ class YataBot(Bot):
                     print(f"\tCreate role Verified")
                     role_verified = await guild.create_role(name="Verified")
 
-                # for channel_name in ["verify-id", "admin"]:
                 # create admin channel
                 channel_name = "admin"
                 if get(guild.channels, name=channel_name) is None:
@@ -115,6 +114,25 @@ class YataBot(Bot):
                         }
                     channel_slooting = await guild.create_text_channel(channel_name, topic="Channel created for the YATA bot", overwrites=overwrites)
                     await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
+
+            # create socks role and channels
+            stocks = config.get("stocks")  # list of stock name ["wssb", "tcb"]
+            if stocks is not None:
+                for stock in stocks:
+                    stock_role = get(guild.roles, name=stock)
+                    if stock_role is None:
+                        print(f"\tCreate role {stock}")
+                        stock_role = await guild.create_role(name=stock)
+
+                    # create admin channel
+                    if get(guild.channels, name=stock) is None:
+                        print(f"\tCreate channel {stock}")
+                        overwrites = {
+                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                            stock_role: discord.PermissionOverwrite(read_messages=True),
+                            }
+                        channel_stock = await guild.create_text_channel(stock, topic="Channel created for the YATA bot", overwrites=overwrites)
+                        await channel_stock.send(f"Type `!{stock}` to see the stock status amoung the members")
 
         # change activity
         activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)

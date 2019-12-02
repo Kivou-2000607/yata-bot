@@ -6,7 +6,7 @@ async def channels(ctx, allowed):
     allowed_string = " or ".join(["`#{}`".format(c) for c in allowed])
 
     if ctx.channel.name == "admin":
-        print("[CHECK CHANNEL] access granted in {}".format(ctx.channel.name))
+        # print("[CHECK CHANNEL] access granted in {}".format(ctx.channel.name))
         return True
 
     elif ctx.channel.name not in allowed:
@@ -20,7 +20,7 @@ async def channels(ctx, allowed):
         return False
 
     else:
-        print("[CHECK CHANNEL] access granted in {}".format(ctx.message.channel.name))
+        # print("[CHECK CHANNEL] access granted in {}".format(ctx.message.channel.name))
         return True
 
 
@@ -34,7 +34,7 @@ async def roles(ctx, allowed):
     for allowed_role in allowed:
         if allowed_role in [role.name for role in ctx.author.roles]:
             access = True
-            print("[CHECK ROLE] access granted for {}".format(allowed_role))
+            # print("[CHECK ROLE] access granted for {}".format(allowed_role))
             break
 
     if access:

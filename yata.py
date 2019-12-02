@@ -33,8 +33,8 @@ bot = YataBot(configs=json.loads(configs), command_prefix=prefix)
 bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
+bot.add_cog(Misc(bot))
 # bot.add_cog(Github(bot))
-# bot.add_cog(Misc(bot))
 
 # run bot
 bot.run(token)
