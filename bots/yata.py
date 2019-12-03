@@ -65,7 +65,7 @@ class YataBot(Bot):
 
                 # send message to creator
                 my_creator = self.get_user(227470975317311488)
-                await my_creator.send(f"I left {guild} [{guild.id}] owned by {guild_owner}")
+                await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
 
             # create faction roles
