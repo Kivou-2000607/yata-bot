@@ -229,6 +229,7 @@ class Verify(commands.Cog):
         members = ctx.guild.members
 
         # loop over factions
+        c = self.bot.get_config(ctx.guild)
         for faction_id, faction_name in c.get("factions", dict({})).items():
 
             # Get faction role
