@@ -136,7 +136,7 @@ class Loot(commands.Cog):
             '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png"}
         items = {
             '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
-            '10': ["Snow Cannon", "Diamond Icicle"],
+            '10': ["Snow Cannon", "Diamond Icicle", "Snowball"],
             '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
 
         # YATA api
@@ -186,18 +186,17 @@ class Loot(commands.Cog):
         # get the sleeping time (add 15 minutes if empty)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
         s = nextDue[0] - 5 * 60
-        print(f"[LOOT] sleeping for {fmt.s_to_hms(s)} minutes.")
+        print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
-        # for guildId in [int(k) for k, v in self.bot.configs.items() if v.get('loot') is not None]:
-        async for guild in self.bot.fetch_guilds(limit=5):
+        async for guild in self.bot.fetch_guilds(limit=100):
             c = self.bot.get_config(guild)
 
             # ignore non loot servers
             if c.get('loot') is None:
-                print(f"[LOOT] guild {guild}: ignore.")
+                # print(f"[LOOT] guild {guild}: ignore.")
                 continue
-            print(f"[LOOT] guild {guild}: notify.")
+            # print(f"[LOOT] guild {guild}: notify.")
 
             # get full guild (async iterator doesn't return channels)
             guild = self.bot.get_guild(guild.id)
@@ -213,12 +212,13 @@ class Loot(commands.Cog):
                 print(f"[LOOT] guild {guild}: mention {m}.")
                 await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
 
-            await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")
+            # await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")
 
         # sleeps
         await asyncio.sleep(s)
 
     @notify.before_loop
     async def before_notify(self):
-        print('waiting...')
+        print('[LOOT] waiting...')
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

@@ -27,6 +27,10 @@ class Verify(commands.Cog):
         if not c.get("verify"):
             return
 
+        # check if bot
+        if member.bot:
+            return
+
         # get key
         key = self.bot.key(member.guild)
 
@@ -43,7 +47,7 @@ class Verify(commands.Cog):
         # send welcome message
         try:
             await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
-        except:
+        except BaseException:
             await welcome_channel.send(f"Welcome {member.mention}.")
 
         await welcome_channel.send(message)
@@ -107,7 +111,7 @@ class Verify(commands.Cog):
             return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["admin"]
+        ALLOWED_CHANNELS = ["yata-admin"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
@@ -229,7 +233,7 @@ class Verify(commands.Cog):
             return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["admin"]
+        ALLOWED_CHANNELS = ["yata-admin"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:

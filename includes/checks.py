@@ -5,7 +5,7 @@ import asyncio
 async def channels(ctx, allowed):
     allowed_string = " or ".join(["`#{}`".format(c) for c in allowed])
 
-    if ctx.channel.name == "admin":
+    if ctx.channel.name == "yata-admin":
         # print("[CHECK CHANNEL] access granted in {}".format(ctx.channel.name))
         return True
 

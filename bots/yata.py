@@ -49,8 +49,20 @@ class YataBot(Bot):
         """
         # loop over guilds
         for guild in self.guilds:
-            print(f'Server {guild} [{guild.id}]')
+            print(f'[SETUP] Server {guild} [{guild.id}]')
             config = self.get_config(guild)
+
+            if not len(config):
+                print(f'\tWTF I\'m doing here?')
+                await guild.system_channel.send("What am I doing here? Contact Kivou [2000607] if you want the bot on your server.")
+                await guild.system_channel.send("See you.")
+                await guild.leave()
+                my_creator = self.get_user(227470975317311488)
+                guild_owner = self.get_user(guild.owner_id)
+                await my_creator.send(f"I left {guild} [{guild.id}] owned by {guild_owner}")
+                await guild_owner.send(f"I left you guild **{guild}** [{guild.id}]. Contact Kivou [2000607] if you want the bot on your server.")
+                continue
+
 
             # create faction roles
             fac = config.get("factions", dict({}))
@@ -68,7 +80,7 @@ class YataBot(Bot):
                     role_verified = await guild.create_role(name="Verified")
 
                 # create admin channel
-                channel_name = "admin"
+                channel_name = "yata-admin"
                 if get(guild.channels, name=channel_name) is None:
                     print(f"\tCreate channel {channel_name}")
                     overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False)}
@@ -144,4 +156,4 @@ class YataBot(Bot):
         activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
         await self.change_presence(activity=activity)
 
-        print("Ready...")
+        print("[SETUP] Ready...")
