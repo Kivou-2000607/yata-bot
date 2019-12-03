@@ -141,6 +141,7 @@ class YataBot(Bot):
             # create socks role and channels
             if self.check_module(guild, "stocks"):
                 stocks = config.get("stocks")  # list of stock name ["wssb", "tcb"]
+                del stocks["active"]
                 for stock in stocks:
                     stock_role = get(guild.roles, name=stock)
                     if stock_role is None:

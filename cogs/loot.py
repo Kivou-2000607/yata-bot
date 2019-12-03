@@ -185,7 +185,7 @@ class Loot(commands.Cog):
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=100):
             # ignore non loot servers
-            if not self.bot.check_module(ctx.guild, "loot"):
+            if not self.bot.check_module(guild, "loot"):
                 # print(f"[LOOT] guild {guild}: ignore.")
                 continue
             # print(f"[LOOT] guild {guild}: notify.")
