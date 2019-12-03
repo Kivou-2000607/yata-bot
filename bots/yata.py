@@ -55,21 +55,16 @@ class YataBot(Bot):
             # leave guild not in YATA database
             if not len(config):
                 print(f'\tWTF I\'m doing here?')
-                # send message to guild
-                try:
-                    await guild.system_channel.send("What am I doing here? Contact Kivou [2000607] if you want me on your server.")
-                    await guild.system_channel.send("See you.")
-                except BaseException:
-                    if len(guild.text_channels):
-                        await guild.text_channels[0].send("What am I doing here? Contact Kivou [2000607] if you want me on your server.")
-                        await guild.text_channels[0].send("See you.")
+                # send message to guild or guild owner
+                if guild.system_channel is not None:
+                    send_message = guild.system_channel
+                elif len(guild.text_channels):
+                    send_message = guild.text_channels[0]
+                else:
+                    send_message = self.get_user(guild.owner_id)
 
-                # send message to guild owner
-                try:
-                    guild_owner = self.get_user(guild.owner_id)
-                    await guild_owner.send(f"I left you guild **{guild}** [{guild.id}]. Contact Kivou [2000607] if you want the bot on your server.")
-                except BaseException:
-                    pass
+                await send_message.send("What am I doing here? Contact Kivou [2000607] if you want me on your server.")
+                await send_message.send("See you.")
 
                 # leave guild
                 await guild.leave()
