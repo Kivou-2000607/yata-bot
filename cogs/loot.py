@@ -177,9 +177,9 @@ class Loot(commands.Cog):
             else:
                 print(f'[LOOT] {npc["name"]}: ignore (due {due})')
 
-        # get the sleeping time (add 15 minutes if empty)
+        # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
-        s = nextDue[0] - 5 * 60
+        s = nextDue[0] - 5 * 60 - 5  # next due - 5 minutes - 5 seconds of the task ticker
         print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
