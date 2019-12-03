@@ -52,17 +52,32 @@ class YataBot(Bot):
             print(f'[SETUP] Server {guild} [{guild.id}]')
             config = self.get_config(guild)
 
+            # leave guild not in YATA database
             if not len(config):
                 print(f'\tWTF I\'m doing here?')
-                await guild.system_channel.send("What am I doing here? Contact Kivou [2000607] if you want the bot on your server.")
-                await guild.system_channel.send("See you.")
-                await guild.leave()
-                my_creator = self.get_user(227470975317311488)
-                guild_owner = self.get_user(guild.owner_id)
-                await my_creator.send(f"I left {guild} [{guild.id}] owned by {guild_owner}")
-                await guild_owner.send(f"I left you guild **{guild}** [{guild.id}]. Contact Kivou [2000607] if you want the bot on your server.")
-                continue
+                # send message to guild
+                try:
+                    await guild.system_channel.send("What am I doing here? Contact Kivou [2000607] if you want me on your server.")
+                    await guild.system_channel.send("See you.")
+                except BaseException:
+                    if len(guild.text_channels):
+                        await guild.text_channels[0].send("What am I doing here? Contact Kivou [2000607] if you want me on your server.")
+                        await guild.text_channels[0].send("See you.")
 
+                # send message to guild owner
+                try:
+                    guild_owner = self.get_user(guild.owner_id)
+                    await guild_owner.send(f"I left you guild **{guild}** [{guild.id}]. Contact Kivou [2000607] if you want the bot on your server.")
+                except BaseException:
+                    pass
+
+                # leave guild
+                await guild.leave()
+
+                # send message to creator
+                my_creator = self.get_user(227470975317311488)
+                await my_creator.send(f"I left {guild} [{guild.id}] owned by {guild_owner}")
+                continue
 
             # create faction roles
             fac = config.get("factions", dict({}))
