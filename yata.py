@@ -22,7 +22,7 @@ db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
 con = psycopg2.connect(**db_cred)
 cur = con.cursor()
 cur.execute(f"SELECT * FROM bot_configuration WHERE id = {bot_id};")
-_, token, configs = cur.fetchone()
+_, token, configs, _ = cur.fetchone()
 cur.close()
 con.close()
 

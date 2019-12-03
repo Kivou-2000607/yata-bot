@@ -19,9 +19,6 @@ class Stocks(commands.Cog):
     @commands.command()
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group."""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # check role and channel
         ALLOWED_CHANNELS = ["wssb"]
         ALLOWED_ROLES = ["wssb"]
@@ -31,7 +28,7 @@ class Stocks(commands.Cog):
             return
 
         # return if stocks not active
-        if not c.get("stocks"):
+        if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Stocks module not activated")
             return
 
@@ -85,9 +82,6 @@ class Stocks(commands.Cog):
     @commands.command()
     async def tcb(self, ctx):
         """Display information for the TCB sharing group."""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # check role and channel
         ALLOWED_CHANNELS = ["tcb"]
         ALLOWED_ROLES = ["tcb"]
@@ -97,7 +91,7 @@ class Stocks(commands.Cog):
             return
 
         # return if stocks not active
-        if not c.get("stocks"):
+        if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Stocks module not activated")
             return
 

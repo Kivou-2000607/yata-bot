@@ -20,11 +20,8 @@ class Verify(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         """Automatically verify member on join"""
-        # get configuration for guild
-        c = self.bot.get_config(member.guild)
-
         # return if verify not active
-        if not c.get("verify"):
+        if not self.bot.check_module(member.guild, "verify"):
             return
 
         # check if bot
@@ -67,11 +64,8 @@ class Verify(commands.Cog):
     @commands.command()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if verify not active
-        if not c.get("verify"):
+        if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
             return
 
@@ -102,11 +96,8 @@ class Verify(commands.Cog):
     @commands.command()
     async def verifyAll(self, ctx):
         """Verify all members based on discord ID"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if verify not active
-        if not c.get("verify"):
+        if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
             return
 
@@ -167,11 +158,8 @@ class Verify(commands.Cog):
 
             await ctx.author.send(f'Verification for server **{guild}**')
 
-            # get configuration for guild
-            c = self.bot.get_config(guild)
-
             # return if verify not active
-            if not c.get("verify"):
+            if not self.bot.check_module(ctx.guild, "verify"):
                 await ctx.author.send(":x: Verify module not activated")
                 continue
 
@@ -224,11 +212,8 @@ class Verify(commands.Cog):
     @commands.command()
     async def checkFactions(self, ctx):
         """Check faction role of members"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if verify not active
-        if not c.get("verify"):
+        if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
             return
 

@@ -33,11 +33,8 @@ class Repository(commands.Cog):
     @commands.command()
     async def issues(self, ctx):
         """list issues"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if github not active
-        if not c.get("repository"):
+        if not not self.bot.check_module(ctx.guild, "repository"):
             await ctx.send(":x: Repository module not activated")
             return
 
@@ -53,6 +50,7 @@ class Repository(commands.Cog):
         embeds = []
 
         # get repo
+        c = self.bot.get_config(ctx.guild)
         repo = RepoConnection(**c["repository"])
 
         # loop over issues
@@ -87,11 +85,8 @@ class Repository(commands.Cog):
     @commands.command()
     async def bug(self, ctx, *arg):
         """report a but"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if github not active
-        if not c.get("repository"):
+        if not self.bot.check_module(ctx.guild, "repository"):
             await ctx.send(":x: Repository module not activated")
             return
 
@@ -105,6 +100,7 @@ class Repository(commands.Cog):
 
         try:
             # get repo
+            c = self.bot.get_config(ctx.guild)
             repo = RepoConnection(**c["repository"])
 
             if len(arg) == 0:
@@ -119,11 +115,8 @@ class Repository(commands.Cog):
     @commands.command()
     async def request(self, ctx, *arg):
         """make a request"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if github not active
-        if not c.get("repository"):
+        if not self.bot.check_module(ctx.guild, "repository"):
             await ctx.send(":x: Repository module not activated")
             return
 
@@ -137,6 +130,7 @@ class Repository(commands.Cog):
 
         try:
             # get repo
+            c = self.bot.get_config(ctx.guild)
             repo = RepoConnection(**c["repository"])
 
             if len(arg) == 0:

@@ -26,11 +26,8 @@ class Loot(commands.Cog):
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
     async def loot(self, ctx):
         """Gives loot timing for each NPC"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if verify not active
-        if not c.get("loot"):
+        if not self.bot.check_module(ctx.guild, "loot"):
             await ctx.send(":x: Loot module not activated")
             return
 
@@ -93,11 +90,8 @@ class Loot(commands.Cog):
     @commands.command()
     async def looter(self, ctx):
         """Add/remove @Looter role"""
-        # get configuration for guild
-        c = self.bot.get_config(ctx.guild)
-
         # return if loot not active
-        if not c.get("loot"):
+        if not self.bot.check_module(ctx.guild, "loot"):
             await ctx.send(":x: Loot module not activated")
             return
 
@@ -127,7 +121,7 @@ class Loot(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def notify(self):
-        print("[LOOT] start task notify")
+        print("[LOOT] start task")
 
         # images and items
         thumbs = {
@@ -190,10 +184,8 @@ class Loot(commands.Cog):
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=100):
-            c = self.bot.get_config(guild)
-
             # ignore non loot servers
-            if c.get('loot') is None:
+            if not self.bot.check_module(ctx.guild, "loot"):
                 # print(f"[LOOT] guild {guild}: ignore.")
                 continue
             # print(f"[LOOT] guild {guild}: notify.")

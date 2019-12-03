@@ -25,18 +25,19 @@ class YataBot(Bot):
             gets a random torn API key for a guild
         """
         import random
-
-        # get configuration for the guild
         config = self.get_config(guild)
-
-        # get all keys
         keys = config.get("keys", False)
+        return random.choice([v for k, v in keys.items()]) if keys else False
 
-        if keys:
-            # select a random key
-            return random.choice(keys)
-        else:
+    def check_module(self, guild, module):
+        """ check_module: helper function
+            check if guild activated a module
+        """
+        config = self.get_config(guild)
+        if config.get(module) is None:
             return False
+        else:
+            return bool(config[module].get("active", False))
 
     async def on_ready(self):
         """ on_ready
@@ -68,20 +69,20 @@ class YataBot(Bot):
                 await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
 
-            # create faction roles
-            fac = config.get("factions", dict({}))
-            for k, v in fac.items():
-                role_name = f"{v} [{k}]"
-                if get(guild.roles, name=role_name) is None:
-                    print(f"\tCreate role {role_name}")
-                    await guild.create_role(name=role_name)
-
             # create verified role and channels
-            if config.get("verify") is not None:
+            if self.check_module(guild, "verify"):
                 role_verified = get(guild.roles, name="Verified")
                 if role_verified is None:
                     print(f"\tCreate role Verified")
                     role_verified = await guild.create_role(name="Verified")
+
+                # create faction roles
+                fac = config.get("factions", dict({}))
+                for k, v in fac.items():
+                    role_name = f"{v} [{k}]"
+                    if get(guild.roles, name=role_name) is None:
+                        print(f"\tCreate role {role_name}")
+                        await guild.create_role(name=role_name)
 
                 # create admin channel
                 channel_name = "yata-admin"
@@ -105,7 +106,7 @@ class YataBot(Bot):
                     await channel_verif.send(f"If you haven't been assigned the {role_verified.mention} that's where you can type `!verify` or `!verify tornId` to verify another member")
                     await guild.edit(system_channel=channel_verif)
 
-            if config.get("loot") is not None:
+            if self.check_module(guild, "loot"):
                 # create Looter role
                 role_loot = get(guild.roles, name="Looter")
                 if role_loot is None:
@@ -138,8 +139,8 @@ class YataBot(Bot):
                     await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
 
             # create socks role and channels
-            stocks = config.get("stocks")  # list of stock name ["wssb", "tcb"]
-            if stocks is not None:
+            if self.check_module(guild, "stocks"):
+                stocks = config.get("stocks")  # list of stock name ["wssb", "tcb"]
                 for stock in stocks:
                     stock_role = get(guild.roles, name=stock)
                     if stock_role is None:
