@@ -69,6 +69,10 @@ class YataBot(Bot):
                 await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
 
+            # stop if not managing channels
+            if not self.check_module(guild, "channels"):
+                continue
+
             # create category
             yata_category = get(guild.categories, name="yata-bot")
             if yata_category is None:
