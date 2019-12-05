@@ -75,6 +75,7 @@ class YataBot(Bot):
 
             # create category
             yata_category = get(guild.categories, name="yata-bot")
+            bot_role = get(guild.roles, name=self.user.name)
             if yata_category is None:
                 print(f"\tCreate category yata-bot")
                 yata_category = await guild.create_category("yata-bot")
@@ -98,23 +99,29 @@ class YataBot(Bot):
                 channel_name = "yata-admin"
                 if get(guild.channels, name=channel_name) is None:
                     print(f"\tCreate channel {channel_name}")
-                    overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False)}
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        bot_role: discord.PermissionOverwrite(read_messages=True)
+                        }
                     channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
                     await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
 
-                # create admin channel
-                channel_name = "readme"
-                if get(guild.channels, name=channel_name) is None:
-                    print(f"\tCreate channel {channel_name}")
-                    channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
+                # create readme channel
+                # channel_name = "readme"
+                # if get(guild.channels, name=channel_name) is None:
+                #     print(f"\tCreate channel {channel_name}")
+                #     channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
 
                 channel_name = "verify-id"
                 if get(guild.channels, name=channel_name) is None:
                     print(f"\tCreate channel {channel_name}")
                     channel_verif = await guild.create_text_channel(channel_name, topic="Verification channel for the YATA bot", category=yata_category)
-                    await channel_verif.send(f"This channel is now the system channel")
                     await channel_verif.send(f"If you haven't been assigned the {role_verified.mention} that's where you can type `!verify` or `!verify tornId` to verify another member")
-                    await guild.edit(system_channel=channel_verif)
+                    try:
+                        await guild.edit(system_channel=channel_verif)
+                        await channel_verif.send(f"This channel is now the system channel")
+                    except BaseException:                        
+                        pass
 
             if self.check_module(guild, "loot"):
                 # create Looter role
@@ -129,7 +136,8 @@ class YataBot(Bot):
                     print(f"\tCreate channel {channel_name}")
                     overwrites = {
                         guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        role_loot: discord.PermissionOverwrite(read_messages=True)
+                        role_loot: discord.PermissionOverwrite(read_messages=True),
+                        bot_role: discord.PermissionOverwrite(read_messages=True)
                         }
                     channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
                     await channel_loot.send(f"{role_loot.mention} will reveive notification here")
@@ -143,7 +151,8 @@ class YataBot(Bot):
                     print(f"\tCreate channel {channel_name}")
                     overwrites = {
                         guild.default_role: discord.PermissionOverwrite(read_messages=True),
-                        role_loot: discord.PermissionOverwrite(read_messages=False)
+                        role_loot: discord.PermissionOverwrite(read_messages=False),
+                        bot_role: discord.PermissionOverwrite(read_messages=True)
                         }
                     channel_slooting = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
                     await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
@@ -163,6 +172,7 @@ class YataBot(Bot):
                         overwrites = {
                             guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             stock_role: discord.PermissionOverwrite(read_messages=True),
+                            bot_role: discord.PermissionOverwrite(read_messages=True)
                             }
                         channel_stock = await guild.create_text_channel(stock, topic=f"{stock} stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_stock.send(f"Type `!{stock}` to see the {stock} BB status amoung the members")

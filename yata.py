@@ -12,6 +12,7 @@ from cogs.loot import Loot
 from cogs.stocks import Stocks
 from cogs.misc import Misc
 from cogs.repository import Repository
+from cogs.invite import Invite
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
@@ -35,6 +36,7 @@ bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
 bot.add_cog(Misc(bot))
 bot.add_cog(Repository(bot))
+bot.add_cog(Invite(bot))
 
 # run bot
 bot.run(token)
