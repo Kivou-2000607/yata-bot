@@ -12,8 +12,8 @@ import includes.checks as checks
 class RepoConnection():
     """ helper class that connects to repo
     """
-    def __init__(self, token=None, repo=None):
-        self.repo = Github(token).get_repo(repo)
+    def __init__(self, token=None, name=None, **args):
+        self.repo = Github(token).get_repo(name)
 
     def get_issues(self):
         issues = self.repo.get_issues()
