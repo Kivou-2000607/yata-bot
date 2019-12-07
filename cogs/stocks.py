@@ -19,17 +19,19 @@ class Stocks(commands.Cog):
     @commands.command()
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group."""
-        # check role and channel
-        ALLOWED_CHANNELS = ["wssb"]
-        ALLOWED_ROLES = ["wssb"]
-        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
 
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Stocks module not activated")
+            return
+
+        # check role and channel
+        channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
+        ALLOWED_CHANNELS = [channelName] if channelName else ["wssb"]
+        ALLOWED_ROLES = ["wssb"]
+        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
             return
 
         # list all users
@@ -82,17 +84,19 @@ class Stocks(commands.Cog):
     @commands.command()
     async def tcb(self, ctx):
         """Display information for the TCB sharing group."""
-        # check role and channel
-        ALLOWED_CHANNELS = ["tcb"]
-        ALLOWED_ROLES = ["tcb"]
-        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
 
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Stocks module not activated")
+            return
+
+        # check role and channel
+        channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
+        ALLOWED_CHANNELS = [channelName] if channelName else ["tcb"]
+        ALLOWED_ROLES = ["tcb"]
+        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
             return
 
         # list all users

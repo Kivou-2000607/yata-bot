@@ -120,7 +120,7 @@ class YataBot(Bot):
                     try:
                         await guild.edit(system_channel=channel_verif)
                         await channel_verif.send(f"This channel is now the system channel")
-                    except BaseException:                        
+                    except BaseException:
                         pass
 
             if self.check_module(guild, "loot"):
@@ -160,7 +160,7 @@ class YataBot(Bot):
             # create socks role and channels
             if self.check_module(guild, "stocks"):
                 stocks = config.get("stocks")
-                for stock in [s for s in stocks if s not in ["active"]]:
+                for stock in [s for s in stocks if s not in ["active", "channel"]]:
                     stock_role = get(guild.roles, name=stock)
                     if stock_role is None:
                         print(f"\tCreate role {stock}")
