@@ -38,3 +38,23 @@ async def get_member_key(member):
         return tuple(user[0])
     else:
         return -2, None, None
+
+async def get_member_key_by_id(tornId):
+    """ get a member key from YATA database
+        return tornId, Name, key
+        return -2, None, None: did not find torn id in yata db
+    """
+
+    # get YATA user
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    user = await con.fetch(f'SELECT "tId", name, key FROM player_player WHERE "tId" = {tornId};')
+    await con.close()
+
+    # return id, name, key
+    if len(user):
+        return tuple(user[0])
+    else:
+        return -2, None, None
