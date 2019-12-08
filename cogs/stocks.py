@@ -139,7 +139,7 @@ class Stocks(commands.Cog):
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
 
         if len(timeLeft):
-            lst = "{: <15} | {} | {} \n".format("NAME", "INV TIME LEFT", "TCB")
+            lst = "{: <15} | {} | {} \n".format("NAME", "EDU TIME LEFT", "TCB")
             lst += "-" * (len(lst) - 1) + "\n"
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
