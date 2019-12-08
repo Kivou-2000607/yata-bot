@@ -17,9 +17,11 @@ class Stocks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def wssb(self, ctx):
-        """Display information for the WSSB sharing group."""
+    async def get_times(self, ctx, stock=""):
+
+        # options for different stocks
+        # [user api selection, stock id, n shares for BB]
+        so = {"wssb": ["education", 25, 1000000], "tcb": ["money", 2, 1500000]}
 
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):
@@ -28,8 +30,8 @@ class Stocks(commands.Cog):
 
         # check role and channel
         channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
-        ALLOWED_CHANNELS = [channelName] if channelName else ["wssb"]
-        ALLOWED_ROLES = ["wssb"]
+        ALLOWED_CHANNELS = [channelName] if channelName else [stock]
+        ALLOWED_ROLES = [stock]
         if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
@@ -38,16 +40,16 @@ class Stocks(commands.Cog):
         # list all users
         stockOwners = []
         timeLeft = dict()
-        role = get(ctx.guild.roles, name="wssb")
+        role = get(ctx.guild.roles, name=stock)
         for member in role.members:
-            print("[WSSB]: {}".format(member.display_name))
+            print(f"[{stock.upper()}]: {member.display_name}")
 
             # get user key from YATA database
             tId, name, key = await get_member_key(member)
 
             # if couldn't parse id from name
             if tId == -1:
-                # print("[WSSB] couldn't get use id, check with discord id")
+                # print(f"[{stock.upper()}] couldn't get use id, check with discord id")
                 guildKey = self.bot.key(member.guild)
                 url = f'https://api.torn.com/user/{member.id}?selections=discord&key={guildKey}'
                 async with aiohttp.ClientSession() as session:
@@ -59,176 +61,97 @@ class Stocks(commands.Cog):
                     tId = int(req["discord"].get("userID"))
                     # get user key from YATA database
                     tId, name, key = await get_member_key_by_id(tId)
-                    # print("[WSSB] discord id found", tId, name, key)
+                    # print(f"[{stock.upper()}] discord id found", tId, name, key)
 
                 # API error
                 elif "error" in req:
-                    # print("[WSSB] error in api request")
-                    await ctx.send(f':x: An error occured guild owner API key: *{req["error"].get("error", "?")}*')
+                    print(req, guildKey)
+                    # print(f"[{stock.upper()}] error in api request")
+                    await ctx.send(f':x: **{member.display_name}**: guild owner API key error *({req["error"].get("error", "?")})*')
                     continue
 
                 # if not registered Torn
                 else:
-                    # print("[WSSB] member not registered")
-                    await ctx.send(f':x: An error occured with {member.display_name}: I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
+                    # print(f"[{stock.upper()}] member not registered")
+                    await ctx.send(f':x: **{member.display_name}**: I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
                     continue
 
-            if key is not None:
-                url = f'https://api.torn.com/user/?selections=education,stocks,discord&key={key}'
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        req = await r.json()
+            # check if member on YATA
+            if tId == -2:
+                await ctx.send(f":x: **{member.display_name}** is not in YATA database so I can't get his API key")
+                continue
 
-                # deal with api error
-                if "error" in req:
-                    await ctx.send(f':x: An error occured with {member.display_name} API key: *{req["error"].get("error", "?")}*')
-                    continue
+            # at this point we have a torn Id, a discord id, a name and a key
 
-                # very important security check if torn discord ID == member discord ID
-                # the difference can come from a discord user changing is ID to pull information of another member
-                elif req["discord"].get("discordID") != str(member.id):
-                        await ctx.send(f':x: An error occured with {member.display_name}: it seems to me he changed his nickname id to pull data from another player...')
+            # get information from API key
+            url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord&key={key}'
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
 
-                        my_creator = self.bot.get_user(227470975317311488)
-                        guild_owner = self.bot.get_user(ctx.guild.owner_id)
-                        report = [f'Guild name: {ctx.guild}']
-                        report.append(f'Guild owner: {guild_owner} aka {guild_owner.display_name}')
-                        report.append(f'Discord member display name: {member.display_name}')
-                        report.append(f'Discord member name: {member}')
-                        report.append(f'Discord member id: {member.id}')
-                        report.append(f'Discord id pulled from API: {req["discord"].get("discordID")}')
-                        await my_creator.send('**ALERT** WSSB stock function\n```ARM\n{}```'.format("\n".join(report)))
-                        continue
+            # deal with api error
+            if "error" in req:
+                await ctx.send(f':x: **{member.display_name}** API key error: *{req["error"].get("error", "?")}*')
+                continue
 
-                # get stock owner
-                user_stocks = req.get('stocks')
-                if user_stocks is not None:
-                    for k, v in user_stocks.items():
-                        if v['stock_id'] == 25 and v['shares'] == 1000000:
-                            stockOwners.append(name)
-                            # print("        stock {}: {}".format(k, v))
+            # check if verified on Torn discord (mandatory for the next security check)
+            elif not bool(req["discord"].get("discordID")):
+                await ctx.send(f':x: **{member.display_name}**: not verified on the Torn discord server. It\'s mandatory for security reasons.')
+                continue
 
-                # get time left
+            # very important security check if torn discord ID != member discord ID
+            # the only reason I can think of this happening is a discord user changing his ID (in the nickname) to try pulling information of another member... Which is very very wrong.
+            elif req["discord"].get("discordID") != str(member.id):
+                await ctx.send(f':x: **{member.display_name}**: looks like nickname ID does not match discord ID.')
+
+                # send report to me
+                my_creator = self.bot.get_user(227470975317311488)
+                guild_owner = self.bot.get_user(ctx.guild.owner_id)
+                report = [f'Guild name: {ctx.guild}']
+                report.append(f'Guild owner: {guild_owner} aka {guild_owner.display_name}')
+                report.append(f'Discord member display name: {member.display_name}')
+                report.append(f'Discord member name: {member}')
+                report.append(f'Discord member id: {member.id}')
+                report.append(f'Discord id pulled from API: {req["discord"].get("discordID")}')
+                await my_creator.send('**ALERT** {} stock function\n```ARM\n{}```'.format(stock.upper(), "\n".join(report)))
+                continue
+
+            # get stock owner
+            user_stocks = req.get('stocks')
+            if user_stocks is not None:
+                for k, v in user_stocks.items():
+                    if v['stock_id'] == so.get(stock)[1] and v['shares'] == so.get(stock)[2]:
+                        stockOwners.append(name)
+                        # print("        stock {}: {}".format(k, v))
+
+            # get time left
+            if stock == "tcb":
+                timeLeft[name] = req.get('city_bank', dict({})).get("time_left", 0)
+            elif stock == "wssb":
                 timeLeft[name] = req.get('education_timeleft', 0)
 
-            else:
-                if tId == -1:
-                    await ctx.send(f":x: could not parse {member} torn Id")
-                elif tId == -2:
-                    await ctx.send(f":x: {member} is not in YATA database")
-                else:
-                    await ctx.send(f":x: {member}... don't know what happened with him")
+        return timeLeft, stockOwners
+
+    @commands.command()
+    async def wssb(self, ctx):
+        """Display information for the WSSB sharing group."""
+
+        timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
 
         if len(timeLeft):
-            lst = "{: <15} | {} | {} \n".format("NAME", "EDU TIME LEFT", "WSSB")
+            lst = "{: <15} | {} | {} \n".format("NAME", "INV TIME LEFT", "TCB")
             lst += "-" * (len(lst) - 1) + "\n"
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
 
-            await ctx.send(f"Here you go {ctx.author.display_name}, the list of education time left and WSSB owners:\n```\n{lst}```")
+            await ctx.send(f"Here you go {ctx.author.display_name}, the list of investment time left and WSSB owners:\n```\n{lst}```")
 
     @commands.command()
     async def tcb(self, ctx):
         """Display information for the TCB sharing group."""
 
-        # return if stocks not active
-        if not self.bot.check_module(ctx.guild, "stocks"):
-            await ctx.send(":x: Stocks module not activated")
-            return
-
-        # check role and channel
-        channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
-        ALLOWED_CHANNELS = [channelName] if channelName else ["tcb"]
-        ALLOWED_ROLES = ["tcb"]
-        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
-        # list all users
-        stockOwners = []
-        timeLeft = dict()
-        role = get(ctx.guild.roles, name="tcb")
-        for member in role.members:
-            print("[TCB]: {}".format(member.display_name))
-
-            # get user key from YATA database
-            tId, name, key = await get_member_key(member)
-
-            # if couldn't parse id from name
-            if tId == -1:
-                # print("[TCB] couldn't get use id, check with discord id")
-                guildKey = self.bot.key(member.guild)
-                url = f'https://api.torn.com/user/{member.id}?selections=discord&key={guildKey}'
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        req = await r.json()
-
-                # user verified on official torn server
-                if "discord" in req and req["discord"].get("userID"):
-                    tId = int(req["discord"].get("userID"))
-                    # get user key from YATA database
-                    tId, name, key = await get_member_key_by_id(tId)
-                    # print("[TCB] discord id found", tId, name, key)
-
-                # API error
-                elif "error" in req:
-                    # print("[TCB] error in api request")
-                    await ctx.send(f':x: An error occured guild owner API key: *{req["error"].get("error", "?")}*')
-                    continue
-
-                # if not registered Torn
-                else:
-                    # print("[TCB] member not registered")
-                    await ctx.send(f':x: An error occured with {member.display_name}: I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
-                    continue
-
-            if key is not None:
-                url = f'https://api.torn.com/user/?selections=money,stocks,discord&key={key}'
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        req = await r.json()
-
-                # deal with api error
-                if "error" in req:
-                    await ctx.send(f':x: An error occured with {member.display_name} API key: *{req["error"].get("error", "?")}*')
-                    continue
-
-                # very important security check if torn discord ID == member discord ID
-                # the difference can come from a discord user changing is ID to pull information of another member
-                elif req["discord"].get("discordID") != str(member.id):
-                        await ctx.send(f':x: An error occured with {member.display_name}: it seems to me he changed his nickname id to pull data from another player...')
-
-                        my_creator = self.bot.get_user(227470975317311488)
-                        guild_owner = self.bot.get_user(ctx.guild.owner_id)
-                        report = [f'Guild name: {ctx.guild}']
-                        report.append(f'Guild owner: {guild_owner} aka {guild_owner.display_name}')
-                        report.append(f'Discord member display name: {member.display_name}')
-                        report.append(f'Discord member name: {member}')
-                        report.append(f'Discord member id: {member.id}')
-                        report.append(f'Discord id pulled from API: {req["discord"].get("discordID")}')
-                        await my_creator.send('**ALERT** TCB stock function\n```ARM\n{}```'.format("\n".join(report)))
-                        continue
-
-                # get stock owner
-                user_stocks = req.get('stocks')
-                if user_stocks is not None:
-                    for k, v in user_stocks.items():
-                        if v['stock_id'] == 2 and v['shares'] == 1500000:
-                            stockOwners.append(name)
-                            # print("        stock {}: {}".format(k, v))
-
-                # get time left
-                timeLeft[name] = req.get('city_bank', dict({})).get("time_left", 0)
-
-            else:
-                if tId == -1:
-                    await ctx.send(f":x: could not parse {member} torn Id")
-                elif tId == -2:
-                    await ctx.send(f":x: {member} is not in YATA database")
-                else:
-                    await ctx.send(f":x: {member}... don't know what happened with him")
+        timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
 
         if len(timeLeft):
             lst = "{: <15} | {} | {} \n".format("NAME", "INV TIME LEFT", "TCB")
