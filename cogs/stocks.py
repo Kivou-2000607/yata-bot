@@ -67,18 +67,18 @@ class Stocks(commands.Cog):
                 elif "error" in req:
                     print(req, guildKey)
                     # print(f"[{stock.upper()}] error in api request")
-                    await ctx.send(f':x: **{member.display_name}**: guild owner API key error *({req["error"].get("error", "?")})*')
+                    await ctx.send(f':x: {member.mention} guild owner API key error *({req["error"].get("error", "?")})*')
                     continue
 
                 # if not registered Torn
                 else:
                     # print(f"[{stock.upper()}] member not registered")
-                    await ctx.send(f':x: **{member.display_name}**: I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
+                    await ctx.send(f':x: {member.mention} I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
                     continue
 
             # check if member on YATA
             if tId == -2:
-                await ctx.send(f":x: **{member.display_name}** is not in YATA database so I can't get his API key")
+                await ctx.send(f":x: {member.mention} is not in YATA database so I can't get his API key")
                 continue
 
             # at this point we have a torn Id, a discord id, a name and a key
@@ -91,18 +91,18 @@ class Stocks(commands.Cog):
 
             # deal with api error
             if "error" in req:
-                await ctx.send(f':x: **{member.display_name}** API key error: *{req["error"].get("error", "?")}*')
+                await ctx.send(f':x: {member.mention} API key error: *{req["error"].get("error", "?")}*')
                 continue
 
             # check if verified on Torn discord (mandatory for the next security check)
             elif not bool(req["discord"].get("discordID")):
-                await ctx.send(f':x: **{member.display_name}**: not verified on the Torn discord server. It\'s mandatory for security reasons.')
+                await ctx.send(f':x: {member.mention} not verified on the Torn discord server. It\'s mandatory for security reasons.')
                 continue
 
             # very important security check if torn discord ID != member discord ID
             # the only reason I can think of this happening is a discord user changing his ID (in the nickname) to try pulling information of another member... Which is very very wrong.
             elif req["discord"].get("discordID") != str(member.id):
-                await ctx.send(f':x: **{member.display_name}**: looks like nickname ID does not match discord ID.')
+                await ctx.send(f':x: {member.mention} looks like nickname ID does not match discord ID.')
 
                 # send report to me
                 my_creator = self.bot.get_user(227470975317311488)
@@ -145,7 +145,7 @@ class Stocks(commands.Cog):
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
 
-            await ctx.send(f"Here you go {ctx.author.display_name}, the list of investment time left and WSSB owners:\n```\n{lst}```")
+            await ctx.send(f"Here you go {ctx.author.display_name}, the list of education time left and WSSB owners:\n```\n{lst}```")
 
     @commands.command()
     async def tcb(self, ctx):
