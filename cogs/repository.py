@@ -34,7 +34,7 @@ class Repository(commands.Cog):
     async def issues(self, ctx):
         """list issues"""
         # return if github not active
-        if not not self.bot.check_module(ctx.guild, "repository"):
+        if not self.bot.check_module(ctx.guild, "repository"):
             await ctx.send(":x: Repository module not activated")
             return
 

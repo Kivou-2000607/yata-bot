@@ -19,13 +19,19 @@ bot_id = os.environ.get("YATA_ID", 1)
 prefix = os.environ.get("BOT_PREFIX", "!")
 
 # get configurations from YATA's database
-db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-con = psycopg2.connect(**db_cred)
-cur = con.cursor()
-cur.execute(f"SELECT * FROM bot_discordapp WHERE id = {bot_id};")
-_, token, configs, _ = cur.fetchone()
-cur.close()
-con.close()
+if os.environ.get("DB_CREDENTIALS", False):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    con = psycopg2.connect(**db_cred)
+    cur = con.cursor()
+    cur.execute(f"SELECT * FROM bot_discordapp WHERE id = {bot_id};")
+    _, token, configs, _ = cur.fetchone()
+    cur.close()
+    con.close()
+
+# get custom configs (skipping YATA databse configurations)
+else:
+    configs = os.environ.get("YATA_CONFIGS")
+    token = os.environ.get("BOT_TOKEN")
 
 # init yata bot
 bot = YataBot(configs=json.loads(configs), command_prefix=prefix)
