@@ -183,26 +183,30 @@ class Loot(commands.Cog):
         print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=100):
-            # ignore non loot servers
-            if not self.bot.check_module(guild, "loot"):
-                # print(f"[LOOT] guild {guild}: ignore.")
-                continue
-            # print(f"[LOOT] guild {guild}: notify.")
+        async for guild in self.bot.fetch_guilds(limit=10):
+            try:
+                # ignore non loot servers
+                if not self.bot.check_module(guild, "loot"):
+                    # print(f"[LOOT] guild {guild}: ignore.")
+                    continue
+                # print(f"[LOOT] guild {guild}: notify.")
 
-            # get full guild (async iterator doesn't return channels)
-            guild = self.bot.get_guild(guild.id)
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
 
-            # get channel
-            channel = get(guild.channels, name="loot")
+                # get channel
+                channel = get(guild.channels, name="loot")
 
-            # get role
-            role = get(guild.roles, name="Looter")
+                # get role
+                role = get(guild.roles, name="Looter")
 
-            # loop of npcs to mentions
-            for m, e in zip(mentions, embeds):
-                print(f"[LOOT] guild {guild}: mention {m}.")
-                await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
+                # loop of npcs to mentions
+                for m, e in zip(mentions, embeds):
+                    print(f"[LOOT] guild {guild}: mention {m}.")
+                    await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
+
+            except BaseException as e:
+                print(f"[LOOT] guild {guild}: mention failed {e}.")
 
             # await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")
 
