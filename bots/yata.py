@@ -123,6 +123,14 @@ class YataBot(Bot):
                     except BaseException:
                         pass
 
+            if self.check_module(guild, "chain"):
+                # create chain channel
+                channel_name = self.get_config(guild).get("chain").get("channel", "chain")
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
+                    await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
+
             if self.check_module(guild, "loot"):
                 # create Looter role
                 role_loot = get(guild.roles, name="Looter")
