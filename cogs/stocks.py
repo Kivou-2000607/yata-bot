@@ -10,7 +10,6 @@ from discord.utils import get
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import get_member_key
-from includes.yata_db import get_member_key_by_id
 
 
 class Stocks(commands.Cog):
@@ -45,10 +44,10 @@ class Stocks(commands.Cog):
             print(f"[{stock.upper()}]: {member.display_name}")
 
             # get user key from YATA database
-            tId, name, key = await get_member_key(member)
+            status, tId, name, key = await get_member_key(member=member)
 
             # if couldn't parse id from name
-            if tId == -1:
+            if status == -1:
                 # print(f"[{stock.upper()}] couldn't get use id, check with discord id")
                 guildKey = self.bot.key(member.guild)
                 url = f'https://api.torn.com/user/{member.id}?selections=discord&key={guildKey}'
@@ -60,12 +59,11 @@ class Stocks(commands.Cog):
                 if "discord" in req and req["discord"].get("userID"):
                     tId = int(req["discord"].get("userID"))
                     # get user key from YATA database
-                    tId, name, key = await get_member_key_by_id(tId)
+                    status, tId, name, key = await get_member_key(tornId=tId)
                     # print(f"[{stock.upper()}] discord id found", tId, name, key)
 
                 # API error
                 elif "error" in req:
-                    print(req, guildKey)
                     # print(f"[{stock.upper()}] error in api request")
                     await ctx.send(f':x: {member.mention} guild owner API key error *({req["error"].get("error", "?")})*')
                     continue
@@ -77,8 +75,13 @@ class Stocks(commands.Cog):
                     continue
 
             # check if member on YATA
-            if tId == -2:
-                await ctx.send(f":x: {member.mention} is not in YATA database so I can't get his API key")
+            if status == -2:
+                await ctx.send(f":x: {member.mention}: Player {tId} is not in YATA database so I can't get his API key")
+                continue
+
+            # check if member gave perm to the bot to take API key
+            if status == -3:
+                await ctx.send(f":x: {member.mention}: {name} [{tId}] has to give permission to use his API key here: https://yata.alwaysdata.net/bot/")
                 continue
 
             # at this point we have a torn Id, a discord id, a name and a key
@@ -102,7 +105,7 @@ class Stocks(commands.Cog):
             # very important security check if torn discord ID != member discord ID
             # the only reason I can think of this happening is a discord user changing his ID (in the nickname) to try pulling information of another member... Which is very very wrong.
             elif req["discord"].get("discordID") != str(member.id):
-                await ctx.send(f':x: {member.mention} looks like nickname ID does not match discord ID.')
+                await ctx.send(f':x: {member.mention} looks like nickname ID does not match discord ID. Maybe you\'re using a different account.')
 
                 # send report to me
                 my_creator = self.bot.get_user(227470975317311488)
@@ -112,6 +115,7 @@ class Stocks(commands.Cog):
                 report.append(f'Discord member display name: {member.display_name}')
                 report.append(f'Discord member name: {member}')
                 report.append(f'Discord member id: {member.id}')
+                report.append(f'Yata member pulled: {name} [{tId}]')
                 report.append(f'Discord id pulled from API: {req["discord"].get("discordID")}')
                 await my_creator.send('**ALERT** {} stock function\n```ARM\n{}```'.format(stock.upper(), "\n".join(report)))
                 continue
