@@ -71,6 +71,9 @@ class Chain(commands.Cog):
 
             delay = int(nowts - apits)
 
+            # add delay to
+            timeout -= delay
+
             # if cooldown
             if cooldown > 0:
                 await ctx.send(':cold_face: Chain in cooldown')
@@ -88,9 +91,9 @@ class Chain(commands.Cog):
                 await ctx.send(f':scream: Chain timeout in {timeout} seconds {ctx.guild.default_role}')
 
             else:
-                await ctx.send(f':sunglasses: I\'m still watching... chain timeout in {timeout} seconds')
+                await ctx.send(f':sunglasses: I\'m still watching... chain timeout in {timeout/60:.1f} minutes')
 
             # sleeps
-            sleep = max(30, timeout) - delay
+            sleep = max(30, timeout)
             print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
