@@ -34,7 +34,6 @@ class Chain(commands.Cog):
 
         await ctx.send(":white_check_mark: Start watching")
         while True:
-            print("check", ctx.guild)
 
             # check last 5 messages for a stop
             history = await ctx.channel.history(limit=5).flatten()
@@ -79,16 +78,19 @@ class Chain(commands.Cog):
                 return
 
             # if timeout
-            if timeout == 0:
-                await ctx.send(':x: Chain timeout')
+            elif timeout == 0:
+                await ctx.send(':x: Chain timed out')
                 await ctx.send(':x: Stop watching...')
                 return
 
             # if warning
-            if timeout < 60:
+            elif timeout < 60:
                 await ctx.send(f':warning: Chain timeout in {timeout} seconds {ctx.guild.default_role}')
 
+            else:
+                await ctx.send(f':x: Chain timeout in {timeout} seconds')
+
             # sleeps
-            sleep = 30 - delay
-            print(f"API delay of {delay} seconds, sleeping for {sleep} seconds")
+            sleep = max(30, timeout) - delay
+            print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
