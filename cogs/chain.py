@@ -16,7 +16,7 @@ class Chain(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def chain(self, ctx):
+    async def chain(self, ctx, deltaW=90, deltaN=600):
         """Toggle chain timeout notifications"""
 
         # return if chain not active
@@ -35,14 +35,22 @@ class Chain(commands.Cog):
         await ctx.send(":kissing_heart: Start watching")
         while True:
 
+            # times needed
+            now = datetime.datetime.utcnow()
+            epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
+
+            # check if needs to notify still watching
+            notify = False
+
             # check last 5 messages for a stop
-            history = await ctx.channel.history(limit=5).flatten()
-            stops = [m for m in history if m.content in ["!stop"]]
-            if len(stops):
-                for m in stops:
+            async for m in ctx.channel.history(limit=10):
+                timeLastMessage = (now - m.created_at).total_seconds()
+                if m.content == "!stop":
                     await m.delete()
-                await ctx.send(":sleeping: Stop watching")
-                break
+                    await ctx.send(":sleeping: Stop watching")
+                    return
+                elif m.content[:12] == ":sunglasses:" and timeLastMessage > deltaN:
+                    notify = True
 
             # get key
             key = self.bot.key(ctx.guild)
@@ -62,10 +70,9 @@ class Chain(commands.Cog):
             # get timings
             timeout = req.get("chain", dict({})).get("timeout", 0)
             cooldown = req.get("chain", dict({})).get("cooldown", 0)
+            current = req.get("chain", dict({})).get("current", 0)
 
             # get delay
-            epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
-            now = datetime.datetime.utcnow()
             nowts = (now - epoch).total_seconds()
             apits = req.get("timestamp")
 
@@ -76,24 +83,25 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                await ctx.send(':cold_face: Chain in cooldown')
+                await ctx.send(f':cold_face: Chain in cooldown at {current}')
                 await ctx.send(':sleeping: Stop watching...')
                 return
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(':scream: Chain timed out')
+                await ctx.send(f':scream: Chain timed out at {current}')
                 await ctx.send(':sleeping: Stop watching...')
                 return
 
             # if warning
-            elif timeout < 60:
+            elif timeout < deltaW:
                 await ctx.send(f':scream: Chain timeout in {timeout} seconds {ctx.guild.default_role}')
 
-            else:
-                await ctx.send(f':sunglasses: I\'m still watching... chain timeout in {timeout/60:.1f} minutes')
+            # if long enough for a notification
+            elif notify:
+                await ctx.send(f':sunglasses: Chain\'s at {current}. Timeout in {timeout/60:.1f} minutes.')
 
             # sleeps
-            sleep = max(30, timeout)
-            print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            sleep = max(30, timeout - deltaW)
+            # print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
