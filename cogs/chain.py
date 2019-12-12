@@ -33,6 +33,7 @@ class Chain(commands.Cog):
             return
 
         await ctx.send(":kissing_heart: Start watching")
+        notify = True
         while True:
 
             # times needed
@@ -40,7 +41,6 @@ class Chain(commands.Cog):
             epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
 
             # check if needs to notify still watching
-            notify = False
 
             # check last 5 messages for a stop
             async for m in ctx.channel.history(limit=10):
@@ -104,4 +104,5 @@ class Chain(commands.Cog):
             # sleeps
             sleep = max(30, timeout - deltaW)
             print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            notify = False
             await asyncio.sleep(sleep)
