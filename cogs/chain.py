@@ -32,7 +32,7 @@ class Chain(commands.Cog):
         else:
             return
 
-        await ctx.send(":white_check_mark: Start watching")
+        await ctx.send(":kissing_heart: Start watching")
         while True:
 
             # check last 5 messages for a stop
@@ -41,7 +41,7 @@ class Chain(commands.Cog):
             if len(stops):
                 for m in stops:
                     await m.delete()
-                await ctx.send(":x: Stop watching")
+                await ctx.send(":sleeping: Stop watching")
                 break
 
             # get key
@@ -73,22 +73,22 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                await ctx.send(':x: Chain in cooldown')
-                await ctx.send(':x: Stop watching...')
+                await ctx.send(':cold_face: Chain in cooldown')
+                await ctx.send(':sleeping: Stop watching...')
                 return
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(':x: Chain timed out')
-                await ctx.send(':x: Stop watching...')
+                await ctx.send(':scream: Chain timed out')
+                await ctx.send(':sleeping: Stop watching...')
                 return
 
             # if warning
             elif timeout < 60:
-                await ctx.send(f':warning: Chain timeout in {timeout} seconds {ctx.guild.default_role}')
+                await ctx.send(f':scream: Chain timeout in {timeout} seconds {ctx.guild.default_role}')
 
             else:
-                await ctx.send(f':x: Chain timeout in {timeout} seconds')
+                await ctx.send(f':sunglasses: I\'m still watching... chain timeout in {timeout} seconds')
 
             # sleeps
             sleep = max(30, timeout) - delay
