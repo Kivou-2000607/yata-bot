@@ -124,7 +124,7 @@ class Stocks(commands.Cog):
             user_stocks = req.get('stocks')
             if user_stocks is not None:
                 for k, v in user_stocks.items():
-                    if v['stock_id'] == so.get(stock)[1] and v['shares'] == so.get(stock)[2]:
+                    if v['stock_id'] == so.get(stock)[1] and v['shares'] >= so.get(stock)[2]:
                         stockOwners.append(name)
                         # print("        stock {}: {}".format(k, v))
 
@@ -141,9 +141,8 @@ class Stocks(commands.Cog):
         """Display information for the WSSB sharing group."""
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
-
         if len(timeLeft):
-            lst = "{: <15} | {} | {} \n".format("NAME", "EDU TIME LEFT", "TCB")
+            lst = "{: <15} | {} | {} \n".format("NAME", "EDU TIME LEFT", "WSSB")
             lst += "-" * (len(lst) - 1) + "\n"
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
