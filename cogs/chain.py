@@ -103,5 +103,5 @@ class Chain(commands.Cog):
 
             # sleeps
             sleep = max(30, timeout - deltaW)
-            # print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
