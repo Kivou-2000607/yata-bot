@@ -43,14 +43,21 @@ class Chain(commands.Cog):
             # check if needs to notify still watching
 
             # check last 5 messages for a stop
-            async for m in ctx.channel.history(limit=10):
+            history = await ctx.channel.history(limit=10).flatten()
+            for m in history:
                 timeLastMessage = (now - m.created_at).total_seconds()
                 if m.content == "!stop":
                     await m.delete()
                     await ctx.send(":sleeping: Stop watching")
                     return
-                elif m.content[:12] == ":sunglasses:" and timeLastMessage > deltaN:
-                    notify = True
+                elif m.content[:12] == ":sunglasses:":
+                    # check when if last bot notification
+                    if timeLastMessage > deltaN:
+                        # print("notify", m.content, deltaN, timeLastMessage)
+                        notify = True
+                    # else:
+                    #     print("don't notify", m.content, deltaN, timeLastMessage)
+                    continue
 
             # get key
             key = self.bot.key(ctx.guild)
@@ -76,7 +83,7 @@ class Chain(commands.Cog):
             nowts = (now - epoch).total_seconds()
             apits = req.get("timestamp")
 
-            delay = int(nowts - apits)
+            delay = int(abs(nowts - apits))
 
             # add delay to
             timeout -= delay
@@ -103,6 +110,6 @@ class Chain(commands.Cog):
 
             # sleeps
             sleep = max(30, timeout - deltaW)
-            print(f"API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            print(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             notify = False
             await asyncio.sleep(sleep)
