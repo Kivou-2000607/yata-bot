@@ -6,6 +6,7 @@ import json
 
 # import discord modules
 from discord.ext import commands
+from discord.utils import get
 
 # import bot functions and classes
 import includes.checks as checks
@@ -19,29 +20,6 @@ class Chain(commands.Cog):
     async def chain(self, ctx, *args):
         """Toggle chain timeout notifications"""
 
-        # default values of the arguments
-        deltaW=90  # warning timeout in seconds
-        deltaN=600  # breathing messages every in second
-        faction=""  # use faction from key
-
-        for arg in args:
-            splt = arg.split("=")
-            if arg.isdigit():
-                faction=int(arg)
-                continue
-            elif len(splt) != 2:
-                await ctx.send(f":chains: argument {arg} ignored")
-                continue
-            if splt[0] == 'f' and splt[1].isdigit():
-                faction=int(splt[1])
-            elif splt[0] == 'w' and splt[1].isdigit():
-                deltaW=int(splt[1])
-            elif splt[0] == 'n' and splt[1].isdigit():
-                deltaN=int(splt[1])
-            else:
-                await ctx.send(f":chains: key/value pair {arg} ignored")
-
-
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -54,6 +32,28 @@ class Chain(commands.Cog):
             pass
         else:
             return
+
+        # default values of the arguments
+        deltaW = 90  # warning timeout in seconds
+        deltaN = 600  # breathing messages every in second
+        faction = ""  # use faction from key
+
+        for arg in args:
+            splt = arg.split("=")
+            if arg.isdigit():
+                faction = int(arg)
+                continue
+            elif len(splt) != 2:
+                await ctx.send(f":chains: argument {arg} ignored")
+                continue
+            if splt[0] == 'f' and splt[1].isdigit():
+                faction = int(splt[1])
+            elif splt[0] == 'w' and splt[1].isdigit():
+                deltaW = int(splt[1])
+            elif splt[0] == 'n' and splt[1].isdigit():
+                deltaN = int(splt[1])
+            else:
+                await ctx.send(f":chains: key/value pair {arg} ignored")
 
         # Inital call to get faction name
         key = self.bot.key(ctx.guild)
@@ -72,9 +72,11 @@ class Chain(commands.Cog):
             await ctx.send(f':x: There is a API key problem ({req["error"]["error"]})')
             return
 
-        factionName = f'`{req.get("name")} [{req.get("ID")}]`'
+        # faction name and role
+        factionName = f'{req.get("name")} [{req.get("ID")}]'
+        factionRole = get(ctx.guild.roles, name=factionName)
 
-        await ctx.send(f":chains: {factionName} Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
+        await ctx.send(f":chains: `{factionName}` Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -89,7 +91,7 @@ class Chain(commands.Cog):
             for m in history:
                 if m.content == "!stop":
                     await m.delete()
-                    await ctx.send(f":x: {factionName} Stop watching")
+                    await ctx.send(f":x: `{factionName}` Stop watching")
                     return
 
             # chain api call
@@ -101,16 +103,16 @@ class Chain(commands.Cog):
 
             # handle API error
             if 'error' in req:
-                await ctx.send(f':x: {factionName} API key problem ({req["error"]["error"]})')
+                await ctx.send(f':x: `{factionName}` API key problem ({req["error"]["error"]})')
                 return
 
             # get timings
             timeout = req.get("chain", dict({})).get("timeout", 0)
             cooldown = req.get("chain", dict({})).get("cooldown", 0)
             current = req.get("chain", dict({})).get("current", 0)
-            # timeout = 0
-            # cooldown = 0
-            # current = 0
+            timeout = 30
+            cooldown = 0
+            current = 10
 
             # get delay
             nowts = (now - epoch).total_seconds()
@@ -125,27 +127,30 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                await ctx.send(f':x: {factionName} Chain at **{current}** in cooldown for {cooldown/60:.1f}min :cold_face:')
+                await ctx.send(f':x: `{factionName}` Chain at **{current}** in cooldown for {cooldown/60:.1f}min :cold_face:')
                 return
 
             # if no chain
-            elif current == 0 :
-                await ctx.send(f':x: {factionName} No chains on the horizon :partying_face:')
+            elif current == 0:
+                await ctx.send(f':x: `{factionName}` No chains on the horizon :partying_face:')
                 return
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(f':x: {factionName} Chain timed out at **{current}** :rage:')
+                await ctx.send(f':x: `{factionName}` Chain timed out at **{current}** :rage:')
                 return
 
             # if warning
             elif timeout < deltaW:
-                await ctx.send(f':chains: {factionName} Chain at **{current}** and timeout in **{timeout}s**{txtDelay} {ctx.guild.default_role} :scream:')
+                if factionRole is None:
+                    await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay} :scream:')
+                else:
+                    await ctx.send(f':chains: {factionRole.mention} Chain at **{current}** and timeout in **{timeout}s**{txtDelay} :scream:')
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
-                await ctx.send(f':chains: {factionName} Chain at **{current}** (timeout in {timeout/60:.1f}min) {txtDelay}')
+                await ctx.send(f':chains: `{factionName}` Chain at **{current}** (timeout in {timeout/60:.1f}min) {txtDelay}')
 
             # sleeps
             sleep = max(30, timeout - deltaW)
