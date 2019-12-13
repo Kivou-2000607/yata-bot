@@ -110,9 +110,9 @@ class Chain(commands.Cog):
             timeout = req.get("chain", dict({})).get("timeout", 0)
             cooldown = req.get("chain", dict({})).get("cooldown", 0)
             current = req.get("chain", dict({})).get("current", 0)
-            timeout = 30
-            cooldown = 0
-            current = 10
+            # timeout = 30
+            # cooldown = 0
+            # current = 10
 
             # get delay
             nowts = (now - epoch).total_seconds()
