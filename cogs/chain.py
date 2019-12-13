@@ -76,6 +76,11 @@ class Chain(commands.Cog):
         factionName = f'{req.get("name")} [{req.get("ID")}]'
         factionRole = get(ctx.guild.roles, name=factionName)
 
+        # if no chain
+        if req.get("chain", dict({})).get("current", 0) == 0:
+            await ctx.send(f':x: `{factionName}` No chains on the horizon :partying_face:')
+            return
+
         await ctx.send(f":chains: `{factionName}` Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
@@ -87,7 +92,7 @@ class Chain(commands.Cog):
             # check if needs to notify still watching
 
             # check last 10 messages for a stop --- had to do it not async to catch only 1 stop
-            history = await ctx.channel.history(limit=10).flatten()
+            history = await ctx.channel.history(limit=50).flatten()
             for m in history:
                 if m.content == "!stop":
                     await m.delete()
@@ -110,7 +115,7 @@ class Chain(commands.Cog):
             timeout = req.get("chain", dict({})).get("timeout", 0)
             cooldown = req.get("chain", dict({})).get("cooldown", 0)
             current = req.get("chain", dict({})).get("current", 0)
-            # timeout = 30
+            # timeout = 7
             # cooldown = 0
             # current = 10
 
@@ -118,9 +123,9 @@ class Chain(commands.Cog):
             nowts = (now - epoch).total_seconds()
             apits = req.get("timestamp")
 
-            delay = int(abs(nowts - apits))
-            txtDelay = f"   ---   *API caching delay of {delay}s*" if delay else ""
-            deltaLastNotified = (now - lastNotified).total_seconds()
+            delay = int(nowts - apits)
+            txtDelay = f"   *API caching delay of {delay}s*" if delay else ""
+            deltaLastNotified = int((now - lastNotified).total_seconds())
 
             # add delay to
             # timeout -= delay
@@ -128,11 +133,6 @@ class Chain(commands.Cog):
             # if cooldown
             if cooldown > 0:
                 await ctx.send(f':x: `{factionName}` Chain at **{current}** in cooldown for {cooldown/60:.1f}min :cold_face:')
-                return
-
-            # if no chain
-            elif current == 0:
-                await ctx.send(f':x: `{factionName}` No chains on the horizon :partying_face:')
                 return
 
             # if timeout
@@ -143,17 +143,17 @@ class Chain(commands.Cog):
             # if warning
             elif timeout < deltaW:
                 if factionRole is None:
-                    await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay} :scream:')
+                    await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
                 else:
-                    await ctx.send(f':chains: {factionRole.mention} Chain at **{current}** and timeout in **{timeout}s**{txtDelay} :scream:')
+                    await ctx.send(f':chains: {factionRole.mention} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
-                await ctx.send(f':chains: `{factionName}` Chain at **{current}** (timeout in {timeout/60:.1f}min) {txtDelay}')
+                await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
 
             # sleeps
+            # print(timeout, deltaW, delay, 30 - delay)
             sleep = max(30, timeout - deltaW)
-            # print(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
-            notify = False
+            print(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
