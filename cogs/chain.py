@@ -78,7 +78,7 @@ class Chain(commands.Cog):
 
         # if no chain
         if req.get("chain", dict({})).get("current", 0) == 0:
-            await ctx.send(f':x: `{factionName}` No chains on the horizon :partying_face:')
+            await ctx.send(f':x: `{factionName}` No chains on the horizon')
             return
 
         await ctx.send(f":chains: `{factionName}` Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
@@ -132,12 +132,12 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                await ctx.send(f':x: `{factionName}` Chain at **{current}** in cooldown for {cooldown/60:.1f}min :cold_face:')
+                await ctx.send(f':x: `{factionName}` Chain at **{current}** in cooldown for {cooldown/60:.1f}min   :cold_face:')
                 return
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(f':x: `{factionName}` Chain timed out at **{current}** :rage:')
+                await ctx.send(f':x: `{factionName}` Chain timed out at **{current}**   :rage:')
                 return
 
             # if warning
