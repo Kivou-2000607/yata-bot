@@ -57,7 +57,7 @@ class Chain(commands.Cog):
 
         # Inital call to get faction name
         key = self.bot.key(ctx.guild)
-        url = f'https://api.torn.com/faction/{faction}?selections=basic&key={key}'
+        url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
