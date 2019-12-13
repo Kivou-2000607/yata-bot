@@ -74,7 +74,7 @@ class Chain(commands.Cog):
 
         factionName = f'`{req.get("name")} [{req.get("ID")}]`'
 
-        await ctx.send(f":chains: {factionName} Start watching")
+        await ctx.send(f":chains: {factionName} Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -108,9 +108,9 @@ class Chain(commands.Cog):
             timeout = req.get("chain", dict({})).get("timeout", 0)
             cooldown = req.get("chain", dict({})).get("cooldown", 0)
             current = req.get("chain", dict({})).get("current", 0)
-            # timeout = 95
-            # cooldown = 0
-            # current = 53
+            timeout = 0
+            cooldown = 0
+            current = 0
 
             # get delay
             nowts = (now - epoch).total_seconds()
