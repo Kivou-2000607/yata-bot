@@ -12,7 +12,6 @@ from cogs.loot import Loot
 from cogs.stocks import Stocks
 from cogs.misc import Misc
 from cogs.repository import Repository
-from cogs.invite import Invite
 from cogs.chain import Chain
 
 # get basic config
@@ -43,7 +42,6 @@ bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
 bot.add_cog(Misc(bot))
 bot.add_cog(Repository(bot))
-bot.add_cog(Invite(bot))
 bot.add_cog(Chain(bot))
 
 # run bot

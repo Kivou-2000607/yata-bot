@@ -3,6 +3,7 @@ import aiohttp
 
 # import discord modules
 from discord.ext import commands
+from discord.utils import get
 
 # import bot functions and classes
 import includes.checks as checks
@@ -74,3 +75,64 @@ class Misc(commands.Cog):
             message = "Missing banners:\n{}".format("\n".join(honors))
 
             await ctx.send(message)
+
+    # helper functions
+
+    async def role_exists(self, ctx, name):
+        r = get(ctx.guild.roles, name=f"{name}")
+        s = f":white_check_mark: {name} role present" if r is not None else f":x: no {name} role"
+        await ctx.send(s)
+
+    async def channel_exists(self, ctx, name):
+        r = get(ctx.guild.channels, name=f"{name}")
+        s = f":white_check_mark: {name} channel present" if r is not None else f":x: no {name} channel"
+        await ctx.send(s)
+
+    @commands.command()
+    async def c(self, ctx):
+        """Admin tool for the bot owner"""
+
+        if ctx.author.id != 227470975317311488:
+            await ctx.send("This command is not for you")
+            return
+
+        # loop over guilds
+        for guild in self.bot.guilds:
+            await ctx.send(f"**Guild {guild}** owned by {guild.owner} aka {guild.owner.display_name}")
+            config = self.bot.get_config(guild)
+
+            # check 0.1: test if config
+            s = ":white_check_mark: configuration files" if len(config) else ":x: no configurations"
+            await ctx.send(s)
+
+            # check 0.2: test system channel
+            s = ":white_check_mark: system channel" if guild.system_channel else ":x: no system channel"
+            await ctx.send(s)
+
+            # check 1: loot module
+            if self.bot.check_module(guild, "loot"):
+                # check 1.1: looter role
+                await self.role_exists(ctx, "Looter")
+
+                # check 1.2: #loot and #start-looting
+                await self.channel_exists(ctx, "loot")
+                await self.channel_exists(ctx, "start-looting")
+
+            # check 2: loot module
+            if self.bot.check_module(guild, "loot"):
+                # check 1.1: looter role
+                await self.role_exists(ctx, "Looter")
+
+                # check 1.2: #loot and #start-looting
+                await self.channel_exists(ctx, "loot")
+                await self.channel_exists(ctx, "start-looting")
+
+
+
+    @commands.command()
+    async def invite(self, ctx):
+        """invite url"""
+        if ctx.author.id != 227470975317311488:
+            await ctx.send("This command is not for you")
+            return
+        await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))

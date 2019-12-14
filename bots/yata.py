@@ -69,6 +69,10 @@ class YataBot(Bot):
                 await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
 
+            # notifies when back
+            # if guild.system_channel is not None:
+            #     await guild.system_channel.send(":middle_finger:")
+
             # stop if not managing channels
             if not self.check_module(guild, "channels"):
                 continue
@@ -95,6 +99,20 @@ class YataBot(Bot):
                         print(f"\tCreate role {role_name}")
                         await guild.create_role(name=role_name)
 
+                # create commun role
+                com = config['verify'].get("commun")
+                if com:
+                    role_name = get(guild.roles, name=com)
+                    if role_name is None:
+                        print(f"\tCreate role {com}")
+                        await guild.create_role(name=com)
+
+                for k, v in fac.items():
+                    role_name = f"{v} [{k}]"
+                    if get(guild.roles, name=role_name) is None:
+                        print(f"\tCreate role {role_name}")
+                        await guild.create_role(name=role_name)
+
                 # create admin channel
                 channel_name = "yata-admin"
                 if get(guild.channels, name=channel_name) is None:
@@ -107,10 +125,10 @@ class YataBot(Bot):
                     await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
 
                 # create readme channel
-                # channel_name = "readme"
-                # if get(guild.channels, name=channel_name) is None:
-                #     print(f"\tCreate channel {channel_name}")
-                #     channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
+                channel_name = "readme"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
 
                 channel_name = "verify-id"
                 if get(guild.channels, name=channel_name) is None:
@@ -190,3 +208,10 @@ class YataBot(Bot):
         await self.change_presence(activity=activity)
 
         print("[SETUP] Ready...")
+
+
+    async def on_guild_join(self, guild):
+        """notifies me when joining a guild"""
+        owner = self.get_user(guild.owner_id)
+        my_creator = self.get_user(227470975317311488)
+        await my_creator.send(f"I joined guild **{guild} [{guild.id}]** owned by **{owner}**")
