@@ -29,7 +29,10 @@ class Verify(commands.Cog):
             return
 
         # get key
-        key = self.bot.key(member.guild)
+        status, tornId, name, key = await self.bot.key(member.guild)
+        if key is None:
+            await self.bot.send_key_error(member, status, tornId, name, key)
+            return
 
         # verify member when he join
         role = get(member.guild.roles, name="Verified")
@@ -46,9 +49,9 @@ class Verify(commands.Cog):
 
             # send welcome messages
             if readme_channel is None:
-                await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
-            else:
                 await welcome_channel.send(f"Welcome {member.mention}.")
+            else:
+                await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
             await welcome_channel.send(message)
 
         # if not Automatically verified send private message
@@ -80,7 +83,10 @@ class Verify(commands.Cog):
             return
 
         # get key
-        key = self.bot.key(ctx.guild)
+        status, tornId, name, key = await self.bot.key(ctx.guild)
+        if key is None:
+            await self.bot.send_key_error(ctx, status, tornId, name, key)
+            return
 
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
@@ -112,7 +118,10 @@ class Verify(commands.Cog):
             return
 
         # get key
-        key = self.bot.key(ctx.guild)
+        status, tornId, name, key = await self.bot.key(ctx.guild)
+        if key is None:
+            await self.bot.send_key_error(ctx, status, tornId, name, key)
+            return
 
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
@@ -251,14 +260,18 @@ class Verify(commands.Cog):
             # try to parse Torn faction ID
             match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
             if match is not None:
-                tornId = int(faction_role.name.split("[")[-1][:-1])
+                tornFacId = int(faction_role.name.split("[")[-1][:-1])
             else:
                 await ctx.send(f":x: `{faction_role.name}` does not match `(.{1,}) \[(\d{1,7})\]`")
                 return
 
             # api call with members list from torn
-            key = self.bot.key(ctx.guild)
-            url = f'https://api.torn.com/faction/{tornId}?selections=basic&key={key}'
+            status, tornId, name, key = await self.bot.key(ctx.guild)
+            if key is None:
+                await self.bot.send_key_error(ctx, status, tornId, name, key)
+                continue
+
+            url = f'https://api.torn.com/faction/{tornFacId}?selections=basic&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
@@ -269,8 +282,6 @@ class Verify(commands.Cog):
                 return
 
             members_torn = req.get("members", dict({}))
-            # for k, v in members_torn.items():
-            #    print(k, v)
 
             # loop over the members with this role
             members_with_role = [m for m in members if faction_role in m.roles]
@@ -287,7 +298,7 @@ class Verify(commands.Cog):
                 if str(tornId) in members_torn:
                     await ctx.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
                 else:
-                    await ctx.send(f":x: `{m.display_name} not in {faction_role.name} anymore`")
+                    await ctx.send(f":x: `{m.display_name} not in {faction_role.name} anymore, role has been removed`")
                     await m.remove_roles(faction_role)
 
         await ctx.send(f"Done checking")

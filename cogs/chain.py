@@ -137,7 +137,7 @@ class Chain(commands.Cog):
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(f':x: `{factionName}` Chain timed out at **{current}**   :rage:')
+                await ctx.send(f':x: `{factionName}` Chain timed out   :rage:')
                 return
 
             # if warning

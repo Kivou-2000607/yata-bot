@@ -7,6 +7,9 @@ import discord
 from discord.ext.commands import Bot
 from discord.utils import get
 
+# import bot functions and classes
+from includes.yata_db import get_member_key
+
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
@@ -20,14 +23,37 @@ class YataBot(Bot):
         """
         return self.configs.get(str(guild.id), dict({}))
 
-    def key(self, guild):
+    async def key(self, guild):
         """ key: helper function
             gets a random torn API key for a guild
+            return 0, id, Name, Key: All good
+            return -1, None, None, None: no key given
+            return -2, id, None, None: did not find torn id in yata db
+            return -3, id, Name, None: member did not give perm
         """
         import random
         config = self.get_config(guild)
-        keys = config.get("keys", False)
-        return random.choice([v for k, v in keys.items()]) if keys else False
+        ids_keys = config.get("keys", False)
+        if ids_keys:
+            id, key = random.choice([(k, v) for k, v in ids_keys.items()]) if ids_keys else (False, False)
+            # NOTE: 2 options: 1/ safer but waaay slower. 2/ still safe and faster
+            # Only problem with option 2 is if perm is removed will need to wait next config build and bot restert to be taken into account
+            # option 1: check YATA permission at every single call
+            # return await get_member_key(tornId=id)
+            # option 2: permission are checked once on YATA when building the configurations
+            return 0, id, None, key
+        else:
+            return -1, None, None, None
+
+    async def send_key_error(self, ctx, status, tornId, name, key):
+        if status == -1:
+            await ctx.send(":x: No keys has be given")
+        elif status == -2:
+            await ctx.send(f":x: Torn id {tornId} is not registered in YATA")
+        elif status == -3:
+            await ctx.send(f":x: {name} [{tornId}] did not give me the autorization to use their key")
+        else:
+            await ctx.send(":x: Why did you call me? Status is fine")
 
     def check_module(self, guild, module):
         """ check_module: helper function
@@ -68,10 +94,6 @@ class YataBot(Bot):
                 my_creator = self.get_user(227470975317311488)
                 await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
-
-            # notifies when back
-            # if guild.system_channel is not None:
-            #     await guild.system_channel.send(":middle_finger:")
 
             # stop if not managing channels
             if not self.check_module(guild, "channels"):
@@ -148,6 +170,7 @@ class YataBot(Bot):
                     print(f"\tCreate channel {channel_name}")
                     channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
                     await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
+                await get(guild.channels, name=channel_name).send("I was down for a bit but I'm back up. Retype `!chain` if I was watching (got a very short memory).")
 
             if self.check_module(guild, "loot"):
                 # create Looter role
@@ -208,7 +231,6 @@ class YataBot(Bot):
         await self.change_presence(activity=activity)
 
         print("[SETUP] Ready...")
-
 
     async def on_guild_join(self, guild):
         """notifies me when joining a guild"""
