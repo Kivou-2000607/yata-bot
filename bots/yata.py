@@ -9,6 +9,7 @@ from discord.utils import get
 
 # import bot functions and classes
 from includes.yata_db import get_member_key
+from includes.yata_db import push_guild_name
 
 
 # Child class of Bot with extra configuration variables
@@ -94,6 +95,9 @@ class YataBot(Bot):
                 my_creator = self.get_user(227470975317311488)
                 await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
                 continue
+
+            # push guild name to yata
+            await push_guild_name(guild)
 
             # stop if not managing channels
             if not self.check_module(guild, "channels"):

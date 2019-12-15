@@ -23,9 +23,11 @@ class Misc(commands.Cog):
             if not m.pinned:
                 await m.delete()
 
-    @commands.command()
+    @commands.command(aliases=['we'])
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
+
+        await ctx.message.delete()
 
         status, id, name, key = await get_member_key(member=ctx.author, needPerm=False)
         if status == -1:

@@ -50,3 +50,14 @@ async def get_member_key(member=None, tornId=None, needPerm=True):
     # return id, name, key
     else:
         return 0, user[0], user[1], user[2]
+
+
+async def push_guild_name(guild):
+    """Writes the actual guild name in YATA database"""
+    # get YATA user
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3 WHERE "guildId"=$4', guild.name, guild.owner_id, guild.owner.name, guild.id)
+    await con.close()
