@@ -24,7 +24,7 @@ class Misc(commands.Cog):
                 await m.delete()
 
     @commands.command()
-    async def w(self, ctx, *args):
+    async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
 
         status, id, name, key = await get_member_key(member=ctx.author, needPerm=False)
