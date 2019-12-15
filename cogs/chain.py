@@ -62,14 +62,16 @@ class Chain(commands.Cog):
             async with session.get(url) as r:
                 req = await r.json()
 
-        # handle no faction
-        if req["ID"] is None:
-            await ctx.send(f':x: No faction with id {faction}')
-            return
-
         # handle API error
         if 'error' in req:
             await ctx.send(f':x: There is a API key problem ({req["error"]["error"]})')
+            return
+
+        print(req)
+
+        # handle no faction
+        if req["ID"] is None:
+            await ctx.send(f':x: No faction with id {faction}')
             return
 
         # faction name and role
