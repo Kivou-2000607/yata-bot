@@ -7,6 +7,7 @@ from discord.utils import get
 
 # import bot functions and classes
 import includes.checks as checks
+from includes.yata_db import get_member_key
 
 
 class Misc(commands.Cog):
@@ -23,15 +24,41 @@ class Misc(commands.Cog):
                 await m.delete()
 
     @commands.command()
+    async def w(self, ctx, *args):
+        """DM weaponexp to author"""
+
+        status, id, name, key = await get_member_key(member=ctx.author, needPerm=False)
+        if status == -1:
+            await ctx.author.send(":x: You asked for your weapons experience but I could not parse your ID from your display name. Should be something like `Kivou [2000607]`.")
+
+        elif status == -2:
+            await ctx.author.send(":x: You asked for your weapons experience but you didn\'t register to YATA: https://yata.alwaysdata.net")
+
+        else:
+            url = f"https://api.torn.com/user/?selections=discord,weaponexp&key={key}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
+
+            if "error" in req:
+                await ctx.author.send(f':x: You asked for your weapons experience but an error occured with your API key: *{req["error"]["error"]}*')
+                return
+
+            elif int(req['discord']['discordID']) != ctx.author.id:
+                await ctx.author.send(f':x: You asked for your weapons experience but you don\'t seems to be who you say you are')
+                return
+
+            await ctx.author.send(f"List of weapons experience greater than 5% of **{name} [{id}]**:")
+            for i, w in enumerate(req.get("weaponexp", [])):
+                if w["exp"] == 100:
+                    await ctx.author.send(f'**{i+1}**   ---   **{w["name"]} ** {w["exp"]}%')
+                elif w["exp"] > 4:
+                    await ctx.author.send(f'{i+1}   ---   **{w["name"]}** {w["exp"]}%')
+            await ctx.author.send(f"done")
+
+    @commands.command()
     async def banners(self, ctx, *args):
         """Gives missing honor banners or displays banner if id given"""
-
-        # check role and channel
-        ALLOWED_CHANNELS = ["honors"]
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
 
         # get yata's honor dict
         url = "https://yata.alwaysdata.net/awards/bannersId"

@@ -6,7 +6,7 @@ import os
 import asyncpg
 
 
-async def get_member_key(member=None, tornId=None):
+async def get_member_key(member=None, tornId=None, needPerm=True):
     """ get a member key from YATA database
         return status, tornId, Name, key
         return 0, id, Name, Key: All good
@@ -44,7 +44,7 @@ async def get_member_key(member=None, tornId=None):
     user = tuple(user[0])
 
     # user didn't give permission
-    if not user[3]:
+    if not user[3] and needPerm:
         return -3, user[0], user[1], None
 
     # return id, name, key
