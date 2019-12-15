@@ -49,7 +49,11 @@ class Stocks(commands.Cog):
             # if couldn't parse id from name
             if status == -1:
                 # print(f"[{stock.upper()}] couldn't get use id, check with discord id")
-                guildKey = self.bot.key(member.guild)
+                status, tornId, name, key = await self.bot.key(ctx.guild)
+                if key is None:
+                    await self.bot.send_key_error(ctx, status, tornId, name, key)
+                    return
+
                 url = f'https://api.torn.com/user/{member.id}?selections=discord&key={guildKey}'
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:

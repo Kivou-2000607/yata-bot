@@ -56,7 +56,11 @@ class Chain(commands.Cog):
                 await ctx.send(f":chains: key/value pair {arg} ignored")
 
         # Inital call to get faction name
-        key = self.bot.key(ctx.guild)
+        status, tornId, name, key = await self.bot.key(ctx.guild)
+        if key is None:
+            await self.bot.send_key_error(ctx, status, tornId, name, key)
+            return
+
         url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
@@ -102,7 +106,11 @@ class Chain(commands.Cog):
                     return
 
             # chain api call
-            key = self.bot.key(ctx.guild)
+            status, tornId, name, key = await self.bot.key(ctx.guild)
+            if key is None:
+                await self.bot.send_key_error(ctx, status, tornId, name, key)
+                return
+
             url = f'https://api.torn.com/faction/{faction}?selections=chain,timestamp&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:

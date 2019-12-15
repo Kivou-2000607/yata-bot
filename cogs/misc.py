@@ -82,7 +82,10 @@ class Misc(commands.Cog):
         # display missing banners
         else:
             # get configuration for guild
-            key = self.bot.key(ctx.guild)
+            status, tornId, name, key = await self.bot.key(ctx.guild)
+            if key is None:
+                await self.bot.send_key_error(ctx, status, tornId, name, key)
+                return
 
             # get torn's honor dict
             url = "https://api.torn.com/torn/?selections=honors&key={}".format(key)
