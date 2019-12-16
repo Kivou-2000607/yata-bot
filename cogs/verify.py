@@ -70,6 +70,11 @@ class Verify(commands.Cog):
     @commands.command()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
+        # check if dm
+        if isinstance(ctx.channel, PrivateChannel):
+            await ctx.send(f'You have to do this on your server')
+            return
+
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
@@ -105,6 +110,11 @@ class Verify(commands.Cog):
     @commands.command()
     async def verifyAll(self, ctx):
         """Verify all members based on discord ID"""
+        # check if dm
+        if isinstance(ctx.channel, PrivateChannel):
+            await ctx.send(f'You have to do this on your server')
+            return
+
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
@@ -224,7 +234,7 @@ class Verify(commands.Cog):
                 else:
                     await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
             else:
-                welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
+                await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
 
             # final message ti member

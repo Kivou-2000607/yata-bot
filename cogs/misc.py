@@ -18,7 +18,6 @@ class Misc(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx):
         """clear not pinned messages"""
-
         async for m in ctx.channel.history():
             if not m.pinned:
                 await m.delete()
@@ -110,13 +109,13 @@ class Misc(commands.Cog):
 
     # helper functions
 
-    async def role_exists(self, ctx, name):
-        r = get(ctx.guild.roles, name=f"{name}")
+    async def role_exists(self, ctx, guild, name):
+        r = get(guild.roles, name=f"{name}")
         s = f":white_check_mark: {name} role present" if r is not None else f":x: no {name} role"
         await ctx.send(s)
 
-    async def channel_exists(self, ctx, name):
-        r = get(ctx.guild.channels, name=f"{name}")
+    async def channel_exists(self, ctx, guild, name):
+        r = get(guild.channels, name=f"{name}")
         s = f":white_check_mark: {name} channel present" if r is not None else f":x: no {name} channel"
         await ctx.send(s)
 
@@ -130,9 +129,10 @@ class Misc(commands.Cog):
 
         # loop over guilds
         for guild in self.bot.guilds:
-            await ctx.send(f"**Guild {guild}** owned by {guild.owner} aka {guild.owner.display_name}")
+            await ctx.send(f"**Guild {guild} owned by {guild.owner} aka {guild.owner.display_name}**")
             config = self.bot.get_config(guild)
 
+            await ctx.send("*general*")
             # check 0.1: test if config
             s = ":white_check_mark: configuration files" if len(config) else ":x: no configurations"
             await ctx.send(s)
@@ -141,24 +141,31 @@ class Misc(commands.Cog):
             s = ":white_check_mark: system channel" if guild.system_channel else ":x: no system channel"
             await ctx.send(s)
 
+            # check 0.3: test readme channel
+            await self.channel_exists(ctx, guild, "readme")
+
             # check 1: loot module
             if self.bot.check_module(guild, "loot"):
-                # check 1.1: looter role
-                await self.role_exists(ctx, "Looter")
+                await ctx.send("*loot*")
+
+                # check 1.1: Looter role
+                await self.role_exists(ctx, guild, "Looter")
 
                 # check 1.2: #loot and #start-looting
-                await self.channel_exists(ctx, "loot")
-                await self.channel_exists(ctx, "start-looting")
+                await self.channel_exists(ctx, guild, "loot")
+                await self.channel_exists(ctx, guild, "start-looting")
 
-            # check 2: loot module
-            if self.bot.check_module(guild, "loot"):
-                # check 1.1: looter role
-                await self.role_exists(ctx, "Looter")
+            # check 2: verify module
+            if self.bot.check_module(guild, "verify"):
+                await ctx.send("*verify*")
 
-                # check 1.2: #loot and #start-looting
-                await self.channel_exists(ctx, "loot")
-                await self.channel_exists(ctx, "start-looting")
+                # check 1.1: Verified role
+                await self.role_exists(ctx, guild, "Verified")
 
+                # check 1.2: #verified-id
+                await self.channel_exists(ctx, guild, "verify-id")
+                for k, v in config.get("factions", dict({})).items():
+                    await self.role_exists(ctx, guild, f"{v} [{k}]")
 
 
     @commands.command()
@@ -167,4 +174,5 @@ class Misc(commands.Cog):
         if ctx.author.id != 227470975317311488:
             await ctx.send("This command is not for you")
             return
-        await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
+        # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
+        await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
