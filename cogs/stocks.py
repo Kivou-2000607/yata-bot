@@ -54,7 +54,7 @@ class Stocks(commands.Cog):
                     await self.bot.send_key_error(ctx, status, tornId, name, key)
                     return
 
-                url = f'https://api.torn.com/user/{member.id}?selections=discord&key={guildKey}'
+                url = f'https://api.torn.com/user/{member.id}?selections=discord&key={key}'
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:
                         req = await r.json()
