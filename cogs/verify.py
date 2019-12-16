@@ -266,9 +266,9 @@ class Verify(commands.Cog):
                 return
 
             # api call with members list from torn
-            status, tornId, name, key = await self.bot.key(ctx.guild)
+            status, tornIdForKey, name, key = await self.bot.key(ctx.guild)
             if key is None:
-                await self.bot.send_key_error(ctx, status, tornId, name, key)
+                await self.bot.send_key_error(ctx, status, tornIdForKey, name, key)
                 continue
 
             url = f'https://api.torn.com/faction/{tornFacId}?selections=basic&key={key}'
@@ -292,7 +292,8 @@ class Verify(commands.Cog):
                 if match is not None:
                     tornId = int(m.display_name.split("[")[-1][:-1])
                 else:
-                    await ctx.send(f":x: `{m.display_name}` does not match `([a-zA-Z0-9_-]{1,16}) \[(\d{1,7})\]`")
+                    await ctx.send(f":x: `{m.display_name}` does not match `Name [id]`. So I'm not checking them.")
+                    continue
 
                 # check if member still in faction
                 if str(tornId) in members_torn:
