@@ -25,7 +25,7 @@ class Stocks(commands.Cog):
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Stocks module not activated")
-            return
+            return [], False
 
         # check role and channel
         channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
@@ -34,7 +34,7 @@ class Stocks(commands.Cog):
         if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
-            return
+            return [], False
 
         # list all users
         stockOwners = []
@@ -52,7 +52,7 @@ class Stocks(commands.Cog):
                 status, tornId, name, key = await self.bot.key(ctx.guild)
                 if key is None:
                     await self.bot.send_key_error(ctx, status, tornId, name, key)
-                    return
+                    return [], False
 
                 url = f'https://api.torn.com/user/{member.id}?selections=discord&key={key}'
                 async with aiohttp.ClientSession() as session:
