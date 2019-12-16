@@ -48,11 +48,11 @@ class Stocks(commands.Cog):
 
             # if couldn't parse id from name
             if status == -1:
-                # print(f"[{stock.upper()}] couldn't get use id, check with discord id")
+                # print(f"[{stock.upper()}] couldn't get user id, check with discord id")
                 status, tornId, name, key = await self.bot.key(ctx.guild)
                 if key is None:
                     await self.bot.send_key_error(ctx, status, tornId, name, key)
-                    return [], False
+                    continue
 
                 url = f'https://api.torn.com/user/{member.id}?selections=discord&key={key}'
                 async with aiohttp.ClientSession() as session:
@@ -143,6 +143,7 @@ class Stocks(commands.Cog):
     @commands.command()
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group."""
+        print("[WSSB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         if len(timeLeft):
@@ -157,9 +158,9 @@ class Stocks(commands.Cog):
     @commands.command()
     async def tcb(self, ctx):
         """Display information for the TCB sharing group."""
+        print("[TCB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
-
         if len(timeLeft):
             lst = "{: <15} | {} | {} \n".format("NAME", "INV TIME LEFT", "TCB")
             lst += "-" * (len(lst) - 1) + "\n"
