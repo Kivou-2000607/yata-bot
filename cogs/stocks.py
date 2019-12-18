@@ -75,17 +75,17 @@ class Stocks(commands.Cog):
                 # if not registered Torn
                 else:
                     # print(f"[{stock.upper()}] member not registered")
-                    await ctx.send(f':x: {member.mention} I couldn\'t parse his ID from his nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
+                    await ctx.send(f':x: {member.mention} I couldn\'t parse their ID from their nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
                     continue
 
             # check if member on YATA
             if status == -2:
-                await ctx.send(f":x: {member.mention}: Player {tId} is not in YATA database so I can't get his API key")
+                await ctx.send(f":x: {member.mention}: Player {tId} is not in YATA database so I can't get their API key")
                 continue
 
             # check if member gave perm to the bot to take API key
             if status == -3:
-                await ctx.send(f":x: {member.mention}: {name} [{tId}] has to give permission to use his API key here: https://yata.alwaysdata.net/bot/")
+                await ctx.send(f":x: {member.mention}: {name} [{tId}] has to give permission to use their API key here: https://yata.alwaysdata.net/bot/")
                 continue
 
             # at this point we have a torn Id, a discord id, a name and a key

@@ -309,8 +309,13 @@ class Verify(commands.Cog):
                 if str(tornId) in members_torn:
                     await ctx.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
                 else:
-                    await ctx.send(f":x: `{m.display_name} not in {faction_role.name} anymore, role has been removed`")
                     await m.remove_roles(faction_role)
+                    commun_role = get(ctx.guild.roles, name=c["verify"].get("commun"))
+                    if commun_role is None:
+                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
+                    else:
+                        await m.remove_roles(commun_role)
+                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{commun_role.name}`")
 
         await ctx.send(f"Done checking")
 

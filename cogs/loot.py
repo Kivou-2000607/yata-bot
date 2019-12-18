@@ -203,7 +203,8 @@ class Loot(commands.Cog):
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
                     print(f"[LOOT] guild {guild}: mention {m}.")
-                    await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
+                    # await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
+                    await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
                 print(f"[LOOT] guild {guild}: mention failed {e}.")

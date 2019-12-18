@@ -2,8 +2,10 @@
 import aiohttp
 
 # import discord modules
+import discord
 from discord.ext import commands
 from discord.utils import get
+from discord.utils import oauth_url
 
 # import bot functions and classes
 import includes.checks as checks

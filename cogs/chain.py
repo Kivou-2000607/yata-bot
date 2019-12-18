@@ -71,8 +71,6 @@ class Chain(commands.Cog):
             await ctx.send(f':x: There is a API key problem ({req["error"]["error"]})')
             return
 
-        print(req)
-
         # handle no faction
         if req["ID"] is None:
             await ctx.send(f':x: No faction with id {faction}')
