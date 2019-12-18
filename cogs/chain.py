@@ -18,7 +18,12 @@ class Chain(commands.Cog):
 
     @commands.command()
     async def chain(self, ctx, *args):
-        """Toggle chain timeout notifications"""
+        """ Watch the chain status of a factions and gives notifications.
+            Use: $chain <factionId> <w=warningTime> <n=notificationTime>
+                 factionId: torn id of the faction (by default the author's faction)
+                 warningTime: time in seconds before timeout in second for a ping @faction (default 90s)
+                 notificationTime: time in seconds between each notifications default (600s)
+        """
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):

@@ -13,6 +13,10 @@ from cogs.stocks import Stocks
 from cogs.misc import Misc
 from cogs.repository import Repository
 from cogs.chain import Chain
+from cogs.admin import Admin
+
+# import includes
+from includes.yata_db import load_configurations
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
@@ -20,13 +24,7 @@ prefix = os.environ.get("BOT_PREFIX", "!")
 
 # get configurations from YATA's database
 if os.environ.get("DB_CREDENTIALS", False):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-    con = psycopg2.connect(**db_cred)
-    cur = con.cursor()
-    cur.execute(f"SELECT * FROM bot_discordapp WHERE id = {bot_id};")
-    _, token, configs, _ = cur.fetchone()
-    cur.close()
-    con.close()
+    token, configs = load_configurations(bot_id)
 
 # get custom configs (skipping YATA databse configurations)
 else:
@@ -34,7 +32,7 @@ else:
     token = os.environ.get("BOT_TOKEN")
 
 # init yata bot
-bot = YataBot(configs=json.loads(configs), command_prefix=prefix)
+bot = YataBot(configs=json.loads(configs), command_prefix=prefix, bot_id=bot_id)
 
 # load classes
 bot.add_cog(Verify(bot))
@@ -43,6 +41,7 @@ bot.add_cog(Stocks(bot))
 bot.add_cog(Misc(bot))
 bot.add_cog(Repository(bot))
 bot.add_cog(Chain(bot))
+bot.add_cog(Admin(bot))
 
 # run bot
 bot.run(token)

@@ -4,6 +4,7 @@ import os
 
 # import discord modules
 import discord
+from discord.ext import commands
 from discord.ext.commands import Bot
 from discord.utils import get
 
@@ -14,9 +15,10 @@ from includes.yata_db import push_guild_name
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, configs=None, **args):
+    def __init__(self, configs=None, bot_id=0, **args):
         Bot.__init__(self, **args)
         self.configs = configs
+        self.bot_id = bot_id
 
     def get_config(self, guild):
         """ get_config: helper function
@@ -68,12 +70,7 @@ class YataBot(Bot):
 
     async def on_ready(self):
         """ on_ready
-            loop over the bot guilds and do:
-                - get guild config
-                - create faction roles necessary
-                - create Verified role
-                TODO:
-                - send I'm back up message
+            loop over the bot guilds and do the setup
         """
         # loop over guilds
         for guild in self.guilds:
@@ -126,8 +123,8 @@ class YataBot(Bot):
                             print(f"\tCreate role {role_name}")
                             await guild.create_role(name=role_name)
 
-                    # create commun role
-                    com = config['verify'].get("commun")
+                    # create common role
+                    com = config['verify'].get("common")
                     if com:
                         role_name = get(guild.roles, name=com)
                         if role_name is None:

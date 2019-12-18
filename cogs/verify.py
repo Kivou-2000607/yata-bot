@@ -226,11 +226,11 @@ class Verify(commands.Cog):
                 await member.add_roles(faction_role)
                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {faction_role}')
                 # add a common faction role
-                commun_role = get(guild.roles, name=config["verify"].get("commun"))
-                if commun_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
-                    await member.add_roles(commun_role)
-                    await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{commun_role}*. o7")
-                    await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {commun_role}')
+                common_role = get(guild.roles, name=config["verify"].get("common"))
+                if common_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
+                    await member.add_roles(common_role)
+                    await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
+                    await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {common_role}')
                 else:
                     await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
             else:
@@ -241,8 +241,10 @@ class Verify(commands.Cog):
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
     @commands.command()
-    async def checkFactions(self, ctx):
-        """Check faction role of members"""
+    async def checkFactions(self, ctx, *args):
+        """ Check faction role of members
+
+        """
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
@@ -257,6 +259,9 @@ class Verify(commands.Cog):
 
         # Get all members
         members = ctx.guild.members
+
+        # look at args if we force remove role
+        force = True if len(args) and args[0] == "force" else False
 
         # loop over factions
         c = self.bot.get_config(ctx.guild)
@@ -309,13 +314,17 @@ class Verify(commands.Cog):
                 if str(tornId) in members_torn:
                     await ctx.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
                 else:
-                    await m.remove_roles(faction_role)
-                    commun_role = get(ctx.guild.roles, name=c["verify"].get("commun"))
-                    if commun_role is None:
-                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
+                    if force:
+                        await m.remove_roles(faction_role)
+                        common_role = get(ctx.guild.roles, name=c["verify"].get("common"))
+                        if common_role is None:
+                            await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
+                        else:
+                            await m.remove_roles(common_role)
+                            await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
                     else:
-                        await m.remove_roles(commun_role)
-                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{commun_role.name}`")
+                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
+
 
         await ctx.send(f"Done checking")
 
@@ -520,10 +529,10 @@ class Verify(commands.Cog):
                 # add faction role if role exists
                 await author.add_roles(faction_role)
                 # add a common faction role
-                commun_role = get(ctx.guild.roles, name=config["verify"].get("commun"))
-                if commun_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
-                    await author.add_roles(commun_role)
-                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{commun_role}*. o7", True
+                common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
+                if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
+                    await author.add_roles(common_role)
+                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
                 else:
                     return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}*. o7", True
 
@@ -548,10 +557,10 @@ class Verify(commands.Cog):
                         # add faction role if role exists
                         await member.add_roles(faction_role)
                         # add a common faction role
-                        commun_role = get(ctx.guild.roles, name=config["verify"].get("commun"))
-                        if commun_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
-                            await member.add_roles(commun_role)
-                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{commun_role}*. o7", True
+                        common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
+                        if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
+                            await member.add_roles(common_role)
+                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
                         else:
                             return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7", True
                     else:

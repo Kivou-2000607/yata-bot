@@ -142,7 +142,7 @@ class Stocks(commands.Cog):
 
     @commands.command()
     async def wssb(self, ctx):
-        """Display information for the WSSB sharing group."""
+        """Display information for the WSSB sharing group"""
         print("[WSSB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
@@ -157,7 +157,7 @@ class Stocks(commands.Cog):
 
     @commands.command()
     async def tcb(self, ctx):
-        """Display information for the TCB sharing group."""
+        """Display information for the TCB sharing group"""
         print("[TCB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
