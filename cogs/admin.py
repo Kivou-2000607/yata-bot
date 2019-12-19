@@ -7,26 +7,28 @@ from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
 
-# import bot functions and classes
-from includes.yata_db import load_configurations
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def reload(self, ctx):
-        """Admin tool for the bot owner"""
-        if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
-            return
-        _, c = load_configurations(self.bot.bot_id)
-        self.bot.config = c
-        await ctx.author.send("**Configurations reloaded**")
-        for k1, v1 in json.loads(self.bot.config).items():
-            await ctx.author.send(f"`{k1}`")
-            for k2, v2 in v1.items():
-                await ctx.author.send(f"`{k2} {v2}`")
+    # @commands.command()
+    # async def reload(self, ctx):
+    #     """Admin tool for the bot owner"""
+    #     from includes.yata_db import load_configurations
+    #     from includes.yata_db import push_guild_name
+    #     if ctx.author.id != 227470975317311488:
+    #         await ctx.send("This command is not for you")
+    #         return
+    #     _, c = load_configurations(self.bot.bot_id)
+    #     self.bot.config = c
+    #     await ctx.author.send("**Configurations reloaded**")
+    #     for k1, v1 in json.loads(self.bot.config).items():
+    #         await ctx.author.send(f"`{k1}`")
+    #         guild = get(self.bot.guilds, id=int(k1))
+    #         await push_guild_name(guild)
+    #         for k2, v2 in json.loads(self.bot.config)[k1].items():
+    #             await ctx.author.send(f"`{k2} {v2}`")
 
     @commands.command()
     async def invite(self, ctx):
@@ -36,6 +38,23 @@ class Admin(commands.Cog):
             return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
+
+    @commands.command()
+    async def yataRole(self, ctx):
+        """Admin tool for the bot owner"""
+        if ctx.author.id != 227470975317311488:
+            await ctx.send("This command is not for you")
+            return
+
+        # loop over member
+        for member in ctx.guild.members:
+            print(f"[YATA ROLE] {member} [{member.id}]")
+            status, id, key = await self.bot.get_master_key(ctx.guild)
+            if status == -1:
+                return
+            status, _, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
+            if status == 0:
+                await member.add_roles(get(ctx.guild.roles, name="YATA user"))
 
     # helper functions
 

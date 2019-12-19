@@ -61,9 +61,9 @@ class Chain(commands.Cog):
                 await ctx.send(f":chains: key/value pair {arg} ignored")
 
         # Inital call to get faction name
-        status, tornId, name, key = await self.bot.key(ctx.guild)
-        if key is None:
-            await self.bot.send_key_error(ctx, status, tornId, name, key)
+        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
             return
 
         url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
@@ -73,7 +73,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await ctx.send(f':x: There is a API key problem ({req["error"]["error"]})')
+            await ctx.send(f':x: Master key problem: *{req["error"]["error"]}*')
             return
 
         # handle no faction
@@ -109,9 +109,9 @@ class Chain(commands.Cog):
                     return
 
             # chain api call
-            status, tornId, name, key = await self.bot.key(ctx.guild)
-            if key is None:
-                await self.bot.send_key_error(ctx, status, tornId, name, key)
+            status, tornId, key = await self.bot.get_master_key(ctx.guild)
+            if status == -1:
+                await ctx.send(":x: No master key given")
                 return
 
             url = f'https://api.torn.com/faction/{faction}?selections=chain,timestamp&key={key}'
@@ -121,7 +121,7 @@ class Chain(commands.Cog):
 
             # handle API error
             if 'error' in req:
-                await ctx.send(f':x: `{factionName}` API key problem ({req["error"]["error"]})')
+                await ctx.send(f':x: `{factionName}` Master key problem: *{req["error"]["error"]}*')
                 return
 
             # get timings

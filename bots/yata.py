@@ -1,6 +1,7 @@
 # import standard modules
 import json
 import os
+import aiohttp
 
 # import discord modules
 import discord
@@ -9,8 +10,9 @@ from discord.ext.commands import Bot
 from discord.utils import get
 
 # import bot functions and classes
-from includes.yata_db import get_member_key
+# from includes.yata_db import get_member_key
 from includes.yata_db import push_guild_name
+from includes.yata_db import get_yata_user
 
 
 # Child class of Bot with extra configuration variables
@@ -26,37 +28,101 @@ class YataBot(Bot):
         """
         return self.configs.get(str(guild.id), dict({}))
 
-    async def key(self, guild):
-        """ key: helper function
-            gets a random torn API key for a guild
+    async def discord_to_torn(self, member, key):
+        """ get a torn id form discord id
+            return tornId, None: okay
+            return -1, error: api error
+            return -2, None: not verified on discord
+        """
+        url = f"https://api.torn.com/user/{member.id}?selections=discord&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        if 'error' in req:
+            print(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
+            return -1, req['error']
+
+        elif req['discord'].get("userID") == '':
+            print(f'[DISCORD TO TORN] discord id {member.id} not verified')
+            return -2, None
+
+        else:
+            return int(req['discord'].get("userID")), None
+
+    async def get_master_key(self, guild):
+        """ gets a random master key from configuration
             return 0, id, Name, Key: All good
             return -1, None, None, None: no key given
-            return -2, id, None, None: did not find torn id in yata db
-            return -3, id, Name, None: member did not give perm
         """
         import random
         config = self.get_config(guild)
         ids_keys = config.get("keys", False)
         if ids_keys:
             id, key = random.choice([(k, v) for k, v in ids_keys.items()]) if ids_keys else (False, False)
-            # NOTE: 2 options: 1/ safer but waaay slower. 2/ still safe and faster
-            # Only problem with option 2 is if perm is removed will need to wait next config build and bot restert to be taken into account
-            # option 1: check YATA permission at every single call
-            # return await get_member_key(tornId=id)
-            # option 2: permission are checked once on YATA when building the configurations
-            return 0, id, None, key
+            return 0, id, key
         else:
-            return -1, None, None, None
+            return -1, None, None
 
-    async def send_key_error(self, ctx, status, tornId, name, key):
-        if status == -1:
-            await ctx.send(":x: No keys has be given")
-        elif status == -2:
-            await ctx.send(f":x: Torn id {tornId} is not registered in YATA")
-        elif status == -3:
-            await ctx.send(f":x: {name} [{tornId}] did not give me the autorization to use their key")
+    async def get_user_key(self, ctx, member, needPerm=True):
+        """ gets a key from discord member
+            return status, tornId, Name, key
+            return 0, id, Name, Key: All good
+            return -1, None, None, None: no master key given
+            return -2, None, None, None: master key api error
+            return -3, None, None, None: user not verified
+            return -4, id, None, None: did not find torn id in yata db
+            return -5, id, Name, None: member did not give perm
+        """
+
+        # get master key to check identity
+
+        print(f"[GET USER KEY] <{ctx.guild}> get master key")
+        master_status, master_id, master_key = await self.get_master_key(ctx.guild)
+        if master_status == -1:
+            print(f"[GET USER KEY] <{ctx.guild}> no master key given")
+            await ctx.send(":x: no master key given")
+            return -1, None, None, None
+        print(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
+
+        # get torn id from discord id
+
+        print(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
+        tornId, msg = await self.discord_to_torn(member, master_key)
+
+        # handle master api error or not verified member
+
+        if tornId == -1:
+            print(f'[GET MEMBER KEY] status -1: master key error {msg}')
+            await ctx.send(f':x: api error with master key id {master_id}: *{msg["error"]["error"]}*')
+            return -2, None, None, None
+        elif tornId == -2:
+            print(f'[GET MEMBER KEY] status -2: user not verified')
+            await ctx.send(f':x: {member.mention} is not verified')
+            return -3, None, None, None
+
+        # get YATA user
+
+        user = await get_yata_user(tornId)
+
+        # handle user not on YATA
+        if not len(user):
+            print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
+            await ctx.send(f':x: {member.mention} not found in YATA\'s database')
+            return -4, tornId, None, None
+
+        # Return user if perm given
+
+        user = tuple(user[0])
+        if not user[3] and needPerm:
+            print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
+            await ctx.send(f':x: {member.mention} didn\'t give their permission to user their API key (https://yata.alwaysdata.net/bot/)')
+            return -5, user[0], user[1], None
+
+        # return id, name, key
         else:
-            await ctx.send(":x: Why did you call me? Status is fine")
+            print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
+            return 0, user[0], user[1], user[2]
 
     def check_module(self, guild, module):
         """ check_module: helper function

@@ -8,7 +8,6 @@ from discord.utils import get
 
 # import bot functions and classes
 import includes.checks as checks
-from includes.yata_db import get_member_key
 
 
 class Misc(commands.Cog):
@@ -29,34 +28,42 @@ class Misc(commands.Cog):
 
         await ctx.message.delete()
 
-        status, id, name, key = await get_member_key(member=ctx.author, needPerm=False)
-        if status == -1:
-            await ctx.author.send(":x: You asked for your weapons experience but I could not parse your ID from your display name. Should be something like `Kivou [2000607]`.")
+        # get user key
 
-        elif status == -2:
-            await ctx.author.send(":x: You asked for your weapons experience but you didn\'t register to YATA: https://yata.alwaysdata.net")
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
+            print(f"[WEAPON EXP] error {status}")
+            return
 
-        else:
-            url = f"https://api.torn.com/user/?selections=discord,weaponexp&key={key}"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    req = await r.json()
+        # make api call
 
-            if "error" in req:
-                await ctx.author.send(f':x: You asked for your weapons experience but an error occured with your API key: *{req["error"]["error"]}*')
-                return
+        url = f"https://api.torn.com/user/?selections=discord,weaponexp&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
 
-            elif int(req['discord']['discordID']) != ctx.author.id:
-                await ctx.author.send(f':x: You asked for your weapons experience but you don\'t seems to be who you say you are')
-                return
+        # handle API error
 
-            await ctx.author.send(f"List of weapons experience greater than 5% of **{name} [{id}]**:")
-            for i, w in enumerate(req.get("weaponexp", [])):
-                if w["exp"] == 100:
-                    await ctx.author.send(f'**{i+1}**   ---   **{w["name"]} ** {w["exp"]}%')
-                elif w["exp"] > 4:
-                    await ctx.author.send(f'{i+1}   ---   **{w["name"]}** {w["exp"]}%')
-            await ctx.author.send(f"done")
+        if "error" in req:
+            await ctx.author.send(f':x: You asked for your weapons experience but an error occured with your API key: *{req["error"]["error"]}*')
+            return
+
+        # if no weapon exp
+
+        if not len(req.get("weaponexp", [])):
+            await ctx.author.send(f"no weapon exp")
+            return
+
+        # send list
+
+        await ctx.author.send(f"List of weapons experience greater than 5% of **{name} [{id}]**:")
+        for i, w in enumerate(req.get("weaponexp", [])):
+            if w["exp"] == 100:
+                await ctx.author.send(f'**{i+1}**   ---   **{w["name"]} ** {w["exp"]}%')
+            elif w["exp"] > 4:
+                await ctx.author.send(f'{i+1}   ---   **{w["name"]}** {w["exp"]}%')
+        await ctx.author.send(f"done")
+        return
 
     @commands.command()
     async def banners(self, ctx, *args):
@@ -82,9 +89,9 @@ class Misc(commands.Cog):
         # display missing banners
         else:
             # get configuration for guild
-            status, tornId, name, key = await self.bot.key(ctx.guild)
-            if key is None:
-                await self.bot.send_key_error(ctx, status, tornId, name, key)
+            status, tornId, key = await self.bot.get_master_key(ctx.guild)
+            if status == -1:
+                await ctx.send(":x: No master key given")
                 return
 
             # get torn's honor dict
@@ -92,6 +99,11 @@ class Misc(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     tornHonors = await r.json()
+
+            # handle API error
+            if 'error' in tornHonors:
+                await ctx.send(f':x: Master key problem: *{tornHonors["error"]["error"]}*')
+                return
 
             # dirtiest way to deal with API error
             tornHonors = tornHonors.get('honors', dict({}))

@@ -9,7 +9,6 @@ from discord.utils import get
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
-from includes.yata_db import get_member_key
 
 
 class Stocks(commands.Cog):
@@ -44,51 +43,9 @@ class Stocks(commands.Cog):
             print(f"[{stock.upper()}]: {member.display_name}")
 
             # get user key from YATA database
-            status, tId, name, key = await get_member_key(member=member)
-
-            # if couldn't parse id from name
-            if status == -1:
-                # print(f"[{stock.upper()}] couldn't get user id, check with discord id")
-                status, tornId, name, key = await self.bot.key(ctx.guild)
-                if key is None:
-                    await self.bot.send_key_error(ctx, status, tornId, name, key)
-                    continue
-
-                url = f'https://api.torn.com/user/{member.id}?selections=discord&key={key}'
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        req = await r.json()
-
-                # user verified on official torn server
-                if "discord" in req and req["discord"].get("userID"):
-                    tId = int(req["discord"].get("userID"))
-                    # get user key from YATA database
-                    status, tId, name, key = await get_member_key(tornId=tId)
-                    # print(f"[{stock.upper()}] discord id found", tId, name, key)
-
-                # API error
-                elif "error" in req:
-                    # print(f"[{stock.upper()}] error in api request")
-                    await ctx.send(f':x: {member.mention} guild owner API key error *({req["error"].get("error", "?")})*')
-                    continue
-
-                # if not registered Torn
-                else:
-                    # print(f"[{stock.upper()}] member not registered")
-                    await ctx.send(f':x: {member.mention} I couldn\'t parse their ID from their nickname and he is not verified on the official Torn discord server. Not much I can do to know who he is.')
-                    continue
-
-            # check if member on YATA
-            if status == -2:
-                await ctx.send(f":x: {member.mention}: Player {tId} is not in YATA database so I can't get their API key")
+            status, id, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
+            if status < 0:
                 continue
-
-            # check if member gave perm to the bot to take API key
-            if status == -3:
-                await ctx.send(f":x: {member.mention}: {name} [{tId}] has to give permission to use their API key here: https://yata.alwaysdata.net/bot/")
-                continue
-
-            # at this point we have a torn Id, a discord id, a name and a key
 
             # get information from API key
             url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord&key={key}'
@@ -99,29 +56,6 @@ class Stocks(commands.Cog):
             # deal with api error
             if "error" in req:
                 await ctx.send(f':x: {member.mention} API key error: *{req["error"].get("error", "?")}*')
-                continue
-
-            # check if verified on Torn discord (mandatory for the next security check)
-            elif not bool(req["discord"].get("discordID")):
-                await ctx.send(f':x: {member.mention} not verified on the Torn discord server. It\'s mandatory for security reasons.')
-                continue
-
-            # very important security check if torn discord ID != member discord ID
-            # the only reason I can think of this happening is a discord user changing his ID (in the nickname) to try pulling information of another member... Which is very very wrong.
-            elif req["discord"].get("discordID") != str(member.id):
-                await ctx.send(f':x: {member.mention} looks like nickname ID does not match discord ID. Maybe you\'re using a different account.')
-
-                # send report to me
-                my_creator = self.bot.get_user(227470975317311488)
-                guild_owner = self.bot.get_user(ctx.guild.owner_id)
-                report = [f'Guild name: {ctx.guild}']
-                report.append(f'Guild owner: {guild_owner} aka {guild_owner.display_name}')
-                report.append(f'Discord member display name: {member.display_name}')
-                report.append(f'Discord member name: {member}')
-                report.append(f'Discord member id: {member.id}')
-                report.append(f'Yata member pulled: {name} [{tId}]')
-                report.append(f'Discord id pulled from API: {req["discord"].get("discordID")}')
-                await my_creator.send('**ALERT** {} stock function\n```ARM\n{}```'.format(stock.upper(), "\n".join(report)))
                 continue
 
             # get stock owner

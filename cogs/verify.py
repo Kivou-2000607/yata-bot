@@ -11,6 +11,7 @@ from discord import Embed
 # import bot functions and classes
 import includes.checks as checks
 # import includes.verify as verify
+from includes.yata_db import get_yata_user
 
 
 class Verify(commands.Cog):
@@ -29,9 +30,9 @@ class Verify(commands.Cog):
             return
 
         # get key
-        status, tornId, name, key = await self.bot.key(member.guild)
-        if key is None:
-            await self.bot.send_key_error(member, status, tornId, name, key)
+        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            # await ctx.send(":x: No master key given")
             return
 
         # verify member when he join
@@ -88,9 +89,9 @@ class Verify(commands.Cog):
             return
 
         # get key
-        status, tornId, name, key = await self.bot.key(ctx.guild)
-        if key is None:
-            await self.bot.send_key_error(ctx, status, tornId, name, key)
+        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
             return
 
         # Get Verified role
@@ -128,9 +129,9 @@ class Verify(commands.Cog):
             return
 
         # get key
-        status, tornId, name, key = await self.bot.key(ctx.guild)
-        if key is None:
-            await self.bot.send_key_error(ctx, status, tornId, name, key)
+        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
             return
 
         # Get Verified role
@@ -237,7 +238,7 @@ class Verify(commands.Cog):
                 await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
 
-            # final message ti member
+            # final message to member
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
     @commands.command()
@@ -281,9 +282,9 @@ class Verify(commands.Cog):
                 return
 
             # api call with members list from torn
-            status, tornIdForKey, name, key = await self.bot.key(ctx.guild)
-            if key is None:
-                await self.bot.send_key_error(ctx, status, tornIdForKey, name, key)
+            status, tornIdForKey, key = await self.bot.get_master_key(ctx.guild)
+            if status == -1:
+                await ctx.send(":x: No master key given")
                 continue
 
             url = f'https://api.torn.com/faction/{tornFacId}?selections=basic&key={key}'
@@ -324,7 +325,6 @@ class Verify(commands.Cog):
                             await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
                     else:
                         await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
-
 
         await ctx.send(f"Done checking")
 
@@ -521,6 +521,13 @@ class Verify(commands.Cog):
                 await ctx.send(f":x: **{author}**, I don't have the permission to change your nickname.")
             await author.add_roles(verified_role)
 
+            # set YATA role
+            yata_role = get(ctx.guild.roles, name="YATA user")
+            if yata_role is not None:
+                r = await get_yata_user(userID)
+                if len(r):
+                    await author.add_roles(yata_role)
+
             # Set Faction role
             faction_name = "{faction_name} [{faction_id}]".format(**req['faction'])
             faction_role = get(ctx.guild.roles, name=faction_name)
@@ -548,6 +555,13 @@ class Verify(commands.Cog):
                     except BaseException:
                         await ctx.send(f":x: I don't have the permission to change **{member}**'s nickname.")
                     await member.add_roles(verified_role)
+
+                    # set YATA role
+                    yata_role = get(ctx.guild.roles, name="YATA user")
+                    if yata_role is not None:
+                        r = await get_yata_user(userID)
+                        if len(r):
+                            await member.add_roles(yata_role)
 
                     # Set Faction role
                     faction_name = "{faction_name} [{faction_id}]".format(**req['faction'])
