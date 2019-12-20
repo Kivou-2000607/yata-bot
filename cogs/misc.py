@@ -65,6 +65,46 @@ class Misc(commands.Cog):
         await ctx.author.send(f"done")
         return
 
+    @commands.command(aliases=['net'])
+    async def networth(self, ctx, *args):
+        """DM your networth breakdown (in case you're flying)"""
+
+        await ctx.message.delete()
+
+        # get user key
+
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
+            print(f"[NETWORTH] error {status}")
+            return
+
+        # make api call
+
+        url = f"https://api.torn.com/user/?selections=discord,networth&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # handle API error
+
+        if "error" in req:
+            await ctx.author.send(f':x: You asked for your networth but an error occured with your API key: *{req["error"]["error"]}*')
+            return
+
+        # send list
+
+        lst = [f"Networth breakdown of {name} [{id}]", '---']
+        for k, v in req.get("networth", dict({})).items():
+            if k in ['total']:
+                lst.append('---')
+            if int(v):
+                a = f"{k}:"
+                b = f"${v:,.0f}"
+                lst.append(f'{a: <13}{b: >16}')
+
+        await ctx.author.send('```YAML\n{}```'.format('\n'.join(lst)))
+        return
+
     @commands.command()
     async def banners(self, ctx, *args):
         """Gives missing honor banners or displays banner if id given"""
