@@ -30,7 +30,7 @@ class Verify(commands.Cog):
             return
 
         # get key
-        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        status, tornId, key = await self.bot.get_master_key(member.guild)
         if status == -1:
             # await ctx.send(":x: No master key given")
             return
