@@ -58,13 +58,27 @@ class Misc(commands.Cog):
 
         # send list
 
-        await ctx.author.send(f"List of weapons experience greater than 5% of **{name} [{id}]**:")
-        for i, w in enumerate(req.get("weaponexp", [])):
+        maxed = []
+        tomax = []
+        for w in req.get("weaponexp", []):
             if w["exp"] == 100:
-                await ctx.author.send(f'**{i+1}**   ---   **{w["name"]} ** {w["exp"]}%')
+                maxed.append(w)
             elif w["exp"] > 4:
-                await ctx.author.send(f'{i+1}   ---   **{w["name"]}** {w["exp"]}%')
-        await ctx.author.send(f"done")
+                tomax.append(w)
+
+        lst = [f"# {name} [{id}]: weapon experience\n"]
+
+        if len(maxed):
+            lst.append("# weapon maxed")
+        for i, w in enumerate(maxed):
+            lst.append(f'{i+1: >2}: {w["name"]} ({w["exp"]}%)')
+
+        if len(tomax):
+            lst.append("# experience > 5%")
+        for i, w in enumerate(tomax):
+            lst.append(f'{i+1: >2}: {w["name"]} ({w["exp"]}%)')
+
+        await fmt.send_tt(ctx.author, lst)
         return
 
     @commands.command(aliases=['net'])
@@ -95,7 +109,7 @@ class Misc(commands.Cog):
 
         # send list
 
-        lst = [f"Networth breakdown of {name} [{id}]", '---']
+        lst = [f"# {name} [{id}]: Networth breakdown\n"]
         for k, v in req.get("networth", dict({})).items():
             if k in ['total']:
                 lst.append('---')
@@ -104,7 +118,7 @@ class Misc(commands.Cog):
                 b = f"${v:,.0f}"
                 lst.append(f'{a: <13}{b: >16}')
 
-        await ctx.author.send('```YAML\n{}```'.format('\n'.join(lst)))
+        await fmt.send_tt(ctx.author, lst)
         return
 
     @commands.command()
@@ -274,6 +288,60 @@ class Misc(commands.Cog):
         links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
         linki += 1
 
-        await ctx.send("```YAML\n{}```".format("\n".join(lst)))
+        await fmt.send_tt(ctx, lst)
         for k, v in links.items():
             await ctx.send(f'<{k}> {v}')
+
+    @commands.command()
+    async def fly(self, ctx, *args):
+        """Gives information on a user"""
+
+        # send error message if no arg (return)
+        if not len(args):
+            factionId = None
+
+        # check if arg is int
+        elif args[0].isdigit():
+            factionId = int(args[0])
+
+        else:
+            await ctx.send(":x: Either enter nothing or a faction `!fly <factionId>`.")
+            return
+
+        # get configuration for guild
+        status, _, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
+            return
+
+        # Torn API call
+        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                r = await r.json()
+
+        if 'error' in r:
+            await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            return
+
+        travels = {"Traveling": dict({}), "In": dict({}), "Returning": dict({})}
+        for k, v in r.get("members", dict({})).items():
+            if v["status"]["state"] in ["Traveling", "Abroad"]:
+                type = v["status"]["description"].split(" ")[0]
+                dest = v["status"]["description"].split(" ")[-1]
+                if dest in travels[type]:
+                    travels[type][dest].append(f'{v["name"]+":": <17} {v["status"]["description"]}')
+                else:
+                    travels[type][dest] = [f'{v["name"]+":": <17} {v["status"]["description"]}']
+
+        dest = ["Mexico", "Islands", "Canada", "Hawaii", "Kingdom", "Argentina", "Switzerland", "Japan", "China", "UAE", "Africa"]
+        lst = [f'# {r["name"]} [{r["ID"]}]\n']
+        type = ["Returning", "In", "Traveling"]
+        for t in type:
+            for d in dest:
+                for m in travels[t].get(d, []):
+                    lst.append(m)
+            if len(travels[t]) and t != "Traveling":
+                lst.append("---")
+
+        await fmt.send_tt(ctx, lst)

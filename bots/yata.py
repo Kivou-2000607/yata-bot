@@ -238,7 +238,7 @@ class YataBot(Bot):
                         print(f"\tCreate channel {channel_name}")
                         channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
                         await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
-                    await get(guild.channels, name=channel_name).send("I was down for a bit but I'm back up. Retype `!chain` if I was watching (got a very short memory).")
+                    await get(guild.channels, name=channel_name).send("I was down for a bit but I'm back up. Retype `!chain` if I was watching.")
 
                 if self.check_module(guild, "loot"):
                     # create Looter role

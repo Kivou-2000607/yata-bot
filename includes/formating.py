@@ -1,13 +1,15 @@
 # import standard modules
+import asyncio
 import pytz
 import datetime
 import re
 
+
 def cleanhtml(raw_html):
-  cleanr = re.compile('<.*?>')
-  cleantext = re.sub(cleanr, '', raw_html)
-  return cleantext
-  
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, '', raw_html)
+    return cleantext
+
 
 def s_to_hms(seconds, max_hours=24):
     time = float(seconds)
@@ -59,3 +61,14 @@ def ts_to_date(timestamp):
 
 def ts_to_datetime(timestamp):
     return datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+
+
+async def send_tt(ctx, lst, limit=1800):
+    if len(lst):
+        msg = ""
+        for line in lst:
+            msg += line + "\n"
+            if len(msg) > limit:
+                await ctx.send("```YAML\n{}```".format(msg))
+                msg = ""
+        await ctx.send("```YAML\n{}```".format(msg))
