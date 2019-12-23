@@ -537,6 +537,9 @@ class Verify(commands.Cog):
                 await author.add_roles(faction_role)
                 # add a common faction role
                 common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
+                print(ctx.guild)
+                print(ctx.guild.roles)
+                print(common_role)
                 if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
                     await author.add_roles(common_role)
                     return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
