@@ -304,16 +304,11 @@ class Verify(commands.Cog):
             for m in members_with_role:
 
                 # try to parse Torn user ID
-                match = re.match(r'([a-zA-Z0-9_-]{1,16}) \[(\d{1,7})\]', m.display_name)
-                if match is not None:
-                    tornId = m.display_name.split("[")[-1].split("]")[0]
-                    if not tornId.isdigit():
-                        await ctx.send(f":x: `{m.display_name}` does not match `Name [id]`. I got id = {tornId}. So I'm not chacking them.")
-                        continue
-
-                    # tornId = int(m.display_name.split("[")[-1][:-1])
+                regex = re.findall(r'\[(\d{1,7})\]', m.display_name)
+                if len(regex) == 1 and regex[0].isdigit():
+                    tornId = int(regex[0])
                 else:
-                    await ctx.send(f":x: `{m.display_name}` does not match `Name [id]`. So I'm not checking them.")
+                    await ctx.send(f":x: `{m.display_name}` could not find torn ID within their display name. So I'm not checking them.")
                     continue
 
                 # check if member still in faction
@@ -543,7 +538,7 @@ class Verify(commands.Cog):
                 # add a common faction role
                 common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
                 print("DEBUG guild", ctx.guild)
-                print("DEBUG roles", [r.name for n in ctx.guild.roles])
+                print("DEBUG roles", [r.name for r in ctx.guild.roles])
                 print("DEBUG common", common_role)
                 if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
                     await author.add_roles(common_role)
