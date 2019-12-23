@@ -10,8 +10,8 @@ from bots.yata import YataBot
 from cogs.verify import Verify
 from cogs.loot import Loot
 from cogs.stocks import Stocks
-from cogs.misc import Misc
-from cogs.repository import Repository
+from cogs.api import API
+# from cogs.repository import Repository
 from cogs.chain import Chain
 from cogs.admin import Admin
 
@@ -38,8 +38,8 @@ bot = YataBot(configs=json.loads(configs), command_prefix=prefix, bot_id=bot_id)
 bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
-bot.add_cog(Misc(bot))
-bot.add_cog(Repository(bot))
+bot.add_cog(API(bot))
+# bot.add_cog(Repository(bot))
 bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
 

@@ -18,7 +18,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     async def chain(self, ctx, *args):
-        """ Watch the chain status of a factions and gives notifications.
+        """ Watch the chain status of a factions and gives notifications
             Use: $chain <factionId> <w=warningTime> <n=notificationTime>
                  factionId: torn id of the faction (by default the author's faction)
                  warningTime: time in seconds before timeout in second for a ping @faction (default 90s)
