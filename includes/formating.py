@@ -1,7 +1,13 @@
 # import standard modules
 import pytz
 import datetime
+import re
 
+def cleanhtml(raw_html):
+  cleanr = re.compile('<.*?>')
+  cleantext = re.sub(cleanr, '', raw_html)
+  return cleantext
+  
 
 def s_to_hms(seconds, max_hours=24):
     time = float(seconds)

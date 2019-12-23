@@ -1,5 +1,6 @@
 # import standard modules
 import aiohttp
+import re
 
 # import discord modules
 import discord
@@ -8,6 +9,7 @@ from discord.utils import get
 
 # import bot functions and classes
 import includes.checks as checks
+import includes.formating as fmt
 
 
 class Misc(commands.Cog):
@@ -159,3 +161,119 @@ class Misc(commands.Cog):
             message = "Missing banners:\n{}".format("\n".join(honors))
 
             await ctx.send(message)
+
+    @commands.command()
+    async def who(self, ctx, *args):
+        """Gives information on a user"""
+        # init variables
+        helpMsg = f":x: You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
+
+        # send error message if no arg (return)
+        if not len(args):
+            await ctx.send(helpMsg)
+            return
+
+        # check if arg is int
+        elif args[0].isdigit():
+            tornId = int(args[0])
+
+        # check if arg is a mention of a discord user ID
+        elif args[0][:2] == '<@':
+            discordId = int(args[0][2:-1].replace("!", "").replace("&", ""))
+            member = ctx.guild.get_member(discordId)
+
+            # check if member
+            if member is None:
+                await ctx.send(f":x: Couldn't find discord member: {discordId}. Try `!who <torn ID>`.")
+                return
+
+            # try to parse Torn user ID
+            regex = re.findall(r'\[(\d{1,7})\]', member.display_name)
+            if len(regex) == 1 and regex[0].isdigit():
+                tornId = int(regex[0])
+            else:
+                await ctx.send(f":x: `{member.display_name}` could not find Torn ID within their display name. Try `!who <Torn ID>`.")
+                return
+
+        # other cases I didn't think of
+        else:
+            await ctx.send(helpMsg)
+            return
+
+        # at this point tornId should be a interger corresponding to a torn ID
+
+        # get configuration for guild
+        status, _, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
+            return
+
+        # Torn API call
+        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                r = await r.json()
+
+        if 'error' in r:
+            await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            await ctx.send(f'Check the profile by yourself https://www.torn.com/profiles.php?XID={tornId}')
+            return
+
+        links = {}
+        linki = 1
+        lst = []
+
+        # status
+        lst.append(f'Name: {r["name"]} [{r["player_id"]}]    <{linki}>')
+        links[linki] = f'https://www.torn.com/profiles.php?XID={tornId}'
+        linki += 1
+        lst.append(f'Action: {r["last_action"]["relative"]}')
+        s = r["status"]
+        # lst.append(f'State: {s["state"]}')
+        lst.append(f'Status: {s["description"]}')
+        if s["details"]:
+            lst.append(f'Details: {fmt.cleanhtml(s["details"])}')
+        p = 100 * r['life']['current'] // r['life']['maximum']
+        i = int(p * 20 / 100)
+        lst.append(f'Life: {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d} [{"+" * i}{"-" * (20 - i)}]')
+        lst.append('---')
+
+        # levels
+        lst.append(f'Level: {r["level"]}')
+        lst.append(f'Rank: {r["rank"]}')
+        lst.append(f'Age: {r["age"]:,d} days old')
+        lst.append('---')
+
+        # faction
+        if int(r["faction"]["faction_id"]):
+            f = r["faction"]
+            lst.append(f'Faction: {f["faction_name"]} [{f["faction_id"]}]    <{linki}>')
+            links[linki] = f'https://www.torn.com/factions.php?&ID={f["faction_id"]}'
+            linki += 1
+            lst.append(f'Position: {f["position"]} since {f["days_in_faction"]} days')
+            lst.append('---')
+
+        # company
+        if int(r["job"]["company_id"]):
+            j = r["job"]
+            lst.append(f'Company: {j["position"]} at {j["company_name"]} [{j["company_id"]}]    <{linki}>')
+            links[linki] = f'https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]}'
+            linki += 1
+            lst.append('---')
+
+        # social
+        lst.append(f'Friends: {r["friends"]:,d}')
+        lst.append(f'Enemies: {r["enemies"]:,d}')
+        if r["forum_posts"]:
+            lst.append(f'Karma: {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
+        else:
+            lst.append(f'Karma: No forum post')
+
+        s = r["married"]
+        lst.append(f'Married: {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
+        links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
+        linki += 1
+
+        await ctx.send("```YAML\n{}```".format("\n".join(lst)))
+        for k, v in links.items():
+            await ctx.send(f'<{k}> {v}')

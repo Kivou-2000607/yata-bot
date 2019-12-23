@@ -6,7 +6,6 @@ import aiohttp
 from discord.ext import commands
 from discord.abc import PrivateChannel
 from discord.utils import get
-from discord import Embed
 
 # import bot functions and classes
 import includes.checks as checks
@@ -327,104 +326,6 @@ class Verify(commands.Cog):
                         await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
 
         await ctx.send(f"Done checking")
-
-    # @commands.command()
-    # async def who(self, ctx, *args):
-    #     """Gives verified discord user link"""
-    #     # get configuration for guild
-    #     c = self.bot.get_config(ctx.guild)
-    #
-    #     # return if verify not active
-    #     if not c.get("verify"):
-    #         await ctx.send(":x: Verify module not activated")
-    #         return
-    #
-    #     # check role and channel
-    #     ALLOWED_ROLES = ["Verified"]
-    #     if await checks.roles(ctx, ALLOWED_ROLES):
-    #         pass
-    #     else:
-    #         return
-    #
-    #     # init variables
-    #     tornId = 0
-    #     helpMsg = f":x: You have to mention a discord member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`"
-    #
-    #     # send error message if no arg (return)
-    #     if not len(args):
-    #         await ctx.send(helpMsg)
-    #         return
-    #
-    #     # check if arg is int
-    #     elif args[0].isdigit():
-    #         tornId = int(args[0])
-    #
-    #     # check if arg is a mention of a discord user ID
-    #     elif args[0][:2] == '<@':
-    #         discordId = int(args[0][2:-1].replace("!", "").replace("&", ""))
-    #         member = ctx.guild.get_member(discordId)
-    #
-    #         # check if member
-    #         if member is None:
-    #             await ctx.send(f":x: Couldn't find discord member ID {discordId}")
-    #             return
-    #
-    #         # check if member verified
-    #         role = get(member.guild.roles, name=self.verified_role)
-    #         if role not in member.roles:
-    #             await ctx.send(f":x: {member.display_name} is not verified.")
-    #             return
-    #
-    #         # try to parse Torn ID
-    #         match = re.match(r'([a-zA-Z0-9_-]{1,16}) \[(\d{1,7})\]', member.display_name)
-    #         if match is not None:
-    #             tornId = int(member.display_name.split("[")[-1][:-1])
-    #         else:
-    #             await ctx.send(f":x: `{member.display_name}` does not match `([a-zA-Z0-9_-]{1,16}) \[(\d{1,7})\]`")
-    #             return
-    #
-    #     # other cases I didn't think of
-    #     else:
-    #         await ctx.send(helpMsg)
-    #         return
-    #
-    #     # tornId should be a interger corresponding to a torn ID
-    #
-    #     # Torn API call
-    #     url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats&key={self.bot.API_KEY}'
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(url) as r:
-    #             r = await r.json()
-    #
-    #     if 'error' in r:
-    #         await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
-    #         await ctx.send(f'https://www.torn.com/profiles.php?XID={tornId}')
-    #         return
-    #
-    #     title = f'**{r.get("name")} [{r.get("player_id")}]** https://www.torn.com/profiles.php?XID={tornId}'
-    #     msg = f'{r.get("rank")}  -  level {r.get("level")}  -  {r.get("age")} days old'
-    #
-    #     embed = Embed(title=title, description=msg, color=550000)
-    #
-    #     # Status
-    #     status = ", ".join([s for s in r.get("status") if s is not ""])
-    #     # status = r.get("status")[0]
-    #     embed.add_field(name=f'Status', value=f'{status}')
-    #
-    #     # faction
-    #     embed.add_field(name=f'{r["faction"].get("faction_name")} [{r["faction"].get("faction_id")}]', value=f'{r["faction"].get("position")} - {r["faction"].get("days_in_faction")} dif')
-    #
-    #     # social
-    #     embed.add_field(name=f'Friends / enemies / karma', value=f'{r["friends"]} / {r["enemies"]} / {r["karma"]} ({100 * r["karma"] // r["forum_posts"]}%)')
-    #
-    #     # # Life
-    #     # p = 100 * r['life']['current'] // r['life']['maximum']
-    #     # i = int(p * 20 / 100)
-    #     # embed.add_field(name=f'Life {r["life"]["current"]} / {r["life"]["maximum"]}', value=f'[{"+" * i}{"-" * (20 - i)}]')
-    #
-    #     embed.set_footer(text=f'Last action {r["last_action"]["relative"]}')
-    #
-    #     await ctx.send(embed=embed)
 
     async def member(self, ctx, verified_role, userID=None, discordID=None, API_KEY=""):
         """ Verifies one member
