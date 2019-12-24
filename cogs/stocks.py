@@ -1,9 +1,11 @@
 # import standard modules
+import asyncio
 import aiohttp
 import json
 
 # import discord modules
 from discord.ext import commands
+from discord.ext import tasks
 from discord.utils import get
 
 # import bot functions and classes
@@ -14,6 +16,10 @@ import includes.formating as fmt
 class Stocks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.notify.start()
+
+    def cog_unload(self):
+        self.notify.cancel()
 
     async def get_times(self, ctx, stock=""):
 
@@ -103,3 +109,60 @@ class Stocks(commands.Cog):
                 lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
 
             await ctx.send(f"Here you go {ctx.author.display_name}, the list of investment time left and TCB owners:\n```\n{lst}```")
+
+    # @tasks.loop(seconds=5)
+    @tasks.loop(seconds=600)
+    async def notify(self):
+        print("[STOCK] start task")
+
+        # YATA api
+        url = "https://yata.alwaysdata.net/stock/alerts/"
+        # req = requests.get(url).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # set alerts
+        lst = []
+        for k, v in req.items():
+            alerts = v.get("alerts", dict({}))
+            if not len(alerts):
+                continue
+
+            if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
+                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+
+            # if alerts.get("below", False) and v.get("shares"):
+            #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
+
+            if alerts.get("restock", False):
+                lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+
+        # create message to send
+        if len(lst):
+            message = "{}".format("\n".join(lst))
+        else:
+            return
+
+        # loop over guilds to send alerts
+        async for guild in self.bot.fetch_guilds(limit=100):
+
+            # check if module activated
+            if not self.bot.check_module(guild, "stocks"):
+                print(f"[STOCK] guild {guild}: ignore.")
+                continue
+
+            # get full guild (async iterator doesn't return channels)
+            guild = self.bot.get_guild(guild.id)
+
+            # get channel
+            channel = get(guild.channels, name="wall-street")
+
+            if channel is not None:
+                await fmt.send_tt(channel, lst)
+
+    @notify.before_loop
+    async def before_notify(self):
+        print('[STOCK] waiting...')
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
