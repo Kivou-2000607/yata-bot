@@ -221,9 +221,10 @@ class API(commands.Cog):
             lst.append(f'Karma: No forum post')
 
         s = r["married"]
-        lst.append(f'Married: {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
-        links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
-        linki += 1
+        if s["spouse_id"]:
+            lst.append(f'Married: {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
+            links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
+            linki += 1
 
         await fmt.send_tt(ctx, lst)
         for k, v in links.items():

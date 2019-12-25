@@ -33,8 +33,7 @@ class Loot(commands.Cog):
 
         # check role and channel
         ALLOWED_CHANNELS = ["loot"]
-        ALLOWED_ROLES = ["Looter"]
-        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
             return
