@@ -477,7 +477,7 @@ class Verify(commands.Cog):
                         # add a common faction role
                         common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
                         print("DEBUG guild", ctx.guild)
-                        print("DEBUG roles", [r.name for n in ctx.guild.roles])
+                        print("DEBUG roles", [r.name for r in ctx.guild.roles])
                         print("DEBUG common", common_role)
                         if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
                             await member.add_roles(common_role)
