@@ -135,8 +135,11 @@ class Stocks(commands.Cog):
             # if alerts.get("below", False) and v.get("shares"):
             #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
 
-            if alerts.get("new", False) and alerts.get("enough", False):
-                lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+            # if alerts.get("new", False) and alerts.get("enough", False):
+            #     lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+
+            if alerts.get("injection", False):
+                lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
 
         # create message to send
         if len(lst):
