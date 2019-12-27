@@ -55,7 +55,7 @@ class Notifications(commands.Cog):
                 notifications = json.loads(record["notifications"])
 
                 # notify news
-                if "news" in notifications:
+                if "event" in notifications:
                     # loop over events
                     for k, v in req["events"].items():
 
