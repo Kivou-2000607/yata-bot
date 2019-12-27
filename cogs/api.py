@@ -358,7 +358,7 @@ class API(commands.Cog):
                             req = await r.json()
 
                     # notify event
-                    if "event" in notifications and req["notification"]["events"]:
+                    if "event" in notifications and req["notifications"]["events"]:
                         # loop over events
                         for k, v in req["events"].items():
                             # if new event not notified -> notify
@@ -371,7 +371,7 @@ class API(commands.Cog):
                                 del notifications["event"][k]
 
                     # notify message
-                    if "message" in notifications and req["notification"]["messages"]:
+                    if "message" in notifications and req["notifications"]["messages"]:
                         # loop over messages
                         for k, v in req["messages"].items():
                             # if new event not notified -> notify
