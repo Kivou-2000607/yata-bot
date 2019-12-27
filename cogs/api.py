@@ -358,30 +358,36 @@ class API(commands.Cog):
                             req = await r.json()
 
                     # notify event
-                    if "event" in notifications and req["notifications"]["events"]:
-                        # loop over events
-                        for k, v in req["events"].items():
-                            # if new event not notified -> notify
-                            if not v["seen"] and k not in notifications["event"]:
-                                await member.send(fmt.cleanhtml(v["event"]).replace(" [View]", ""))
-                                notifications["event"][k] = True
+                    if "event" in notifications:
+                        if not req["notifications"]["events"]:
+                            notifications["event"] = dict({})
+                        else:
+                            # loop over events
+                            for k, v in req["events"].items():
+                                # if new event not notified -> notify
+                                if not v["seen"] and k not in notifications["event"]:
+                                    await member.send(fmt.cleanhtml(v["event"]).replace(" [View]", ""))
+                                    notifications["event"][k] = True
 
-                            # if seen even already notified -> clean table
-                            elif v["seen"] and k in notifications["event"]:
-                                del notifications["event"][k]
+                                # if seen even already notified -> clean table
+                                elif v["seen"] and k in notifications["event"]:
+                                    del notifications["event"][k]
 
                     # notify message
-                    if "message" in notifications and req["notifications"]["messages"]:
-                        # loop over messages
-                        for k, v in req["messages"].items():
-                            # if new event not notified -> notify
-                            if not v["seen"] and k not in notifications["message"]:
-                                await member.send(f'New message from {v["name"]}: {v["title"]}')
-                                notifications["message"][k] = True
+                    if "message" in notifications:
+                        if not req["notifications"]["messages"]:
+                            notifications["messages"] = dict({})
+                        else:
+                            # loop over messages
+                            for k, v in req["messages"].items():
+                                # if new event not notified -> notify
+                                if not v["seen"] and k not in notifications["message"]:
+                                    await member.send(f'New message from {v["name"]}: {v["title"]}')
+                                    notifications["message"][k] = True
 
-                            # if seen even already notified -> clean table
-                            elif v["seen"] and k in notifications["message"]:
-                                del notifications["message"][k]
+                                # if seen even already notified -> clean table
+                                elif v["seen"] and k in notifications["message"]:
+                                    del notifications["message"][k]
 
                     # notify awards
                     if "award" in notifications:
