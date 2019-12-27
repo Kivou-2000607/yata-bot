@@ -13,7 +13,6 @@ from cogs.stocks import Stocks
 from cogs.api import API
 from cogs.chain import Chain
 from cogs.admin import Admin
-from cogs.notifications import Notifications
 
 # import includes
 from includes.yata_db import load_configurations
@@ -41,7 +40,6 @@ bot.add_cog(Stocks(bot))
 bot.add_cog(API(bot))
 bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
-bot.add_cog(Notifications(bot))
 
 # run bot
 bot.run(token)
