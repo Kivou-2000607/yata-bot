@@ -11,9 +11,9 @@ from cogs.verify import Verify
 from cogs.loot import Loot
 from cogs.stocks import Stocks
 from cogs.api import API
-# from cogs.repository import Repository
 from cogs.chain import Chain
 from cogs.admin import Admin
+from cogs.notifications import Notifications
 
 # import includes
 from includes.yata_db import load_configurations
@@ -39,9 +39,9 @@ bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
 bot.add_cog(API(bot))
-# bot.add_cog(Repository(bot))
 bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
+bot.add_cog(Notifications(bot))
 
 # run bot
 bot.run(token)
