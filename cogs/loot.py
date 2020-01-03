@@ -94,25 +94,17 @@ class Loot(commands.Cog):
             await ctx.send(":x: Loot module not activated")
             return
 
-        # check role and channel
-        ALLOWED_CHANNELS = ["start-looting", "loot"]
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
         # Get Looter role
         role = get(ctx.guild.roles, name="Looter")
 
         if role in ctx.author.roles:
             # remove Looter
             await ctx.author.remove_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll stop receiving notifications.")
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for loot.")
         else:
             # assign Looter
             await ctx.author.add_roles(role)
-            channel = get(ctx.guild.channels, name="loot")
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you're a looter now. You'll receive a notification in {channel.mention} when a NPC is about to reach level IV.")
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for loot.")
 
         await asyncio.sleep(10)
         await msg.delete()

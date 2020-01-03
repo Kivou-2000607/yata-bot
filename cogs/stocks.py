@@ -33,8 +33,7 @@ class Stocks(commands.Cog):
             return [], False
 
         # check role and channel
-        channelName = self.bot.get_config(ctx.guild).get("stocks").get("channel", False)
-        ALLOWED_CHANNELS = [channelName] if channelName else [stock]
+        ALLOWED_CHANNELS = [stock]
         ALLOWED_ROLES = [stock]
         if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
@@ -142,27 +141,58 @@ class Stocks(commands.Cog):
                 lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
 
         # create message to send
-        if len(lst):
-            message = "{}".format("\n".join(lst))
-        else:
+        if not len(lst):
             return
 
         # loop over guilds to send alerts
         async for guild in self.bot.fetch_guilds(limit=100):
 
             # check if module activated
-            if not self.bot.check_module(guild, "stocks"):
-                print(f"[STOCK] guild {guild}: ignore.")
+            if not self.bot.get_config(guild).get("stocks", dict({})).get("alerts", False):
+                print(f"[STOCK] guild {guild}: ignore notifications")
                 continue
 
             # get full guild (async iterator doesn't return channels)
             guild = self.bot.get_guild(guild.id)
 
-            # get channel
-            channel = get(guild.channels, name="wall-street")
+            # get channel and role
+            channelName = self.bot.get_config(guild).get("stocks").get("channel", "stocks")
+            channel = get(guild.channels, name=channelName)
+            role = get(guild.roles, name="Trader")
 
             if channel is not None:
+                if role is None:
+                    print(f"[STOCK] guild {guild}: no role @Trader")
+                else:
+                    s = "" if len(lst) == 1 else "s"
+                    await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
                 await fmt.send_tt(channel, lst)
+            else:
+                print(f"[STOCK] guild {guild}: no channel {channelName}")
+
+    @commands.command()
+    async def trader(self, ctx):
+        """Add/remove @Trader role"""
+        # return if stocks not active
+        if not self.bot.check_module(ctx.guild, "stocks"):
+            await ctx.send(":x: Loot module not activated")
+            return
+
+        # Get Trader role
+        role = get(ctx.guild.roles, name="Trader")
+
+        if role in ctx.author.roles:
+            # remove Trader
+            await ctx.author.remove_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for stocks.")
+        else:
+            # assign Trader
+            await ctx.author.add_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for stocks.")
+
+        await asyncio.sleep(10)
+        await msg.delete()
+        await ctx.message.delete()
 
     @notify.before_loop
     async def before_notify(self):

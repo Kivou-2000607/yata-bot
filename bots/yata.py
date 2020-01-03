@@ -186,7 +186,7 @@ class YataBot(Bot):
                     for k, v in fac.items():
                         role_name = f"{v} [{k}]"
                         if get(guild.roles, name=role_name) is None:
-                            print(f"\tCreate role {role_name}")
+                            print(f"\tCreate faction role {role_name}")
                             await guild.create_role(name=role_name)
 
                     # create common role
@@ -200,7 +200,7 @@ class YataBot(Bot):
                     for k, v in fac.items():
                         role_name = f"{v} [{k}]"
                         if get(guild.roles, name=role_name) is None:
-                            print(f"\tCreate role {role_name}")
+                            print(f"\tCreate common faction role {role_name}")
                             await guild.create_role(name=role_name)
 
                     # create admin channel
@@ -245,7 +245,7 @@ class YataBot(Bot):
                     role_loot = get(guild.roles, name="Looter")
                     if role_loot is None:
                         print(f"\tCreate role Looter")
-                        role_loot = await guild.create_role(name="Looter")
+                        role_loot = await guild.create_role(name="Looter", mentionable=True)
 
                     # create loot channel
                     channel_name = "loot"
@@ -277,7 +277,9 @@ class YataBot(Bot):
                 # create socks role and channels
                 if self.check_module(guild, "stocks"):
                     stocks = config.get("stocks")
-                    for stock in [s for s in stocks if s not in ["active", "channel"]]:
+
+                    # wssb and tcb
+                    for stock in [s for s in stocks if s not in ["active", "channel", 'alerts']]:
                         stock_role = get(guild.roles, name=stock)
                         if stock_role is None:
                             print(f"\tCreate role {stock}")
@@ -293,6 +295,23 @@ class YataBot(Bot):
                                 }
                             channel_stock = await guild.create_text_channel(stock, topic=f"{stock} stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                             await channel_stock.send(f"Type `!{stock}` to see the {stock} BB status amoung the members")
+
+                    # create alerts
+                    if stocks.get("alerts"):
+                        stock_role = get(guild.roles, name="Trader")
+                        if stock_role is None:
+                            print(f"\tCreate role Trader")
+                            stock_role = await guild.create_role(name="Trader", mentionable=True)
+                        channel_name = "stocks" if stocks.get("channel") is None else stocks.get("channel")
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            overwrites = {
+                                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                                stock_role: discord.PermissionOverwrite(read_messages=True),
+                                bot_role: discord.PermissionOverwrite(read_messages=True)
+                            }
+                            channel_stock = await guild.create_text_channel(channel_name, topic=f"Alerts stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
+                            await channel_stock.send(f"{stock_role.mention} will be notified here")
 
             except BaseException as e:
                 print(f"[SETUP] Error in guild {guild}: {e}")
