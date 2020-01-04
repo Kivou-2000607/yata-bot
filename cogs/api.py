@@ -122,7 +122,7 @@ class API(commands.Cog):
         await fmt.send_tt(ctx.author, lst)
         return
 
-    @commands.command()
+    @commands.command(aliases=['profile'])
     async def who(self, ctx, *args):
         """Gives information on a user"""
         # init variables
