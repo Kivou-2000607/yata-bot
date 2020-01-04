@@ -202,6 +202,8 @@ class API(commands.Cog):
         lst.append(f'Level: {r["level"]}')
         lst.append(f'Rank: {r["rank"]}')
         lst.append(f'Age: {r["age"]:,d} days old')
+        lst.append(f'Networth: ${r["personalstats"]["networth"]:,d}')
+        lst.append(f'X-R-SE: {r["personalstats"].get("xantaken", 0):,d} {r["personalstats"].get("refills", 0):,d} {r["personalstats"].get("statenhancersused", 0):,d}')
         lst.append('---')
 
         # faction
