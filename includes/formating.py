@@ -63,12 +63,18 @@ def ts_to_datetime(timestamp):
     return datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
 
 
-async def send_tt(ctx, lst, limit=1800):
+async def send_tt(ctx, lst, limit=1800, tt=True):
     if len(lst):
         msg = ""
         for line in lst:
             msg += line + "\n"
             if len(msg) > limit:
-                await ctx.send("```YAML\n{}```".format(msg))
+                if tt:
+                    await ctx.send("```YAML\n{}```".format(msg))
+                else:
+                    await ctx.send("{}".format(msg))
                 msg = ""
-        await ctx.send("```YAML\n{}```".format(msg))
+        if tt:
+            await ctx.send("```YAML\n{}```".format(msg))
+        else:
+            await ctx.send("{}".format(msg))

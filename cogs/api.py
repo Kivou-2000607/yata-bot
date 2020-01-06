@@ -295,6 +295,57 @@ class API(commands.Cog):
 
         await fmt.send_tt(ctx, lst)
 
+    @commands.command()
+    async def hosp(self, ctx, *args):
+        """Gives faction members hospitalized"""
+
+        # send error message if no arg (return)
+        if not len(args):
+            factionId = None
+
+        # check if arg is int
+        elif args[0].isdigit():
+            factionId = int(args[0])
+
+        else:
+            await ctx.send(":x: Either enter nothing or a faction `!fly <factionId>`.")
+            return
+
+        # get configuration for guild
+        status, _, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
+            return
+
+        # Torn API call
+        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                r = await r.json()
+
+        if 'error' in r:
+            await ctx.send(f':x: Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            return
+
+        if r["name"] is None:
+            await ctx.send(f':x: No faction with ID {factionId}')
+            return
+
+        hosps = {}
+        for k, v in r.get("members", dict({})).items():
+            if v["status"]["state"] in ["Hospital"]:
+                s = v["status"]
+                a = v["last_action"]
+                hosps[k] = [v["name"], s["description"], fmt.cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
+
+        lst = [f'Members of **{r["name"]} [{r["ID"]}]** hospitalized: {len(hosps)}']
+        for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
+            # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
+            line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
+            lst.append(line)
+
+        await fmt.send_tt(ctx, lst, tt=False)
+
     @tasks.loop(minutes=1)
     async def notify(self):
         print("[NOTIFICATIONS] start task")
