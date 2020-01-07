@@ -5,7 +5,7 @@ import asyncio
 async def channels(ctx, allowed):
     allowed_string = " or ".join(["`#{}`".format(c) for c in allowed])
 
-    if ctx.channel.name == "yata-admin":
+    if ctx.channel.name == "yata-admin" or "*" in allowed:
         # print("[CHECK CHANNEL] access granted in {}".format(ctx.channel.name))
         return True
 
@@ -26,10 +26,10 @@ async def channels(ctx, allowed):
 
 async def roles(ctx, allowed):
     # test if private channel or not
-    if ctx.channel.name is None:
+    if ctx.channel.name is None or "*" in allowed:
         return True
 
-    allowed_string = " or ".join(["`{}`".format(c) for c in allowed])
+    allowed_string = " or ".join(["`@{}`".format(c) for c in allowed])
     access = False
     for allowed_role in allowed:
         if allowed_role in [role.name for role in ctx.author.roles]:

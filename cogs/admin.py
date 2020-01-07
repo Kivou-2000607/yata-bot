@@ -13,23 +13,16 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # @commands.command()
-    # async def reload(self, ctx):
-    #     """Admin tool for the bot owner"""
-    #     from includes.yata_db import load_configurations
-    #     from includes.yata_db import push_guild_name
-    #     if ctx.author.id != 227470975317311488:
-    #         await ctx.send("This command is not for you")
-    #         return
-    #     _, c = load_configurations(self.bot.bot_id)
-    #     self.bot.config = c
-    #     await ctx.author.send("**Configurations reloaded**")
-    #     for k1, v1 in json.loads(self.bot.config).items():
-    #         await ctx.author.send(f"`{k1}`")
-    #         guild = get(self.bot.guilds, id=int(k1))
-    #         await push_guild_name(guild)
-    #         for k2, v2 in json.loads(self.bot.config)[k1].items():
-    #             await ctx.author.send(f"`{k2} {v2}`")
+    @commands.command()
+    async def reload(self, ctx):
+        """Admin tool for the bot owner"""
+        from includes.yata_db import load_configurations
+        from includes.yata_db import push_guild_name
+        if ctx.author.id != 227470975317311488:
+            await ctx.send("This command is not for you")
+            return
+        _, c = load_configurations(self.bot.bot_id)
+        self.bot.configs = json.loads(c)
 
     @commands.command()
     async def invite(self, ctx):

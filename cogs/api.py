@@ -29,36 +29,39 @@ class API(commands.Cog):
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
 
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
         await ctx.message.delete()
 
         # get user key
-
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
             print(f"[WEAPON EXP] error {status}")
             return
 
         # make api call
-
         url = f"https://api.torn.com/user/?selections=discord,weaponexp&key={key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
 
         # handle API error
-
         if "error" in req:
             await ctx.author.send(f':x: You asked for your weapons experience but an error occured with your API key: *{req["error"]["error"]}*')
             return
 
         # if no weapon exp
-
         if not len(req.get("weaponexp", [])):
             await ctx.author.send(f"no weapon exp")
             return
 
         # send list
-
         maxed = []
         tomax = []
         for w in req.get("weaponexp", []):
@@ -86,30 +89,34 @@ class API(commands.Cog):
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
 
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
         await ctx.message.delete()
 
         # get user key
-
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
             print(f"[NETWORTH] error {status}")
             return
 
         # make api call
-
         url = f"https://api.torn.com/user/?selections=discord,networth&key={key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
 
         # handle API error
-
         if "error" in req:
             await ctx.author.send(f':x: You asked for your networth but an error occured with your API key: *{req["error"]["error"]}*')
             return
 
         # send list
-
         lst = [f"# {name} [{id}]: Networth breakdown\n"]
         for k, v in req.get("networth", dict({})).items():
             if k in ['total']:
@@ -125,6 +132,15 @@ class API(commands.Cog):
     @commands.command(aliases=['profile'])
     async def who(self, ctx, *args):
         """Gives information on a user"""
+
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
         # init variables
         helpMsg = f":x: You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
 
@@ -245,6 +261,14 @@ class API(commands.Cog):
     async def fly(self, ctx, *args):
         """Gives faction members flying"""
 
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
         # send error message if no arg (return)
         if not len(args):
             factionId = None
@@ -299,6 +323,14 @@ class API(commands.Cog):
     async def hosp(self, ctx, *args):
         """Gives faction members hospitalized"""
 
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
         # send error message if no arg (return)
         if not len(args):
             factionId = None
@@ -349,6 +381,14 @@ class API(commands.Cog):
     @commands.command(aliases=['ok'])
     async def okay(self, ctx, *args):
         """Gives faction members that are okay"""
+
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
 
         # send error message if no arg (return)
         if not len(args):
