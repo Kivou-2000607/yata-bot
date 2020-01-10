@@ -17,6 +17,104 @@ class Chain(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    async def retal(self, ctx, *args):
+        """ Mention faction role if retal
+        """
+
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "chain"):
+            await ctx.send(":x: Chain module not activated")
+            return
+
+        # check role and channel
+        channelName = self.bot.get_config(ctx.guild).get("chain").get("channel", False)
+        ALLOWED_CHANNELS = [channelName] if channelName else ["chain"]
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
+            return
+
+        # send error message if no arg (return)
+        if not len(args):
+            faction = None
+
+        # check if arg is int
+        elif args[0].isdigit():
+            faction = int(args[0])
+
+        else:
+            await ctx.send(":x: Either enter nothing or a faction `!retal <factionId>`.")
+            return
+
+        # Inital call to get faction name
+        status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        if status == -1:
+            await ctx.send(":x: No master key given")
+            return
+
+        url = f'https://api.torn.com/faction/{faction}?selections=basic&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # handle API error
+        if 'error' in req:
+            await ctx.send(f':x: Master key problem: *{req["error"]["error"]}*')
+            return
+
+        # handle no faction
+        if req["ID"] is None:
+            await ctx.send(f':x: No faction with id {faction}')
+            return
+
+        # faction name and role
+        faction = req.get("ID")
+        factionName = f'{req.get("name")} [{req.get("ID")}]'
+        factionRole = get(ctx.guild.roles, name=factionName)
+
+        await ctx.send(f":rage: `{factionName}` Start watching for retal")
+        past_mentions = []
+        while True:
+            # check last 50 messages for a stop --- had to do it not async to catch only 1 stop
+            history = await ctx.channel.history(limit=50).flatten()
+            for m in history:
+                if m.content == "!stopretal":
+                    await m.delete()
+                    await ctx.send(f":x: `{factionName}` Stop watching retals")
+                    return
+
+            # chain api call
+            status, tornId, key = await self.bot.get_master_key(ctx.guild)
+            if status == -1:
+                await ctx.send(":x: No master key given")
+                return
+
+            url = f'https://api.torn.com/faction/{faction}?selections=attacks&key={key}'
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
+
+            # handle API error
+            if 'error' in req:
+                await ctx.send(f':x: `{factionName}` Master key problem: *{req["error"]["error"]}*')
+                return
+
+            now = datetime.datetime.utcnow()
+            epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
+            nowts = (now - epoch).total_seconds()
+            for k, v in req["attacks"].items():
+                if v["defender_faction"] == int(faction) and v["attacker_id"] and k not in past_mentions:
+                    delay = int(nowts - v["timestamp_ended"]) / float(60)
+                    if v["attacker_faction"]:
+                        await ctx.send(f':rage: {factionRole.mention}: retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]} ({delay:.1f} minutes)')
+                    else:
+                        await ctx.send(f':rage: {factionRole.mention}: retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]} ({delay:.1f} minutes)')
+                    past_mentions.append(k)
+
+            await asyncio.sleep(60)
+
+
+    @commands.command()
     async def chain(self, ctx, *args):
         """ Watch the chain status of a factions and gives notifications
             Use: !chain <factionId> <w=warningTime> <n=notificationTime>
@@ -100,12 +198,12 @@ class Chain(commands.Cog):
 
             # check if needs to notify still watching
 
-            # check last 10 messages for a stop --- had to do it not async to catch only 1 stop
+            # check last 50 messages for a stop --- had to do it not async to catch only 1 stop
             history = await ctx.channel.history(limit=50).flatten()
             for m in history:
-                if m.content == "!stop":
+                if m.content in ["!stopchain", "!stop"]:
                     await m.delete()
-                    await ctx.send(f":x: `{factionName}` Stop watching")
+                    await ctx.send(f":x: `{factionName}` Stop watching chain")
                     return
 
             # chain api call
