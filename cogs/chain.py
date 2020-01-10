@@ -47,8 +47,8 @@ class Chain(commands.Cog):
             return
 
         # Inital call to get faction name
-        status, tornId, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
+        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author)
+        if status < 0:
             await ctx.send(":x: No master key given")
             return
 
