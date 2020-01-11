@@ -40,11 +40,11 @@ class YataBot(Bot):
                 req = await r.json()
 
         if 'error' in req:
-            print(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
+            # print(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
             return -1, req['error']
 
         elif req['discord'].get("userID") == '':
-            print(f'[DISCORD TO TORN] discord id {member.id} not verified')
+            # print(f'[DISCORD TO TORN] discord id {member.id} not verified')
             return -2, None
 
         else:
@@ -77,27 +77,27 @@ class YataBot(Bot):
 
         # get master key to check identity
 
-        print(f"[GET USER KEY] <{ctx.guild}> get master key")
+        # print(f"[GET USER KEY] <{ctx.guild}> get master key")
         master_status, master_id, master_key = await self.get_master_key(ctx.guild)
         if master_status == -1:
-            print(f"[GET USER KEY] <{ctx.guild}> no master key given")
+            # print(f"[GET USER KEY] <{ctx.guild}> no master key given")
             await ctx.send(":x: no master key given")
             return -1, None, None, None
-        print(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
+        # print(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
 
         # get torn id from discord id
 
-        print(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
+        # print(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
         tornId, msg = await self.discord_to_torn(member, master_key)
 
         # handle master api error or not verified member
 
         if tornId == -1:
-            print(f'[GET MEMBER KEY] status -1: master key error {msg}')
-            await ctx.send(f':x: api error with master key id {master_id}: *{msg["error"]["error"]}*')
+            # print(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
+            await ctx.send(f':x: api error with master key id {master_id}: *{msg["error"]}*')
             return -2, None, None, None
         elif tornId == -2:
-            print(f'[GET MEMBER KEY] status -2: user not verified')
+            # print(f'[GET MEMBER KEY] status -2: user not verified')
             await ctx.send(f':x: {member.mention} is not verified')
             return -3, None, None, None
 
@@ -107,7 +107,7 @@ class YataBot(Bot):
 
         # handle user not on YATA
         if not len(user):
-            print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
+            # print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             await ctx.send(f':x: {member.mention} not found in YATA\'s database')
             return -4, tornId, None, None
 
@@ -115,13 +115,13 @@ class YataBot(Bot):
 
         user = tuple(user[0])
         if not user[3] and needPerm:
-            print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
+            # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
             await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
             return -5, user[0], user[1], None
 
         # return id, name, key
         else:
-            print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
+            # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
             return 0, user[0], user[1], user[2]
 
     def check_module(self, guild, module):
