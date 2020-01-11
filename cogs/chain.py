@@ -39,7 +39,7 @@ class Chain(commands.Cog):
         if status < 0:
             return
 
-        url = f'https://api.torn.com/faction/{faction}?selections=basic&key={key}'
+        url = f'https://api.torn.com/faction/?selections=basic&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
@@ -51,7 +51,7 @@ class Chain(commands.Cog):
 
         # handle no faction
         if req["ID"] is None:
-            await ctx.send(f':x: No faction with id {faction}')
+            await ctx.send(f':x: No faction with id {req["ID"]}')
             return
 
         # faction name and role
