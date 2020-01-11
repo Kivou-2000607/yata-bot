@@ -93,7 +93,7 @@ class Chain(commands.Cog):
                         await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
                     past_mentions.append(k)
 
-                elif v["attaker_faction"] == int(faction) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
+                elif v["attacker_faction"] == int(faction) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                     await ctx.send(f':rage: `{factionRole}` retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
                     past_mentions.append(k)
 
