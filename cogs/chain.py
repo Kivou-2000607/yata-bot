@@ -86,11 +86,17 @@ class Chain(commands.Cog):
             for k, v in req["attacks"].items():
                 delay = int(nowts - v["timestamp_ended"]) / float(60)
                 if v["defender_faction"] == int(faction) and v["attacker_id"] and k not in past_mentions and delay < 5:
+                    tleft = 5 - delay
                     if v["attacker_faction"]:
-                        await ctx.send(f':rage: {factionRole.mention}: retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]} ({delay:.1f} minutes)')
+                        await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
                     else:
-                        await ctx.send(f':rage: {factionRole.mention}: retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]} ({delay:.1f} minutes)')
+                        await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
                     past_mentions.append(k)
+
+                elif v["attaker_faction"] == int(faction) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
+                    await ctx.send(f':rage: `{factionRole}` retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
+                    past_mentions.append(k)
+
 
             await asyncio.sleep(60)
 
