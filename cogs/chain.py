@@ -17,7 +17,7 @@ class Chain(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def retal(self, ctx, *args):
+    async def retal(self, ctx):
         """ Mention faction role if retal
         """
 
@@ -34,22 +34,9 @@ class Chain(commands.Cog):
         else:
             return
 
-        # send error message if no arg (return)
-        if not len(args):
-            faction = None
-
-        # check if arg is int
-        elif args[0].isdigit():
-            faction = int(args[0])
-
-        else:
-            await ctx.send(":x: Either enter nothing or a faction `!retal <factionId>`.")
-            return
-
-        # Inital call to get faction name
-        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author)
+        # Initial call to get faction name
+        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            await ctx.send(":x: No master key given")
             return
 
         url = f'https://api.torn.com/faction/{faction}?selections=basic&key={key}'
@@ -59,7 +46,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await ctx.send(f':x: Master key problem: *{req["error"]["error"]}*')
+            await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
             return
 
         # handle no faction
@@ -103,8 +90,8 @@ class Chain(commands.Cog):
             epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
             nowts = (now - epoch).total_seconds()
             for k, v in req["attacks"].items():
-                if v["defender_faction"] == int(faction) and v["attacker_id"] and k not in past_mentions:
-                    delay = int(nowts - v["timestamp_ended"]) / float(60)
+                delay = int(nowts - v["timestamp_ended"]) / float(60)
+                if v["defender_faction"] == int(faction) and v["attacker_id"] and k not in past_mentions and delay < 5:
                     if v["attacker_faction"]:
                         await ctx.send(f':rage: {factionRole.mention}: retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]} ({delay:.1f} minutes)')
                     else:
@@ -112,7 +99,6 @@ class Chain(commands.Cog):
                     past_mentions.append(k)
 
             await asyncio.sleep(60)
-
 
     @commands.command()
     async def chain(self, ctx, *args):
@@ -158,10 +144,9 @@ class Chain(commands.Cog):
             else:
                 await ctx.send(f":chains: key/value pair {arg} ignored")
 
-        # Inital call to get faction name
-        status, tornId, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
+        # Initial call to get faction name
+        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
             return
 
         url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
@@ -171,7 +156,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await ctx.send(f':x: Master key problem: *{req["error"]["error"]}*')
+            await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
             return
 
         # handle no faction
@@ -206,10 +191,9 @@ class Chain(commands.Cog):
                     await ctx.send(f":x: `{factionName}` Stop watching chain")
                     return
 
-            # chain api call
-            status, tornId, key = await self.bot.get_master_key(ctx.guild)
-            if status == -1:
-                await ctx.send(":x: No master key given")
+            # Initial call to get faction name
+            status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+            if status < 0:
                 return
 
             url = f'https://api.torn.com/faction/{faction}?selections=chain,timestamp&key={key}'

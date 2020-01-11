@@ -116,7 +116,7 @@ class YataBot(Bot):
         user = tuple(user[0])
         if not user[3] and needPerm:
             print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
-            await ctx.send(f':x: {member.mention} didn\'t give their permission to user their API key (https://yata.alwaysdata.net/bot/)')
+            await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
             return -5, user[0], user[1], None
 
         # return id, name, key
