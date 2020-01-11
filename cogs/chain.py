@@ -70,20 +70,14 @@ class Chain(commands.Cog):
                     await ctx.send(f":x: `{factionName}` Stop watching retals")
                     return
 
-            # chain api call
-            status, tornId, key = await self.bot.get_master_key(ctx.guild)
-            if status == -1:
-                await ctx.send(":x: No master key given")
-                return
-
-            url = f'https://api.torn.com/faction/{faction}?selections=attacks&key={key}'
+            url = f'https://api.torn.com/faction/?selections=attacks&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
 
             # handle API error
             if 'error' in req:
-                await ctx.send(f':x: `{factionName}` Master key problem: *{req["error"]["error"]}*')
+                await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
                 return
 
             now = datetime.datetime.utcnow()
