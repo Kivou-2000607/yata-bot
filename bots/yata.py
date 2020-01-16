@@ -184,7 +184,7 @@ class YataBot(Bot):
                     # create faction roles
                     fac = config.get("factions", dict({}))
                     for k, v in fac.items():
-                        role_name = f"{v} [{k}]"
+                        role_name = f"{v} [{k}]" if config['verify'].get('id', False) else f"{v}"
                         if get(guild.roles, name=role_name) is None:
                             print(f"\tCreate faction role {role_name}")
                             await guild.create_role(name=role_name)
@@ -194,14 +194,8 @@ class YataBot(Bot):
                     if com:
                         role_name = get(guild.roles, name=com)
                         if role_name is None:
-                            print(f"\tCreate role {com}")
+                            print(f"\tCreate common role {com}")
                             await guild.create_role(name=com)
-
-                    for k, v in fac.items():
-                        role_name = f"{v} [{k}]"
-                        if get(guild.roles, name=role_name) is None:
-                            print(f"\tCreate common faction role {role_name}")
-                            await guild.create_role(name=role_name)
 
                     # create admin channel
                     channel_name = "yata-admin"
@@ -262,17 +256,17 @@ class YataBot(Bot):
                         await channel_loot.send(f"Type `!looter` to remove your {role_loot.mention} role")
 
                     # create start-looting channel
-                    channel_loot = get(guild.channels, name="loot")
-                    channel_name = "start-looting"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        overwrites = {
-                            guild.default_role: discord.PermissionOverwrite(read_messages=True),
-                            role_loot: discord.PermissionOverwrite(read_messages=False),
-                            bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
-                        channel_slooting = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
-                        await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
+                    # channel_loot = get(guild.channels, name="loot")
+                    # channel_name = "start-looting"
+                    # if get(guild.channels, name=channel_name) is None:
+                    #     print(f"\tCreate channel {channel_name}")
+                    #     overwrites = {
+                    #         guild.default_role: discord.PermissionOverwrite(read_messages=True),
+                    #         role_loot: discord.PermissionOverwrite(read_messages=False),
+                    #         bot_role: discord.PermissionOverwrite(read_messages=True)
+                    #         }
+                    #     channel_slooting = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
+                    #     await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
 
                 # create socks role and channels
                 if self.check_module(guild, "stocks"):

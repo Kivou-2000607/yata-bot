@@ -216,11 +216,14 @@ class Verify(commands.Cog):
                 continue
 
             # Set Faction role
-
-            # assign Faction
-            faction_name = "{faction_name} [{faction_id}]".format(**user['faction'])
-            faction_role = get(guild.roles, name=faction_name)
             config = self.bot.get_config(guild)
+            fId = str(user['faction']['faction_id'])
+            if fId in config["factions"]:
+                faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+            else:
+                faction_name = "{faction_name} [{faction_id}]".format(**user) if config["verify"].get("id", False) else "{faction_name}".format(**user)
+
+            faction_role = get(guild.roles, name=faction_name)
             if faction_role is not None:
                 # add faction role if role exists
                 await member.add_roles(faction_role)
@@ -268,17 +271,17 @@ class Verify(commands.Cog):
         for faction_id, faction_name in c.get("factions", dict({})).items():
 
             # Get faction role
-            faction_role_name = f'{faction_name} [{faction_id}]'
+            faction_role_name = f'{faction_name} [{faction_id}]' if c['verify'].get('id', False) else f'{faction_name}'
             faction_role = get(ctx.guild.roles, name=faction_role_name)
             await ctx.send(f'\n**Checking faction {faction_role.name}**')
 
             # try to parse Torn faction ID
-            match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
-            if match is not None:
-                tornFacId = int(faction_role.name.split("[")[-1][:-1])
-            else:
-                await ctx.send(f":x: `{faction_role.name}` does not match `(.{1,}) \[(\d{1,7})\]`")
-                return
+            # match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
+            # if match is not None:
+            #     tornFacId = int(faction_role.name.split("[")[-1][:-1])
+            # else:
+            #     await ctx.send(f":x: `{faction_role.name}` does not match `(.{1,}) \[(\d{1,7})\]`")
+            #     return
 
             # api call with members list from torn
             status, tornIdForKey, key = await self.bot.get_master_key(ctx.guild)
@@ -286,7 +289,7 @@ class Verify(commands.Cog):
                 await ctx.send(":x: No master key given")
                 continue
 
-            url = f'https://api.torn.com/faction/{tornFacId}?selections=basic&key={key}'
+            url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
@@ -430,18 +433,21 @@ class Verify(commands.Cog):
                     await author.add_roles(yata_role)
 
             # Set Faction role
-            faction_name = "{faction_name} [{faction_id}]".format(**req['faction'])
-            faction_role = get(ctx.guild.roles, name=faction_name)
             config = self.bot.get_config(ctx.guild)
+            fId = str(req['faction']['faction_id'])
+            if fId in config["factions"]:
+                faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+                faction_role = get(ctx.guild.roles, name=faction_name)
+            else:
+                faction_name = ""
+                faction_role = None
+
             if faction_role is not None:
                 # add faction role if role exists
                 await author.add_roles(faction_role)
                 # add a common faction role
                 common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
-                print("DEBUG guild", ctx.guild)
-                print("DEBUG roles", [r.name for r in ctx.guild.roles])
-                print("DEBUG common", common_role)
-                if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
+                if common_role is not None and fId in config.get("factions"):
                     await author.add_roles(common_role)
                     return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
                 else:
@@ -468,17 +474,20 @@ class Verify(commands.Cog):
                             await member.add_roles(yata_role)
 
                     # Set Faction role
-                    faction_name = "{faction_name} [{faction_id}]".format(**req['faction'])
-                    faction_role = get(ctx.guild.roles, name=faction_name)
                     config = self.bot.get_config(ctx.guild)
+                    fId = str(req['faction']['faction_id'])
+                    if fId in config["factions"]:
+                        faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+                        faction_role = get(ctx.guild.roles, name=faction_name)
+                    else:
+                        faction_name = ""
+                        faction_role = None
+
                     if faction_role is not None:
                         # add faction role if role exists
                         await member.add_roles(faction_role)
                         # add a common faction role
                         common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
-                        print("DEBUG guild", ctx.guild)
-                        print("DEBUG roles", [r.name for r in ctx.guild.roles])
-                        print("DEBUG common", common_role)
                         if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
                             await member.add_roles(common_role)
                             return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
