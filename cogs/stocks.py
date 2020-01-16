@@ -2,6 +2,7 @@
 import asyncio
 import aiohttp
 import json
+import termplotlib as tpl
 
 # import discord modules
 from discord.ext import commands
@@ -11,6 +12,20 @@ from discord.utils import get
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
+
+
+def plot_stocks(lst, graph):
+    x = []
+    y = []
+    for _, price in graph:
+        x.append(_)
+        y.append(price)
+
+    fig = tpl.figure()
+    fig.plot(x, y, width=80, height=15)
+    for l in fig.get_string().split("\n"):
+        lst.append(l)
+    lst[-1] = " " * 33 + "14 days prices" + " " * 33
 
 
 class Stocks(commands.Cog):
@@ -130,6 +145,11 @@ class Stocks(commands.Cog):
 
             if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+                plot_stocks(lst, v.get("graph", []))
+
+            if alerts.get("below", False):
+                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+                plot_stocks(lst, v.get("graph", []))
 
             # if alerts.get("below", False) and v.get("shares"):
             #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
@@ -139,6 +159,7 @@ class Stocks(commands.Cog):
 
             if alerts.get("injection", False):
                 lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
+                plot_stocks(lst, v.get("graph", []))
 
         # create message to send
         if not len(lst):
@@ -198,4 +219,4 @@ class Stocks(commands.Cog):
     async def before_notify(self):
         print('[STOCK] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
