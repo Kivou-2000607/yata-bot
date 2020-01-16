@@ -147,9 +147,9 @@ class Stocks(commands.Cog):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
                 plot_stocks(lst, v.get("graph", []))
 
-            if alerts.get("below", False):
-                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                plot_stocks(lst, v.get("graph", []))
+            # if alerts.get("below", False):
+            #     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+            #     plot_stocks(lst, v.get("graph", []))
 
             # if alerts.get("below", False) and v.get("shares"):
             #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
