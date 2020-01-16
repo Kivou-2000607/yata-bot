@@ -458,7 +458,7 @@ class API(commands.Cog):
                 # get corresponding discord member
                 member = get(guild.members, id=record["dId"])
                 if member is None:
-                    print(f"[NOTIFICATIONS] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`")
+                    print(f'[NOTIFICATIONS] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
                     continue
 
                 try:
