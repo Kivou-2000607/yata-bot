@@ -27,7 +27,8 @@ class Chain(commands.Cog):
             return
 
         # check role and channel
-        channelName = self.bot.get_config(ctx.guild).get("chain").get("channel", False)
+        config = self.bot.get_config(ctx.guild)
+        channelName = config.get("chain", dict({})).get("channel", False)
         ALLOWED_CHANNELS = [channelName] if channelName else ["chain"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
@@ -54,9 +55,12 @@ class Chain(commands.Cog):
             await ctx.send(f':x: No faction with id {req["ID"]}')
             return
 
-        # faction name and role
-        faction = req.get("ID")
-        factionName = f'{req.get("name")} [{req.get("ID")}]'
+        # Set Faction role
+        fId = str(req['ID'])
+        if fId in config["factions"]:
+            factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+        else:
+            factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
         factionRole = get(ctx.guild.roles, name=factionName)
 
         await ctx.send(f":rage: `{factionName}` Start watching for retal")
@@ -85,7 +89,10 @@ class Chain(commands.Cog):
             nowts = (now - epoch).total_seconds()
             for k, v in req["attacks"].items():
                 delay = int(nowts - v["timestamp_ended"]) / float(60)
-                if v["defender_faction"] == int(faction) and v["attacker_id"] and k not in past_mentions and delay < 5:
+                if k in past_mentions:
+                    continue
+
+                if v["defender_faction"] == int(fId) and v["attacker_id"] and delay < 5:
                     tleft = 5 - delay
                     if v["attacker_faction"]:
                         await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
@@ -93,10 +100,9 @@ class Chain(commands.Cog):
                         await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
                     past_mentions.append(k)
 
-                elif v["attacker_faction"] == int(faction) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
+                elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                     await ctx.send(f':rage: `{factionRole}` retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
                     past_mentions.append(k)
-
 
             await asyncio.sleep(60)
 
@@ -115,7 +121,8 @@ class Chain(commands.Cog):
             return
 
         # check role and channel
-        channelName = self.bot.get_config(ctx.guild).get("chain").get("channel", False)
+        config = self.bot.get_config(ctx.guild)
+        channelName = config.get("chain", dict({})).get("channel", False)
         ALLOWED_CHANNELS = [channelName] if channelName else ["chain"]
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
@@ -164,8 +171,12 @@ class Chain(commands.Cog):
             await ctx.send(f':x: No faction with id {faction}')
             return
 
-        # faction name and role
-        factionName = f'{req.get("name")} [{req.get("ID")}]'
+        # Set Faction role
+        fId = str(req['ID'])
+        if fId in config["factions"]:
+            factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+        else:
+            factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
         factionRole = get(ctx.guild.roles, name=factionName)
 
         # if no chain
@@ -196,7 +207,7 @@ class Chain(commands.Cog):
             if status < 0:
                 return
 
-            url = f'https://api.torn.com/faction/{faction}?selections=chain,timestamp&key={key}'
+            url = f'https://api.torn.com/faction/{fId}?selections=chain,timestamp&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
