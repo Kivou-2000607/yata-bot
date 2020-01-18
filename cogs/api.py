@@ -449,7 +449,7 @@ class API(commands.Cog):
         db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
         dbname = db_cred["dbname"]
         del db_cred["dbname"]
-        sql = 'SELECT "tId", "dId", "notifications", "key" FROM player_player WHERE "activateNotifications" = True;'
+        sql = 'SELECT "tId", "dId", "notifications", "apikey" FROM player_player WHERE "activateNotifications" = True;'
         con = await asyncpg.connect(database=dbname, **db_cred)
 
         # async loop over notifiers

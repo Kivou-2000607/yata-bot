@@ -14,10 +14,24 @@ async def get_yata_user(tornId):
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    user = await con.fetch(f'SELECT "tId", "name", "key", "botPerm" FROM player_player WHERE "tId" = {tornId};')
+    user = await con.fetch(f'SELECT "tId", "name", "botPerm" FROM player_player WHERE "tId" = {tornId};')
+    # key = await con.fetch(f'SELECT "value" FROM player_key WHERE "tId" = {tornId};')
     await con.close()
 
     return user
+
+
+async def get_yata_key(tornId):
+    # get YATA user
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    key = await con.fetch(f'SELECT "value" FROM player_key WHERE "tId" = {tornId};')
+    print("get_yata_key", key)
+    await con.close()
+
+    return key
 
 
 async def push_guild_name(guild):

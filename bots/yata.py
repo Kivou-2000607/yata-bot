@@ -11,8 +11,7 @@ from discord.utils import get
 
 # import bot functions and classes
 # from includes.yata_db import get_member_key
-from includes.yata_db import push_guild_name
-from includes.yata_db import get_yata_user
+from includes.yata_db import *
 
 
 # Child class of Bot with extra configuration variables
@@ -114,7 +113,7 @@ class YataBot(Bot):
         # Return user if perm given
 
         user = tuple(user[0])
-        if not user[3] and needPerm:
+        if not user[2] and needPerm:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
             await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
             return -5, user[0], user[1], None
@@ -122,7 +121,9 @@ class YataBot(Bot):
         # return id, name, key
         else:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
-            return 0, user[0], user[1], user[2]
+            key = await get_yata_key(tornId)
+            key = tuple(key[0])
+            return 0, user[0], user[1], key[0]
 
     def check_module(self, guild, module):
         """ check_module: helper function
