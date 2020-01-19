@@ -113,7 +113,7 @@ class YataBot(Bot):
         # Return user if perm given
 
         user = tuple(user[0])
-        if not user[2] and needPerm:
+        if not user[3] and needPerm:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
             await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
             return -5, user[0], user[1], None
@@ -121,9 +121,7 @@ class YataBot(Bot):
         # return id, name, key
         else:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
-            key = await get_yata_key(tornId)
-            key = tuple(key[0])
-            return 0, user[0], user[1], key[0]
+            return 0, user[0], user[1], user[2]
 
     def check_module(self, guild, module):
         """ check_module: helper function

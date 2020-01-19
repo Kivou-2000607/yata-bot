@@ -8,30 +8,28 @@ import asyncpg
 import psycopg2
 
 
+# definition of the view linking Player to Key
+# Name of the view: player_view_player_key
+# SELECT player_key.value,
+#    player_player.notifications,
+#    player_player."dId",
+#    player_player."tId",
+#    player_player.name,
+#    player_player."botPerm",
+#    player_player."activateNotifications"
+#   FROM player_key
+#     JOIN player_player ON player_key.player_id = player_player.id;
+
 async def get_yata_user(tornId):
     # get YATA user
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    user = await con.fetch(f'SELECT "tId", "name", "botPerm" FROM player_player WHERE "tId" = {tornId};')
-    # key = await con.fetch(f'SELECT "value" FROM player_key WHERE "tId" = {tornId};')
+    user = await con.fetch(f'SELECT "tId", "name", "value", "botPerm" FROM player_view_player_key WHERE "tId" = {tornId};')
     await con.close()
 
     return user
-
-
-async def get_yata_key(tornId):
-    # get YATA user
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    key = await con.fetch(f'SELECT "value" FROM player_key WHERE "tId" = {tornId};')
-    print("get_yata_key", key)
-    await con.close()
-
-    return key
 
 
 async def push_guild_name(guild):

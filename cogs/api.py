@@ -442,14 +442,14 @@ class API(commands.Cog):
         print("[NOTIFICATIONS] start task")
 
         # YATA guild
-        # guild = get(self.bot.guilds, id=432226682506575893)  # nub navy guild
-        guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
+        guild = get(self.bot.guilds, id=432226682506575893)  # nub navy guild
+        # guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
 
         # connect to YATA database of notifiers
         db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
         dbname = db_cred["dbname"]
         del db_cred["dbname"]
-        sql = 'SELECT "tId", "dId", "notifications", "apikey" FROM player_player WHERE "activateNotifications" = True;'
+        sql = 'SELECT "tId", "dId", "notifications", "value" FROM player_view_player_key WHERE "activateNotifications" = True;'
         con = await asyncpg.connect(database=dbname, **db_cred)
 
         # async loop over notifiers
@@ -496,7 +496,7 @@ class API(commands.Cog):
                         keys.append("travel")
 
                     # make Torn API call
-                    url = f'https://api.torn.com/user/?selections={",".join(list(set(keys)))}&key={record["key"]}'
+                    url = f'https://api.torn.com/user/?selections={",".join(list(set(keys)))}&key={record["value"]}'
                     async with aiohttp.ClientSession() as session:
                         async with session.get(url) as r:
                             req = await r.json()
