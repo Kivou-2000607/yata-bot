@@ -59,5 +59,5 @@ async def push_configurations(bot_id, configs):
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE bot_discordapp SET variables = $1 WHERE id = $2', json.dumps(configs), bot_id)
+    await con.execute('UPDATE bot_discordapp SET variables = $1 WHERE id = $2', json.dumps(configs), int(bot_id))
     await con.close()
