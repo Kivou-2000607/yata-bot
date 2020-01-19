@@ -83,14 +83,17 @@ class Revive(commands.Cog):
 
         for id in self.bot.configs[str(ctx.guild.id)]["revive"].get("servers", []):
             try:
-                # get guild, role and channel
-                guild = self.bot.get_guild(id)
-                role = get(guild.roles, name="Reviver")
-                channel = get(guild.channels, name="revive")
-                await channel.send(f'{role.mention} {msg}')
+                if ctx.guild.id in self.bot.configs[str(id)]["revive"].get("blacklist", []):
+                    await ctx.send(f'Server {ctx.guild.name} has blacklisted you')
+                else:
+                    # get guild, role and channel
+                    guild = self.bot.get_guild(id)
+                    role = get(guild.roles, name="Reviver")
+                    channel = get(guild.channels, name="revive")
+                    await channel.send(f'{role.mention} {msg}')
+                    # await ctx.send(f'Sent to {id}')
             except BaseException as e:
                 await ctx.send(f":x: Error with guild {id}: {e}")
-
 
     @commands.command(aliases=["a"])
     async def reviveServers(self, ctx, *args):
@@ -111,36 +114,82 @@ class Revive(commands.Cog):
         configs = self.bot.configs
 
         # dictionnary of all servers with revive enables
-        servers = {k: v["admin"] for k, v in configs.items() if v.get("revive", dict({})).get("active", False) and int(k) != ctx.guild.id}
+        servers = {k: [v["admin"], v["revive"].get("servers", []), v["revive"].get("blacklist", [])] for k, v in configs.items() if v.get("revive", dict({})).get("active", False) and int(k) != ctx.guild.id}
 
         # update configuration
-        if len(args) and args[0].isdigit() and args[0] in servers:
+        if len(args) and args[0].replace("-", "").isdigit() and args[0].replace("-", "") in servers:
             serverId = int(args[0])
-            servTmp = configs[str(ctx.guild.id)]["revive"].get('servers', [])
-            # toogle server id
-            if serverId in servTmp:
-                servTmp.remove(serverId)
+            if serverId > 0:
+                servTmp = configs[str(ctx.guild.id)]["revive"].get('servers', [])
+                # toogle server id
+                if serverId in servTmp:
+                    servTmp.remove(serverId)
+                else:
+                    servTmp.append(serverId)
+                configs[str(ctx.guild.id)]["revive"]['servers'] = servTmp
+
             else:
-                servTmp.append(serverId)
-            configs[str(ctx.guild.id)]["revive"]['servers'] = servTmp
+                serverId = -serverId
+                servTmp = configs[str(ctx.guild.id)]["revive"].get('blacklist', [])
+                # toogle server id
+                if serverId in servTmp:
+                    servTmp.remove(serverId)
+                else:
+                    servTmp.append(serverId)
+                configs[str(ctx.guild.id)]["revive"]['blacklist'] = servTmp
+
             self.bot.configs = configs
             await push_configurations(self.bot.bot_id, configs)
 
         myServers = configs[str(ctx.guild.id)]["revive"].get("servers", [])  # id of all servers I want to send message
+        myBlackList = configs[str(ctx.guild.id)]["revive"].get("blacklist", [])  # id of all servers I want to send message
 
         if len(servers):
             lst = ["List of servers with the *revive module* activated\n"]
-            for k, s in servers.items():
+            for k, [s, r, b] in servers.items():
+                lst.append(f'**{s["name"]}** server (contact **{s["contact"]} [{s["contact_id"]}]**)')
                 if int(k) in myServers:
-                    lst.append(f'**{s["name"]}** server (contact **{s["contact"]} [{s["contact_id"]}]**)')
-                    lst.append('\tStatus: *linked*')
-                    lst.append('\tType `!reviveServers {}` to unlink this server and stop sending them revive messages'.format(k))
+                    lst.append('\tSending: **on**')
                 else:
-                    lst.append(f'**{s["name"]}** server (contact **{s["contact"]} [{s["contact_id"]}]**)')
-                    lst.append('\tStatus: *not linked*')
-                    lst.append('\tType `!reviveServers {}` to link this server and start sending them revive messages'.format(k))
+                    lst.append('\tSending: **off**')
+                if ctx.guild.id in r:
+                    lst.append('\tReceiving: **on**')
+                else:
+                    lst.append('\tReceiving: **off**')
+                if int(k) in myBlackList:
+                    lst.append('\tThis server is on your blacklist')
+                if ctx.guild.id in b:
+                    lst.append('\tThis server have you on their blacklist')
+
+                lst.append('\tType `!reviveServers {}` to start or stop sending this server your revive calls'.format(k))
+                lst.append('\tType `!reviveServers -{}` to add or remove this server from your blacklist'.format(k))
+
         else:
             await ctx.send(":x: No other servers have activated their revive option")
             return
 
         await fmt.send_tt(ctx, lst, tt=False)
+
+    @commands.command()
+    async def reviver(self, ctx):
+        """Add/remove @Reviver role"""
+        # return if revive not active
+        if not self.bot.check_module(ctx.guild, "revive"):
+            await ctx.send(":x: Revive module not activated")
+            return
+
+        # Get Reviver role
+        role = get(ctx.guild.roles, name="Reviver")
+
+        if role in ctx.author.roles:
+            # remove Reviver
+            await ctx.author.remove_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for revives.")
+        else:
+            # assign Reviver
+            await ctx.author.add_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for revives.")
+
+        await asyncio.sleep(10)
+        await msg.delete()
+        await ctx.message.delete()
