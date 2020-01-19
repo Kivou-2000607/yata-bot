@@ -231,7 +231,7 @@ class YataBot(Bot):
                         print(f"\tCreate channel {channel_name}")
                         channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
                         await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
-                    await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: Stop watching (reboot).")
+                    await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
 
                 if self.check_module(guild, "loot"):
                     # create Looter role
@@ -254,18 +254,21 @@ class YataBot(Bot):
                         await channel_loot.send("Type `!loot` here to get the npc timings")
                         await channel_loot.send(f"Type `!looter` to remove your {role_loot.mention} role")
 
-                    # create start-looting channel
-                    # channel_loot = get(guild.channels, name="loot")
-                    # channel_name = "start-looting"
-                    # if get(guild.channels, name=channel_name) is None:
-                    #     print(f"\tCreate channel {channel_name}")
-                    #     overwrites = {
-                    #         guild.default_role: discord.PermissionOverwrite(read_messages=True),
-                    #         role_loot: discord.PermissionOverwrite(read_messages=False),
-                    #         bot_role: discord.PermissionOverwrite(read_messages=True)
-                    #         }
-                    #     channel_slooting = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
-                    #     await channel_slooting.send(f'Type `!looter` here to have access to the {channel_loot.mention} channel')
+                if self.check_module(guild, "revive"):
+                    # create Reviver role
+                    reviver = get(guild.roles, name="Reviver")
+                    if reviver is None:
+                        print(f"\tCreate role Reviver")
+                        reviver = await guild.create_role(name="Reviver", mentionable=True)
+
+                    # create revive channel
+                    channel_name = "revive"
+                    if get(guild.channels, name=channel_name) is None:
+                        print(f"\tCreate channel {channel_name}")
+                        channel_revive = await guild.create_text_channel(channel_name, topic="Revive channel for the YATA bot", category=yata_category)
+                        # await channel_revive.send(f"{role_loot.mention} will reveive notification here")
+                        # await channel_revive.send("Type `!loot` here to get the npc timings")
+                        # await channel_revive.send(f"Type `!looter` to remove your {role_loot.mention} role")
 
                 # create socks role and channels
                 if self.check_module(guild, "stocks"):
