@@ -47,7 +47,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
+            await ctx.send(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
             return
 
         # handle no faction
@@ -81,7 +81,7 @@ class Chain(commands.Cog):
 
             # handle API error
             if 'error' in req:
-                await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
+                await ctx.send(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
                 return
 
             now = datetime.datetime.utcnow()
@@ -163,7 +163,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await ctx.send(f':x: Problem with {name} [{tornId}]\'s key: *{req["error"]["error"]}*')
+            await ctx.send(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
             return
 
         # handle no faction
