@@ -163,33 +163,37 @@ class Stocks(commands.Cog):
 
         # create message to send
         if not len(lst):
+            print("[STOCK] no alerts")
             return
 
         # loop over guilds to send alerts
         async for guild in self.bot.fetch_guilds(limit=100):
+            try:
+                # check if module activated
+                if not self.bot.get_config(guild).get("stocks", dict({})).get("alerts", False):
+                    print(f"[STOCK] guild {guild}: ignore notifications")
+                    continue
 
-            # check if module activated
-            if not self.bot.get_config(guild).get("stocks", dict({})).get("alerts", False):
-                print(f"[STOCK] guild {guild}: ignore notifications")
-                continue
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
 
-            # get full guild (async iterator doesn't return channels)
-            guild = self.bot.get_guild(guild.id)
+                # get channel and role
+                channelName = self.bot.get_config(guild).get("stocks").get("channel", "stocks")
+                channel = get(guild.channels, name=channelName)
+                role = get(guild.roles, name="Trader")
 
-            # get channel and role
-            channelName = self.bot.get_config(guild).get("stocks").get("channel", "stocks")
-            channel = get(guild.channels, name=channelName)
-            role = get(guild.roles, name="Trader")
-
-            if channel is not None:
-                if role is None:
-                    print(f"[STOCK] guild {guild}: no role @Trader")
+                if channel is not None:
+                    if role is None:
+                        print(f"[STOCK] guild {guild}: no role @Trader")
+                    else:
+                        s = "" if len(lst) == 1 else "s"
+                        await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
+                    await fmt.send_tt(channel, lst)
                 else:
-                    s = "" if len(lst) == 1 else "s"
-                    await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
-                await fmt.send_tt(channel, lst)
-            else:
-                print(f"[STOCK] guild {guild}: no channel {channelName}")
+                    print(f"[STOCK] guild {guild}: no channel {channelName}")
+
+            except BaseException as e:
+                print(f"[STOCK] Error with  {guild} {e}")
 
     @commands.command()
     async def trader(self, ctx):
