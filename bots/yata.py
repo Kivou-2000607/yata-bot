@@ -266,9 +266,9 @@ class YataBot(Bot):
                     if get(guild.channels, name=channel_name) is None:
                         print(f"\tCreate channel {channel_name}")
                         channel_revive = await guild.create_text_channel(channel_name, topic="Revive channel for the YATA bot", category=yata_category)
-                        # await channel_revive.send(f"{role_loot.mention} will reveive notification here")
-                        # await channel_revive.send("Type `!loot` here to get the npc timings")
-                        # await channel_revive.send(f"Type `!looter` to remove your {role_loot.mention} role")
+                        await channel_revive.send(f"{reviver.mention} will reveive notifications here")
+                        await channel_revive.send("Type `!revive` or `!r` here to send a revive call")
+                        await channel_revive.send(f"Type `!reviver` to add or remove your {reviver.mention} role")
 
                 # create socks role and channels
                 if self.check_module(guild, "stocks"):

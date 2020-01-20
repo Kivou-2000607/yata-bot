@@ -1,5 +1,5 @@
 # import standard modules
-# import asyncio
+import asyncio
 import aiohttp
 # import datetime
 # import json
@@ -162,7 +162,7 @@ class Revive(commands.Cog):
                     lst.append('\tThis server have you on their blacklist')
 
                 lst.append('\tType `!reviveServers {}` to start or stop sending this server your revive calls'.format(k))
-                lst.append('\tType `!reviveServers -{}` to add or remove this server from your blacklist'.format(k))
+                lst.append('\tType `!reviveServers -{}` to add or remove this server from your blacklist\n'.format(k))
 
         else:
             await ctx.send(":x: No other servers have activated their revive option")
