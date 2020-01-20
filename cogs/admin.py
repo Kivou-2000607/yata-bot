@@ -1,4 +1,5 @@
 # import standard modules
+import re
 import json
 import aiohttp
 
@@ -49,6 +50,34 @@ class Admin(commands.Cog):
             status, _, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
             if status == 0:
                 await member.add_roles(get(ctx.guild.roles, name="YATA user"))
+
+    @commands.command()
+    async def hosts(self, ctx):
+        """Admin tool for the bot owner"""
+        if ctx.author.id != 227470975317311488:
+            await ctx.send("This command is not for you")
+            return
+
+        # get all contacts
+        contacts = []
+        for k, v in self.bot.configs.items():
+            contacts.append(v["admin"].get("contact_id", 0))
+
+        r = get(ctx.guild.roles, name=f"Host")
+        if r is None:
+            print("No @Host")
+            return
+
+        # loop over member
+        for member in ctx.guild.members:
+            print(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
+            match = re.search('\[\d{1,7}\]', member.display_name)
+            if match is None:
+                continue
+            tornId = int(match.group().replace("[", "").replace("]", ""))
+            if tornId in contacts:
+                await ctx.send(f'`@{r}` given to **{member.display_name}**')
+                await member.add_roles(r)
 
     # helper functions
 

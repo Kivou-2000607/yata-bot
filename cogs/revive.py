@@ -43,7 +43,7 @@ class Revive(commands.Cog):
         errors = []
         status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status in [-1, -2, -3]:
-            await ctx.send(":x: I cannot send revive message")
+            await ctx.send(":x: I cannot send the revive call")
             return
 
         if status in [-4]:
@@ -74,28 +74,42 @@ class Revive(commands.Cog):
         if req.get('status', False) and req["status"]["state"] == "Hospital":
             lst.append(f'{req["status"]["description"]} ({req["status"]["details"]})')
 
+        # list of messages to delete them after
+        msgList = []
         # send message to current channel
         if len(errors):
             msg = "\n".join(errors)
-            await ctx.send(f'{msg}')
+            m = await ctx.send(f'{msg}')
+            msgList.append([m, ctx.channel])
         msg = "\n".join(lst)
-        await ctx.send(f'{role.mention} {msg}')
+        m = await ctx.send(f'{role.mention} {msg}')
+        msgList.append([m, ctx.channel])
 
         for id in self.bot.configs[str(ctx.guild.id)]["revive"].get("servers", []):
             try:
                 if ctx.guild.id in self.bot.configs[str(id)]["revive"].get("blacklist", []):
-                    await ctx.send(f'Server {ctx.guild.name} has blacklisted you')
+                    m = await ctx.send(f'Server {ctx.guild.name} has blacklisted you')
+                    msgList.append([m, ctx.channel])
                 else:
                     # get guild, role and channel
                     guild = self.bot.get_guild(id)
                     role = get(guild.roles, name="Reviver")
                     channel = get(guild.channels, name="revive")
-                    await channel.send(f'{role.mention} {msg}')
+                    m = await channel.send(f'{role.mention} {msg}')
+                    msgList.append([m, channel])
                     # await ctx.send(f'Sent to {id}')
             except BaseException as e:
                 await ctx.send(f":x: Error with guild {id}: {e}")
 
-    @commands.command(aliases=["a"])
+        # wait for 5 minutes
+        await asyncio.sleep(300)
+        for [msg, cha] in msgList:
+            try:
+                await msg.delete()
+            except BaseException:
+                await cha.send(":x: There is no need to delete the calls. They are automatically deleted after 5 minutes. *You can delete this message thought* ^^")
+
+    @commands.command(aliases=["rs"])
     async def reviveServers(self, ctx, *args):
 
         # return if revive not active
