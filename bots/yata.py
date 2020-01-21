@@ -63,15 +63,18 @@ class YataBot(Bot):
         else:
             return -1, None, None
 
-    async def get_user_key(self, ctx, member, needPerm=True):
+    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False):
         """ gets a key from discord member
             return status, tornId, Name, key
             return 0, id, Name, Key: All good
             return -1, None, None, None: no master key given
             return -2, None, None, None: master key api error
-            return -3, None, None, None: user not verified
-            return -4, id, None, None: did not find torn id in yata db
-            return -5, id, Name, None: member did not give perm
+            return -3, master_id, None, master_key: user not verified
+            return -4, id, None, master_key: did not find torn id in yata db
+            return -5, id, Name, master_key: member did not give perm
+
+            if returnMaster: return master key if key not available
+            else return None
         """
 
         # get master key to check identity
@@ -98,7 +101,7 @@ class YataBot(Bot):
         elif tornId == -2:
             # print(f'[GET MEMBER KEY] status -2: user not verified')
             await ctx.send(f':x: {member.mention} is not verified')
-            return -3, None, None, None
+            return -3, master_id, None, master_key if returnMaster else -3, None, None, None
 
         # get YATA user
 
@@ -108,7 +111,7 @@ class YataBot(Bot):
         if not len(user):
             # print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             await ctx.send(f':x: {member.mention} not found in YATA\'s database')
-            return -4, tornId, None, None
+            return -4, tornId, None, master_key if returnMaster else None
 
         # Return user if perm given
 
@@ -116,7 +119,7 @@ class YataBot(Bot):
         if not user[3] and needPerm:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
             await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
-            return -5, user[0], user[1], None
+            return -5, user[0], user[1], master_key if returnMaster else None
 
         # return id, name, key
         else:

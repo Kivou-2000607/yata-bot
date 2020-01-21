@@ -20,7 +20,7 @@ class Revive(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["r"])
-    async def revive(self, ctx):
+    async def revive(self, ctx, *args):
         """ send revive message to @Reviver
         """
 
@@ -41,38 +41,70 @@ class Revive(commands.Cog):
         # Get user key
         lst = []
         errors = []
-        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-        if status in [-1, -2, -3]:
-            await ctx.send(":x: I cannot send the revive call")
-            return
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, returnMaster=True)
+        # return 0, id, Name, Key: All good
+        # return -1, None, None, None: no master key given
+        # return -2, None, None, None: master key api error
+        # return -3, master_id, None, master_key: user not verified
+        # return -4, id, None, master_key: did not find torn id in yata db
+        # return -5, id, Name, master_key: member did not give perm
 
-        if status in [-4]:
-            errors.append(":x: I cannot specify faction or hospitalization time")
+        sendFrom = f'Send from {ctx.guild}'
+
+        # in this case it's not possible to link discordID with torn player
+        # -> backup is to have the id as an argument
+        # note: if status == -3 it converts master_id to actual tornId
+        if status in [-1, -2, -3]:
+            if len(args) and args[0].isdigit():
+                sendFrom += f' on behalf of {ctx.author.display_name}'
+                tornId = int(args[0])
+                name = "Player"
+            else:
+                msg = await ctx.send(":x: Impossible to send revive call because you're not verified on the official Torn discord server.\nYou can use `!revive <tornId>`.")
+                await asyncio.sleep(30)
+                await msg.delete()
+                return
+
+        else:
+            if len(args) and args[0].isdigit():
+                sendFrom += f' on behalf of {ctx.author.display_name}'
+                tornId = int(args[0])
+            else:
+                tornId = id
+
+        if key is None:
+            # should be for case -1, -2
             req = dict({})
 
         else:
             # api call to get potential status and faction
-            url = f'https://api.torn.com/user/?key={key}'
+            url = f'https://api.torn.com/user/{tornId}?key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
 
             # handle API error
             if 'error' in req:
-                errors.append(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
+                if status in [0]:
+                    errors.append(f':x: Problem with {name} [{id}]\'s key: *{req["error"]["error"]}*')
+                elif status in [-3, -4]:
+                    errors.append(f':x: Problem with server master key: *{req["error"]["error"]}*')
+                else:
+                    errors.append(f':x: Problem with API key (status = {status}): *{req["error"]["error"]}*')
                 errors.append(":x: I cannot specify faction or hospitalization time")
 
         # get reviver role
+        name = req["name"]
         role = get(ctx.guild.roles, name="Reviver")
         url = f'https://www.torn.com/profiles.php?XID={tornId}'
         if req.get('faction', False) and req["faction"]["faction_id"]:
-            lst.append(f'**{Name} [{tornId}]** from **{req["faction"]["faction_name"]} [{req["faction"]["faction_id"]}]** needs a revive {url}')
+            lst.append(f'**{name} [{tornId}]** from **{req["faction"]["faction_name"]} [{req["faction"]["faction_id"]}]** needs a revive {url}')
         else:
-            lst.append(f'**{Name} [{tornId}]** needs a revive {url}')
+            lst.append(f'**{name} [{tornId}]** needs a revive {url}')
 
         # add status
         if req.get('status', False) and req["status"]["state"] == "Hospital":
-            lst.append(f'{req["status"]["description"]} ({req["status"]["details"]})')
+            lst.append(f'{req["status"]["description"]} ({fmt.cleanhtml(req["status"]["details"])})')
 
         # list of messages to delete them after
         msgList = []
@@ -95,14 +127,15 @@ class Revive(commands.Cog):
                     guild = self.bot.get_guild(id)
                     role = get(guild.roles, name="Reviver")
                     channel = get(guild.channels, name="revive")
-                    m = await channel.send(f'{role.mention} {msg}')
+                    m = await channel.send('{} {}\n*{}*'.format(role.mention, msg, sendFrom))
                     msgList.append([m, channel])
                     # await ctx.send(f'Sent to {id}')
             except BaseException as e:
                 await ctx.send(f":x: Error with guild {id}: {e}")
 
         # wait for 5 minutes
-        await asyncio.sleep(300)
+        # await asyncio.sleep(300)
+        await asyncio.sleep(5)
         for [msg, cha] in msgList:
             try:
                 await msg.delete()
