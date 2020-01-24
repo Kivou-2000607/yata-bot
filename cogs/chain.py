@@ -92,7 +92,7 @@ class Chain(commands.Cog):
                 if k in past_mentions:
                     continue
 
-                if v["defender_faction"] == int(fId) and v["attacker_id"] and delay < 5:
+                if v["defender_faction"] == int(fId) and v["attacker_id"] and float(v["respect_gain"]) > 0 and delay < 5:
                     tleft = 5 - delay
                     if v["attacker_faction"]:
                         await ctx.send(f':rage: {factionRole.mention} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
