@@ -58,9 +58,9 @@ class Chain(commands.Cog):
         # Set Faction role
         fId = str(req['ID'])
         if fId in config.get("factions", []):
-            factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+            factionName = f'{config["factions"][fId]} [{fId}]' if config.get("verify", dict({})).get("id", False) else f'{config["factions"][fId]}'
         else:
-            factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
+            factionName = "{name} [{ID}]".format(**req) if config.get("verify", dict({})).get("id", False) else "{name}".format(**req)
         factionRole = get(ctx.guild.roles, name=factionName)
 
         await ctx.send(f":rage: `{factionName}` Start watching for retal")
@@ -174,9 +174,9 @@ class Chain(commands.Cog):
         # Set Faction role
         fId = str(req['ID'])
         if fId in config.get("factions", []):
-            factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+            factionName = f'{config["factions"][fId]} [{fId}]' if config.get("verify", dict({})).get("id", False) else f'{config["factions"][fId]}'
         else:
-            factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
+            factionName = "{name} [{ID}]".format(**req) if config.get("verify", dict({})).get("id", False) else "{name}".format(**req)
         factionRole = get(ctx.guild.roles, name=factionName)
 
         # if no chain
