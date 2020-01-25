@@ -57,7 +57,7 @@ class Chain(commands.Cog):
 
         # Set Faction role
         fId = str(req['ID'])
-        if fId in config["factions"]:
+        if fId in config.get("factions", []):
             factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
         else:
             factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
@@ -173,7 +173,7 @@ class Chain(commands.Cog):
 
         # Set Faction role
         fId = str(req['ID'])
-        if fId in config["factions"]:
+        if fId in config.get("factions", []):
             factionName = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
         else:
             factionName = "{faction_name} [{faction_id}]".format(**req) if config["verify"].get("id", False) else "{faction_name}".format(**req)
