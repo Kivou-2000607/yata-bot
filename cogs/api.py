@@ -442,8 +442,8 @@ class API(commands.Cog):
         print("[NOTIFICATIONS] start task")
 
         # YATA guild
-        guild = get(self.bot.guilds, id=432226682506575893)  # nub navy guild
-        # guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
+        # guild = get(self.bot.guilds, id=432226682506575893)  # nub navy guild
+        guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
 
         # connect to YATA database of notifiers
         db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
