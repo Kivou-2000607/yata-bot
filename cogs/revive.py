@@ -133,9 +133,9 @@ class Revive(commands.Cog):
             except BaseException as e:
                 await ctx.send(f":x: Error with guild {id}: {e}")
 
-        # wait for 5 minutes
-        # await asyncio.sleep(300)
-        await asyncio.sleep(5)
+        # wait for 1 minute
+        await asyncio.sleep(50)
+        # await asyncio.sleep(5)
         for [msg, cha] in msgList:
             try:
                 await msg.delete()
