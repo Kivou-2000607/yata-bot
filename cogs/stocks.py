@@ -223,4 +223,4 @@ class Stocks(commands.Cog):
     async def before_notify(self):
         print('[STOCK] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
+        await asyncio.sleep(30)

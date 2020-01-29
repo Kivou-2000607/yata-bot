@@ -19,7 +19,7 @@ class Revive(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["r"])
+    @commands.command(aliases=["r", "R"])
     async def revive(self, ctx, *args):
         """ send revive message to @Reviver
         """
@@ -41,7 +41,7 @@ class Revive(commands.Cog):
         # Get user key
         lst = []
         errors = []
-        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, returnMaster=True)
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, returnMaster=True, delError=True)
         # return 0, id, Name, Key: All good
         # return -1, None, None, None: no master key given
         # return -2, None, None, None: master key api error

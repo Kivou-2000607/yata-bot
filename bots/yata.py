@@ -63,7 +63,7 @@ class YataBot(Bot):
         else:
             return -1, None, None
 
-    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False):
+    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False):
         """ gets a key from discord member
             return status, tornId, Name, key
             return 0, id, Name, Key: All good
@@ -83,7 +83,10 @@ class YataBot(Bot):
         master_status, master_id, master_key = await self.get_master_key(ctx.guild)
         if master_status == -1:
             # print(f"[GET USER KEY] <{ctx.guild}> no master key given")
-            await ctx.send(":x: no master key given")
+            m = await ctx.send(":x: no master key given")
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
             return -1, None, None, None
         # print(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
 
@@ -96,11 +99,17 @@ class YataBot(Bot):
 
         if tornId == -1:
             # print(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
-            await ctx.send(f':x: api error with master key id {master_id}: *{msg["error"]}*')
+            m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
             return -2, None, None, None
         elif tornId == -2:
             # print(f'[GET MEMBER KEY] status -2: user not verified')
-            await ctx.send(f':x: {member.mention} is not verified')
+            m = await ctx.send(f':x: {member.mention} is not verified')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
             return -3, master_id, None, master_key if returnMaster else None
 
         # get YATA user
@@ -110,7 +119,10 @@ class YataBot(Bot):
         # handle user not on YATA
         if not len(user):
             # print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
-            await ctx.send(f':x: {member.mention} not found in YATA\'s database')
+            m = await ctx.send(f':x: **{member}** not found in YATA\'s database')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
             return -4, tornId, None, master_key if returnMaster else None
 
         # Return user if perm given
@@ -118,7 +130,10 @@ class YataBot(Bot):
         user = tuple(user[0])
         if not user[3] and needPerm:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
-            await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
+            m = await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
             return -5, user[0], user[1], master_key if returnMaster else None
 
         # return id, name, key
@@ -211,10 +226,10 @@ class YataBot(Bot):
                         await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
 
                     # create readme channel
-                    channel_name = "readme"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
+                    # channel_name = "readme"
+                    # if get(guild.channels, name=channel_name) is None:
+                    #     print(f"\tCreate channel {channel_name}")
+                    #     channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
 
                     channel_name = "verify-id"
                     if get(guild.channels, name=channel_name) is None:
