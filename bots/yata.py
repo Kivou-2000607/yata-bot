@@ -101,7 +101,7 @@ class YataBot(Bot):
         elif tornId == -2:
             # print(f'[GET MEMBER KEY] status -2: user not verified')
             await ctx.send(f':x: {member.mention} is not verified')
-            return -3, master_id, None, master_key if returnMaster else -3, None, None, None
+            return -3, master_id, None, master_key if returnMaster else None
 
         # get YATA user
 
