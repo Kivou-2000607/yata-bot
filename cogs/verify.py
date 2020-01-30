@@ -325,6 +325,12 @@ class Verify(commands.Cog):
                         else:
                             await m.remove_roles(common_role)
                             await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
+
+                        # verify him again see if he has a new faction on the server
+                        vrole = get(ctx.guild.roles, name="Verified")
+                        message, success = await self.member(m, vrole, discordID=m.id, API_KEY=key)
+                        await ctx.send(message)
+
                     else:
                         await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
 
