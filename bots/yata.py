@@ -155,6 +155,22 @@ class YataBot(Bot):
         """ on_ready
             loop over the bot guilds and do the setup
         """
+        await self.rebuild(reboot=True)
+
+        # change activity
+        activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
+        await self.change_presence(activity=activity)
+
+        print("[SETUP] Ready...")
+
+    async def on_guild_join(self, guild):
+        """notifies me when joining a guild"""
+        owner = self.get_user(guild.owner_id)
+        my_creator = self.get_user(227470975317311488)
+        await my_creator.send(f"I joined guild **{guild} [{guild.id}]** owned by **{owner}**")
+
+
+    async def rebuild(self, reboot=False):
         # loop over guilds
         for guild in self.guilds:
             try:
@@ -249,7 +265,8 @@ class YataBot(Bot):
                         print(f"\tCreate channel {channel_name}")
                         channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
                         await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
-                    await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
+                    if reboot:
+                        await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
 
                 if self.check_module(guild, "loot"):
                     # create Looter role
@@ -329,15 +346,3 @@ class YataBot(Bot):
 
             except BaseException as e:
                 print(f"[SETUP] Error in guild {guild}: {e}")
-
-        # change activity
-        activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
-        await self.change_presence(activity=activity)
-
-        print("[SETUP] Ready...")
-
-    async def on_guild_join(self, guild):
-        """notifies me when joining a guild"""
-        owner = self.get_user(guild.owner_id)
-        my_creator = self.get_user(227470975317311488)
-        await my_creator.send(f"I joined guild **{guild} [{guild.id}]** owned by **{owner}**")

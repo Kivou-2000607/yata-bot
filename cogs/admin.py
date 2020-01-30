@@ -20,16 +20,18 @@ class Admin(commands.Cog):
         from includes.yata_db import load_configurations
         from includes.yata_db import push_guild_name
         if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
+            await ctx.send(":x: This command is not for you")
             return
         _, c = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
+        await self.bot.rebuild()
+        await ctx.send(":white_check_mark: Reboot done")
 
     @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
         if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
+            await ctx.send(":x: This command is not for you")
             return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
@@ -38,7 +40,7 @@ class Admin(commands.Cog):
     async def yata(self, ctx):
         """Admin tool for the bot owner"""
         if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
+            await ctx.send(":x: This command is not for you")
             return
 
         # loop over member
@@ -55,7 +57,7 @@ class Admin(commands.Cog):
     async def hosts(self, ctx):
         """Admin tool for the bot owner"""
         if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
+            await ctx.send(":x: This command is not for you")
             return
 
         # get all contacts
@@ -96,7 +98,7 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
 
         if ctx.author.id != 227470975317311488:
-            await ctx.send("This command is not for you")
+            await ctx.send(":x: This command is not for you")
             return
 
         # loop over guilds
