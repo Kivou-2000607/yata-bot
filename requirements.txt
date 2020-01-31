@@ -6,3 +6,5 @@ psycopg2
 asyncio
 asyncpg
 termplotlib
+websockets
+cloudscraper
