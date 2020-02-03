@@ -1,10 +1,19 @@
 discord.py==1.2.5
 requests
 pytz
-PyGithub
 psycopg2
 asyncio
 asyncpg
+
+# for repo
+PyGithub
+
+# for stock alerts
 termplotlib
+
+# chat
 websockets
 cloudscraper
+
+# for xkcd
+xkcd
