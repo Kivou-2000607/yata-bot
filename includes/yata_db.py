@@ -61,3 +61,14 @@ async def push_configurations(bot_id, configs):
     con = await asyncpg.connect(database=dbname, **db_cred)
     await con.execute('UPDATE bot_discordapp SET variables = $1 WHERE id = $2', json.dumps(configs), int(bot_id))
     await con.close()
+
+
+def get_secret(name):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    con = psycopg2.connect(**db_cred)
+    cur = con.cursor()
+    cur.execute(f"SELECT uid, secret, hookurl FROM bot_chat WHERE name = '{name}';")
+    uid, secret, hookurl = cur.fetchone()
+    cur.close()
+    con.close()
+    return uid, secret, hookurl
