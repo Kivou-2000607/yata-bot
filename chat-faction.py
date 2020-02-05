@@ -28,9 +28,11 @@ async def chat(uid, secret, hookurl, room):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]
                 if d.get("roomId", "") == room and d.get("messageText"):
+                    splitMessage = [w.lower().replace("@", "").replace("!", "") for w in d.get("messageText").split(" ")]
                     msg = f'`{d.get("senderName")} [{d.get("senderId")}]: {d.get("messageText")}`'
+                    if "leader" in splitMessage:
+                        msg += " <@&546769358744191006>"
                     await webhook.send(msg)
-                    print(msg)
     print("</chat>")
 
 asyncio.get_event_loop().run_until_complete(chat(iud, secret, hookurl, room))
