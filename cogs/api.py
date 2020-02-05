@@ -163,13 +163,13 @@ class API(commands.Cog):
                 await ctx.send(f":x: Couldn't find discord member: {discordId}. Try `!who <torn ID>`.")
                 return
 
-            # try to parse Torn user ID
-            regex = re.findall(r'\[(\d{1,7})\]', member.display_name)
-            if len(regex) == 1 and regex[0].isdigit():
-                tornId = int(regex[0])
-            else:
-                await ctx.send(f":x: `{member.display_name}` could not find Torn ID within their display name. Try `!who <Torn ID>`.")
-                return
+                # try to parse Torn user ID
+                regex = re.findall(r'\[(\d{1,7})\]', member.display_name)
+                if len(regex) == 1 and regex[0].isdigit():
+                    tornId = int(regex[0])
+                else:
+                    await ctx.send(f":x: `{member.display_name}` could not find Torn ID within their display name. Try `!who <Torn ID>`.")
+                    return
 
         # other cases I didn't think of
         else:
