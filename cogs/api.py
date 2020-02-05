@@ -168,7 +168,7 @@ class API(commands.Cog):
             if len(regex) == 1 and regex[0].isdigit():
                 tornId = int(regex[0])
             else:
-                status, tornId, _, _ = self.bot.get_user_key(ctx, member, needPerm=False)
+                status, tornId, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
                 if status in [-1, -2, -3]:
                     await ctx.send(f":x: `{member.display_name}` could not find Torn ID within their display name and verification failed. Try `!who <Torn ID>`.")
                     return
