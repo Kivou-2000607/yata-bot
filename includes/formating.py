@@ -75,18 +75,18 @@ def chat_message(d):
     return '```markdown\n[{}]({} [{}]) {}\n```'.format(time, name, uid, message)
 
 
-async def send_tt(ctx, lst, limit=1800, tt=True):
+async def send_tt(ctx, lst, limit=1800, tt=True, style="YAML"):
     if len(lst):
         msg = ""
         for line in lst:
             msg += line + "\n"
             if len(msg) > limit:
                 if tt:
-                    await ctx.send("```YAML\n{}```".format(msg))
+                    await ctx.send("```{}\n{}```".format(style, msg))
                 else:
                     await ctx.send("{}".format(msg))
                 msg = ""
         if tt:
-            await ctx.send("```YAML\n{}```".format(msg))
+            await ctx.send("```{}\n{}```".format(style, msg))
         else:
             await ctx.send("{}".format(msg))

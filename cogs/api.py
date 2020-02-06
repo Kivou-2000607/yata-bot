@@ -85,6 +85,62 @@ class API(commands.Cog):
         await fmt.send_tt(ctx.author, lst)
         return
 
+    @commands.command(aliases=['fh'])
+    async def finishing(self, ctx, *args):
+        """DM number of finishing hits to author"""
+
+        # check role and channel
+        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
+        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
+            pass
+        else:
+            return
+
+        await ctx.message.delete()
+
+        # get user key
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
+            print(f"[FINISHING HITS] error {status}")
+            return
+
+        # make api call
+        url = f"https://api.torn.com/user/?selections=discord,personalstats&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # handle API error
+        if "error" in req:
+            await ctx.author.send(f':x: You asked for your finishing hits but an error occured with your API key: *{req["error"]["error"]}*')
+            return
+
+        bridge = {"heahits": "Heavy artillery",
+                  "chahits": "Mechanical guns",
+                  "axehits": "Clubbin weapons",
+                  "grehits": "Temporary weapons",
+                  "machits": "Machine guns",
+                  "pishits": "Pistols",
+                  "rifhits": "Rifles",
+                  "shohits": "Shotguns",
+                  "smghits": "Sub machin guns",
+                  "piehits": "Piercing weapons",
+                  "slahits": "Slashing weapons",
+                  "h2hhits": "Hand to hand"}
+
+        finishingHits = []
+        for k, v in bridge.items():
+            finishingHits.append([v, req.get("personalstats", dict({})).get(k, 0)])
+
+        lst = [f"# {name} [{id}]: finishing hits\n"]
+        # send list
+        for fh in sorted(finishingHits, key=lambda x: -x[1]):
+            lst.append(f"{fh[0]}: {fh[1]:,d}")
+
+        await fmt.send_tt(ctx.author, lst, style="python")
+        return
+
     @commands.command(aliases=['net'])
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
