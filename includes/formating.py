@@ -68,7 +68,11 @@ def ts_to_datetime(timestamp, fmt=None):
 
 
 def chat_message(d):
-    return f'`{ts_to_datetime(d.get("time"), fmt="short")} {d.get("senderName")} [{d.get("senderId")}]: {d.get("messageText")}`'
+    time = ts_to_datetime(d.get("time"), fmt="short")
+    name = d.get("senderName")
+    uid = d.get("senderId")
+    message = d.get("messageText")
+    return '```markdown\n[{}]({} [{}]) {}\n```'.format(time, name, uid, message)
 
 
 async def send_tt(ctx, lst, limit=1800, tt=True):
