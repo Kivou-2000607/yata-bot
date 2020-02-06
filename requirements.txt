@@ -1,7 +1,7 @@
 discord.py==1.2.5
 requests
 pytz
-psycopg2
+psycopg2-binary
 asyncio
 asyncpg
 
@@ -12,7 +12,7 @@ PyGithub
 termplotlib
 
 # chat
-websockets
+websockets==6.0
 cloudscraper
 
 # for xkcd

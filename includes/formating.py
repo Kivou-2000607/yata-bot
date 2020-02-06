@@ -59,8 +59,16 @@ def ts_to_date(timestamp):
     return datetime.date.fromtimestamp(timestamp, tz=pytz.UTC)
 
 
-def ts_to_datetime(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+def ts_to_datetime(timestamp, fmt=None):
+    d = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+    if fmt == "short":
+        return d.strftime("%m/%d %H:%M:%S")
+    else:
+        return d
+
+
+def chat_message(d):
+    return f'`{ts_to_datetime(d.get("time"), fmt="short")} {d.get("senderName")} [{d.get("senderId")}]: {d.get("messageText")}`'
 
 
 async def send_tt(ctx, lst, limit=1800, tt=True):

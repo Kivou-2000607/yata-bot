@@ -5,16 +5,16 @@ import websockets
 import cloudscraper
 import aiohttp
 import json
+import re
 
 from includes.yata_db import get_secret
+import includes.formating as fmt
 
 room = "Faction:33241"
 iud, secret, hookurl = get_secret(room)
 
 
 async def chat(uid, secret, hookurl, room):
-    print("<chat>")
-    print(iud, secret, hookurl)
 
     uri = f"wss://ws-chat.torn.com/chat/ws?uid={iud}&secret={secret}"
 
@@ -28,11 +28,9 @@ async def chat(uid, secret, hookurl, room):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]
                 if d.get("roomId", "") == room and d.get("messageText"):
-                    splitMessage = [w.lower().replace("@", "").replace("!", "") for w in d.get("messageText").split(" ")]
-                    msg = f'`{d.get("senderName")} [{d.get("senderId")}]: {d.get("messageText")}`'
-                    if "leader" in splitMessage:
+                    msg = fmt.chat_message(d)
+                    if re.search("\W*(leader)\W*", msg.lower()) is not None:
                         msg += " <@&546769358744191006>"
                     await webhook.send(msg)
-    print("</chat>")
 
 asyncio.get_event_loop().run_until_complete(chat(iud, secret, hookurl, room))

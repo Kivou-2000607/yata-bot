@@ -7,14 +7,13 @@ import aiohttp
 import json
 
 from includes.yata_db import get_secret
+import includes.formating as fmt
 
 room = "Trade"
 iud, secret, hookurl = get_secret(room)
 
 
 async def chat(uid, secret, hookurl, room):
-    print("<chat>")
-    print(iud, secret, hookurl)
 
     uri = f"wss://ws-chat.torn.com/chat/ws?uid={iud}&secret={secret}"
 
@@ -28,9 +27,7 @@ async def chat(uid, secret, hookurl, room):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]
                 if d.get("roomId", "") == room and d.get("messageText"):
-                    msg = f'`{d.get("senderName")} [{d.get("senderId")}]: {d.get("messageText")}`'
+                    msg = fmt.chat_message(d)
                     await webhook.send(msg)
-                    print(msg)
-    print("</chat>")
 
 asyncio.get_event_loop().run_until_complete(chat(iud, secret, hookurl, room))
