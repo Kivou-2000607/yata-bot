@@ -14,7 +14,6 @@ from cogs.api import API
 from cogs.chain import Chain
 from cogs.admin import Admin
 from cogs.revive import Revive
-from cogs.chat import Chat
 from cogs.misc import Misc
 
 # import includes
@@ -38,7 +37,6 @@ bot.add_cog(API(bot))
 bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(Revive(bot))
-bot.add_cog(Chat(bot))
 bot.add_cog(Misc(bot))
 
 # run bot

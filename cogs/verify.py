@@ -1,11 +1,13 @@
 # import standard modules
 import re
 import aiohttp
+import asyncio
 
 # import discord modules
 from discord.ext import commands
 from discord.abc import PrivateChannel
 from discord.utils import get
+from discord.ext import tasks
 
 # import bot functions and classes
 import includes.checks as checks
@@ -16,6 +18,12 @@ from includes.yata_db import get_yata_user
 class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.dailyVerify.start()
+        self.dailyCheck.start()
+
+    def cog_unload(self):
+        self.dailyVerify.cancel()
+        self.dailyCheck.cancel()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -36,7 +44,7 @@ class Verify(commands.Cog):
 
         # verify member when he join
         role = get(member.guild.roles, name="Verified")
-        message, success = await self.member(member, role, discordID=member.id, API_KEY=key)
+        message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
         # get system channel and send message
         welcome_channel = member.guild.system_channel
@@ -97,61 +105,15 @@ class Verify(commands.Cog):
         role = get(ctx.guild.roles, name="Verified")
         if len(args) == 1:
             userID = args[0]
-            message, _ = await self.member(ctx, role, userID=userID, API_KEY=key)
+            message, _ = await self._member(ctx, role, userID=userID, API_KEY=key)
         elif len(args) == 2:
             userID = args[0]
             discordID = args[1]
-            message, _ = await self.member(ctx, role, userID=userID, discordID=discordID, API_KEY=key)
+            message, _ = await self._member(ctx, role, userID=userID, discordID=discordID, API_KEY=key)
         else:
-            message, _ = await self.member(ctx, role, API_KEY=key)
+            message, _ = await self._member(ctx, role, API_KEY=key)
 
         await ctx.send(message)
-
-    @commands.command()
-    async def verifyAll(self, ctx):
-        """Verify all members based on discord ID"""
-        # check if dm
-        if isinstance(ctx.channel, PrivateChannel):
-            await ctx.send(f'You have to do this on your server')
-            return
-
-        # return if verify not active
-        if not self.bot.check_module(ctx.guild, "verify"):
-            await ctx.send(":x: Verify module not activated")
-            return
-
-        # check role and channel
-        ALLOWED_CHANNELS = ["yata-admin"]
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
-        # get key
-        status, tornId, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
-            return
-
-        # Get Verified role
-        role = get(ctx.guild.roles, name="Verified")
-
-        # loop over members
-        members = ctx.guild.members
-        for i, member in enumerate(members):
-            if member.bot:
-                await ctx.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
-            elif role in member.roles:
-                if member.nick is None:
-                    await ctx.send(f":x: `{i+1:03d}/{len(members):03d} {member} as been verified but no nickname has been assigned. Current display name: {member.display_name}`")
-                else:
-                    await ctx.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified as {member.nick}`")
-            else:
-                message, _ = await self.member(ctx, role, discordID=member.id, API_KEY=key)
-                msg = message.split(":")[2].replace("*", "")
-                emo = message.split(":")[1]
-
-                await ctx.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
 
     @commands.command(aliases=['addkey'])
     async def verifyKey(self, ctx, key):
@@ -244,6 +206,28 @@ class Verify(commands.Cog):
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
     @commands.command()
+    async def verifyAll(self, ctx, *args):
+        """Verify all members based on discord ID"""
+
+        # return if verify not active
+        if not self.bot.check_module(ctx.guild, "verify"):
+            await ctx.send(":x: Verify module not activated")
+            return
+
+        # check role and channel
+        ALLOWED_CHANNELS = ["yata-admin"]
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
+            return
+
+        force = True if len(args) and args[0] == "force" else False
+        guild = ctx.guild
+        channel = ctx.channel
+
+        await self._loop_verify(guild, channel, ctx=ctx, force=force)
+
+    @commands.command()
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members
 
@@ -260,83 +244,15 @@ class Verify(commands.Cog):
         else:
             return
 
-        # Get all members
-        members = ctx.guild.members
-
         # look at args if we force remove role
         force = True if len(args) and args[0] == "force" else False
+        guild = ctx.guild
+        channel = ctx.channel
 
-        # loop over factions
-        c = self.bot.get_config(ctx.guild)
-        for faction_id, faction_name in c.get("factions", dict({})).items():
+        await self._loop_check(guild, channel, ctx=ctx, force=force)
 
-            # Get faction role
-            faction_role_name = f'{faction_name} [{faction_id}]' if c['verify'].get('id', False) else f'{faction_name}'
-            faction_role = get(ctx.guild.roles, name=faction_role_name)
-            await ctx.send(f'\n**Checking faction {faction_role.name}**')
 
-            # try to parse Torn faction ID
-            # match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
-            # if match is not None:
-            #     tornFacId = int(faction_role.name.split("[")[-1][:-1])
-            # else:
-            #     await ctx.send(f":x: `{faction_role.name}` does not match `(.{1,}) \[(\d{1,7})\]`")
-            #     return
-
-            # api call with members list from torn
-            status, tornIdForKey, key = await self.bot.get_master_key(ctx.guild)
-            if status == -1:
-                await ctx.send(":x: No master key given")
-                continue
-
-            url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    req = await r.json()
-
-            # deal with api error
-            if "error" in req:
-                await ctx.author.send(f'I\'m sorry but an error occured with your API key `{key}`: *{user["error"]["error"]}*')
-                return
-
-            members_torn = req.get("members", dict({}))
-
-            # loop over the members with this role
-            members_with_role = [m for m in members if faction_role in m.roles]
-            for m in members_with_role:
-
-                # try to parse Torn user ID
-                regex = re.findall(r'\[(\d{1,7})\]', m.display_name)
-                if len(regex) == 1 and regex[0].isdigit():
-                    tornId = int(regex[0])
-                else:
-                    await ctx.send(f":x: `{m.display_name}` could not find torn ID within their display name. So I'm not checking them.")
-                    continue
-
-                # check if member still in faction
-                if str(tornId) in members_torn:
-                    await ctx.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
-                else:
-                    if force:
-                        await m.remove_roles(faction_role)
-                        common_role = get(ctx.guild.roles, name=c["verify"].get("common"))
-                        if common_role is None:
-                            await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
-                        else:
-                            await m.remove_roles(common_role)
-                            await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
-
-                        # verify him again see if he has a new faction on the server
-                        vrole = get(ctx.guild.roles, name="Verified")
-                        message, success = await self.member(m, vrole, discordID=m.id, API_KEY=key)
-                        await ctx.send(message)
-
-                    else:
-                        await ctx.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
-
-        await ctx.send(f"Done checking")
-
-    async def member(self, ctx, verified_role, userID=None, discordID=None, API_KEY=""):
+    async def _member(self, ctx, verified_role, userID=None, discordID=None, API_KEY="", context=True):
         """ Verifies one member
             Returns what the bot should say
         """
@@ -428,7 +344,9 @@ class Verify(commands.Cog):
             try:
                 await author.edit(nick=nickname)
             except BaseException:
-                await ctx.send(f":x: **{author}**, I don't have the permission to change your nickname.")
+                if context:
+                    # only send this message if ctx is a context (context=True)
+                    await ctx.send(f":x: **{author}**, I don't have the permission to change your nickname.")
             await author.add_roles(verified_role)
 
             # set YATA role
@@ -469,7 +387,9 @@ class Verify(commands.Cog):
                     try:
                         await member.edit(nick=nickname)
                     except BaseException:
-                        await ctx.send(f":x: I don't have the permission to change **{member}**'s nickname.")
+                        if context:
+                            # only send this message if ctx is a context (context=True)
+                            await ctx.send(f":x: I don't have the permission to change **{member}**'s nickname.")
                     await member.add_roles(verified_role)
 
                     # set YATA role
@@ -506,3 +426,198 @@ class Verify(commands.Cog):
             return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
 
         return ":x: Weird... I didn't do anything...", False
+
+
+    async def _loop_verify(self, guild, channel, ctx=False, force=False):
+
+        # get key
+        status, tornId, key = await self.bot.get_master_key(guild)
+        if status == -1:
+            await channel.send(":x: No master key given")
+            return
+
+        # Get Verified role
+        role = get(guild.roles, name="Verified")
+
+        # loop over members
+        members = guild.members
+        for i, member in enumerate(members):
+            if force:
+                if ctx:
+                    message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
+                else:
+                    message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
+                msg = message.split(":")[2].replace("*", "")
+                emo = message.split(":")[1]
+
+                await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
+                continue
+
+            print("pass because force")
+            if member.bot:
+                await channel.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
+            elif role in member.roles:
+                if member.nick is None:
+                    await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified but no nickname has been assigned. Current display name: {member.display_name}`.")
+                else:
+                    await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified as {member.nick}`")
+            else:
+                if ctx:
+                    message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
+                else:
+                    message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
+                msg = message.split(":")[2].replace("*", "")
+                emo = message.split(":")[1]
+
+                await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
+
+
+    async def _loop_check(self, guild, channel, ctx=False, force=False):
+
+        # Get all members
+        members = guild.members
+
+        # loop over factions
+        c = self.bot.get_config(guild)
+        for faction_id, faction_name in c.get("factions", dict({})).items():
+
+            # Get faction role
+            faction_role_name = f'{faction_name} [{faction_id}]' if c['verify'].get('id', False) else f'{faction_name}'
+            faction_role = get(guild.roles, name=faction_role_name)
+            await channel.send(f'\n**Checking faction {faction_role.name}**')
+
+            # try to parse Torn faction ID
+            # match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
+            # if match is not None:
+            #     tornFacId = int(faction_role.name.split("[")[-1][:-1])
+            # else:
+            #     await channel.send(f":x: `{faction_role.name}` does not match `(.{1,}) \[(\d{1,7})\]`")
+            #     return
+
+            # api call with members list from torn
+            status, tornIdForKey, key = await self.bot.get_master_key(guild)
+            if status == -1:
+                await channel.send(":x: No master key given")
+                continue
+
+            url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
+
+            # deal with api error
+            if "error" in req:
+                await channel.send(f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*')
+                return
+
+            members_torn = req.get("members", dict({}))
+
+            # loop over the members with this role
+            members_with_role = [m for m in members if faction_role in m.roles]
+            for m in members_with_role:
+
+                # try to parse Torn user ID
+                regex = re.findall(r'\[(\d{1,7})\]', m.display_name)
+                if len(regex) == 1 and regex[0].isdigit():
+                    tornId = int(regex[0])
+                else:
+                    await channel.send(f":x: `{m.display_name}` could not find torn ID within their display name. So I'm not checking them.")
+                    continue
+
+                # check if member still in faction
+                if str(tornId) in members_torn:
+                    await channel.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
+                else:
+                    if force:
+                        await m.remove_roles(faction_role)
+                        common_role = get(guild.roles, name=c["verify"].get("common"))
+                        if common_role is None:
+                            await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
+                        else:
+                            await m.remove_roles(common_role)
+                            await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
+
+                        # verify him again see if he has a new faction on the server
+                        vrole = get(guild.roles, name="Verified")
+                        if ctx:
+                            message, success = await self._member(ctx, vrole, discordID=m.id, API_KEY=key)
+                        else:
+                            message, success = await self._member(m, vrole, discordID=m.id, API_KEY=key, context=False)
+                        await channel.send(message)
+
+                    else:
+                        await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
+
+        await channel.send(f"Done checking")
+
+
+    @tasks.loop(seconds=43200)
+    async def dailyVerify(self):
+        print("[VERIFY] start task")
+
+        # iteration over all guilds
+        async for guild in self.bot.fetch_guilds(limit=100):
+            try:
+                # ignore servers with no verify
+                if not self.bot.check_module(guild, "verify"):
+                    continue
+
+                # ignore servers with no option daily check
+                config = self.bot.get_config(guild)
+                if not config["verify"].get("dailyverify", False):
+                    continue
+
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
+                print(f"[VERIFY] verifying all {guild}: start")
+                # get channel
+                channel = get(guild.channels, name="yata-admin")
+                await channel.send("Automatic verification of your members: **START**")
+                await self._loop_verify(guild, channel, force=True)
+                await channel.send("Automatic verification of your members: **DONE**")
+                print(f"[VERIFY] verifying all {guild}: end")
+
+            except BaseException as e:
+                print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
+
+    @tasks.loop(seconds=43200)
+    async def dailyCheck(self):
+        print("[VERIFY] start task")
+
+        # iteration over all guilds
+        async for guild in self.bot.fetch_guilds(limit=100):
+            try:
+                # ignore servers with no verify
+                if not self.bot.check_module(guild, "verify"):
+                    continue
+
+                # ignore servers with no option daily check
+                config = self.bot.get_config(guild)
+                if not config["verify"].get("dailycheck", False):
+                    continue
+
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
+                print(f"[VERIFY] verifying all {guild}: start")
+                # get channel
+                channel = get(guild.channels, name="yata-admin")
+                await channel.send("Automatic check of your members faction: **START**")
+                await self._loop_check(guild, channel, force=True)
+                await channel.send("Automatic check of your members faction: **DONE**")
+                print(f"[VERIFY] verifying all {guild}: end")
+
+            except BaseException as e:
+                print(f"[VERIFY] guild {guild}: checkFactions failed {e}.")
+
+
+    @dailyVerify.before_loop
+    async def before_dailyVerify(self):
+        print('[Verify] waiting...')
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(30)
+
+    @dailyCheck.before_loop
+    async def before_dailyCheck(self):
+        print('[Verify] waiting...')
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(30)
