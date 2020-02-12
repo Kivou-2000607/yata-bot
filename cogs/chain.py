@@ -263,3 +263,41 @@ class Chain(commands.Cog):
             sleep = max(30, timeout - deltaW)
             print(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
+
+    @commands.command()
+    async def stopchain(self, ctx):
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "chain"):
+            await ctx.send(":x: Chain module not activated")
+            return
+
+        # check role and channel
+        config = self.bot.get_config(ctx.guild)
+        channelName = config.get("chain", dict({})).get("channel", False)
+        ALLOWED_CHANNELS = [channelName] if channelName else ["chain"]
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
+            return
+        msg = await ctx.send("Gotcha! Just be patient, I'll stop watching on the next notification.")
+        await asyncio.sleep(10)
+        await msg.delete()
+
+    @commands.command()
+    async def stopretal(self, ctx):
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "chain"):
+            await ctx.send(":x: Chain module not activated")
+            return
+
+        # check role and channel
+        config = self.bot.get_config(ctx.guild)
+        channelName = config.get("chain", dict({})).get("channel", False)
+        ALLOWED_CHANNELS = [channelName] if channelName else ["chain"]
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
+            return
+        msg = await ctx.send("Gotcha! Just be patient, I'll stop watching retals on the next notification.")
+        await asyncio.sleep(10)
+        await msg.delete()
