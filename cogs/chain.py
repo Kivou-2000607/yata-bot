@@ -101,7 +101,7 @@ class Chain(commands.Cog):
                     past_mentions.append(k)
 
                 elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
-                    await ctx.send(f':rage: `{factionRole}` retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
+                    await ctx.send(f':rage: `{factionRole}` **{v["attacker_name"]} [{v["attacker_id"]}]** retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
                     past_mentions.append(k)
 
             await asyncio.sleep(60)
