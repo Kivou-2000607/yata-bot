@@ -568,7 +568,7 @@ class Chain(commands.Cog):
                 await channel.send(f':rage: `{fName} [{fId}]` **{v["attacker_name"]} [{v["attacker_id"]}]** retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
                 retal["mentions"].append(k)
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=60)
     async def retalTask(self):
         print("[RETAL] start task")
 
@@ -606,4 +606,4 @@ class Chain(commands.Cog):
     async def before_retalTask(self):
         print('[RETAL] waiting...')
         await self.bot.wait_until_ready()
-        # await asyncio.sleep(30)
+        await asyncio.sleep(30)
