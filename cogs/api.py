@@ -30,8 +30,9 @@ class API(commands.Cog):
         """DM weaponexp to author"""
 
         # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
+        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
         if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
             pass
         else:
@@ -90,8 +91,9 @@ class API(commands.Cog):
         """DM number of finishing hits to author"""
 
         # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
+        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
         if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
             pass
         else:
@@ -146,8 +148,9 @@ class API(commands.Cog):
         """DM your networth breakdown (in case you're flying)"""
 
         # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
+        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
         if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
             pass
         else:
@@ -190,8 +193,9 @@ class API(commands.Cog):
         """Gives information on a user"""
 
         # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
+        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
         if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
             pass
         else:
@@ -315,185 +319,6 @@ class API(commands.Cog):
         for k, v in links.items():
             await ctx.send(f'<{k}> {v}')
 
-    @commands.command()
-    async def fly(self, ctx, *args):
-        """Gives faction members flying"""
-
-        # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
-        # send error message if no arg (return)
-        if not len(args):
-            factionId = None
-
-        # check if arg is int
-        elif args[0].isdigit():
-            factionId = int(args[0])
-
-        else:
-            await ctx.send(":x: Either enter nothing or a faction `!fly <factionId>`.")
-            return
-
-        # get configuration for guild
-        status, _, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
-            return
-
-        # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
-            return
-
-        travels = {"Traveling": dict({}), "In": dict({}), "Returning": dict({})}
-        for k, v in r.get("members", dict({})).items():
-            if v["status"]["state"] in ["Traveling", "Abroad"]:
-                type = v["status"]["description"].split(" ")[0]
-                dest = v["status"]["description"].split(" ")[-1]
-                if dest in travels[type]:
-                    travels[type][dest].append(f'{v["name"]+":": <17} {v["status"]["description"]}')
-                else:
-                    travels[type][dest] = [f'{v["name"]+":": <17} {v["status"]["description"]}']
-
-        dest = ["Mexico", "Islands", "Canada", "Hawaii", "Kingdom", "Argentina", "Switzerland", "Japan", "China", "UAE", "Africa"]
-        lst = [f'# {r["name"]} [{r["ID"]}]\n']
-        type = ["Returning", "In", "Traveling"]
-        for t in type:
-            for d in dest:
-                for m in travels[t].get(d, []):
-                    lst.append(m)
-            if len(travels[t]) and t != "Traveling":
-                lst.append("---")
-
-        await fmt.send_tt(ctx, lst)
-
-    @commands.command()
-    async def hosp(self, ctx, *args):
-        """Gives faction members hospitalized"""
-
-        # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
-        # send error message if no arg (return)
-        if not len(args):
-            factionId = None
-
-        # check if arg is int
-        elif args[0].isdigit():
-            factionId = int(args[0])
-
-        else:
-            await ctx.send(":x: Either enter nothing or a faction `!hosp <factionId>`.")
-            return
-
-        # get configuration for guild
-        status, _, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
-            return
-
-        # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await ctx.send(f':x: Error code {r["error"]["code"]}: {r["error"]["error"]}')
-            return
-
-        if r["name"] is None:
-            await ctx.send(f':x: No faction with ID {factionId}')
-            return
-
-        hosps = {}
-        for k, v in r.get("members", dict({})).items():
-            if v["status"]["state"] in ["Hospital"]:
-                s = v["status"]
-                a = v["last_action"]
-                hosps[k] = [v["name"], s["description"], fmt.cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
-
-        lst = [f'Members of **{r["name"]} [{r["ID"]}]** hospitalized: {len(hosps)}']
-        for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
-            # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
-            line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
-            lst.append(line)
-
-        await fmt.send_tt(ctx, lst, tt=False)
-
-    @commands.command(aliases=['ok'])
-    async def okay(self, ctx, *args):
-        """Gives faction members that are okay"""
-
-        # check role and channel
-        ALLOWED_CHANNELS = self.bot.get_config(ctx.guild)["admin"].get("channels", ["*"])
-        ALLOWED_ROLES = self.bot.get_config(ctx.guild)["admin"].get("roles", ["*"])
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
-        # send error message if no arg (return)
-        if not len(args):
-            factionId = None
-
-        # check if arg is int
-        elif args[0].isdigit():
-            factionId = int(args[0])
-
-        else:
-            await ctx.send(":x: Either enter nothing or a faction `!okay <factionId>`.")
-            return
-
-        # get configuration for guild
-        status, _, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
-            return
-
-        # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await ctx.send(f':x: Error code {r["error"]["code"]}: {r["error"]["error"]}')
-            return
-
-        if r["name"] is None:
-            await ctx.send(f':x: No faction with ID {factionId}')
-            return
-
-        hosps = {}
-        for k, v in r.get("members", dict({})).items():
-            if v["status"]["state"] in ["Okay"]:
-                s = v["status"]
-                a = v["last_action"]
-                hosps[k] = [v["name"], s["description"], fmt.cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
-
-        lst = [f'Members of **{r["name"]} [{r["ID"]}]** that are Okay: {len(hosps)}']
-        for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
-            # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
-            line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
-            lst.append(line)
-
-        await fmt.send_tt(ctx, lst, tt=False)
 
     @tasks.loop(minutes=1)
     async def notify(self):

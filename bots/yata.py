@@ -27,6 +27,24 @@ class YataBot(Bot):
         """
         return self.configs.get(str(guild.id), dict({}))
 
+    def get_allowed_channels(self, config, key):
+        channels = config.get(key)
+        if channels is None:
+            return [key]
+        elif '*' in channels["channels"]:
+            return ["*"]
+        else:
+            return channels["channels"]
+
+    def get_allowed_roles(self, config, key):
+        roles = config.get(key)
+        if roles is None:
+            return [key]
+        elif '*' in roles["roles"]:
+            return ["*"]
+        else:
+            return roles["roles"]
+
     async def discord_to_torn(self, member, key):
         """ get a torn id form discord id
             return tornId, None: okay
@@ -169,7 +187,6 @@ class YataBot(Bot):
         my_creator = self.get_user(227470975317311488)
         await my_creator.send(f"I joined guild **{guild} [{guild.id}]** owned by **{owner}**")
 
-
     async def rebuild(self, reboot=False):
         # loop over guilds
         for guild in self.guilds:
@@ -197,7 +214,8 @@ class YataBot(Bot):
                 await push_guild_name(guild)
 
                 # stop if not managing channels
-                if not self.check_module(guild, "channels"):
+                if not config["admin"].get("manage", False):
+                    print(f"\tSkip managing")
                     continue
 
                 # create category
@@ -206,6 +224,17 @@ class YataBot(Bot):
                 if yata_category is None:
                     print(f"\tCreate category yata-bot")
                     yata_category = await guild.create_category("yata-bot")
+
+                # create admin channel
+                channel_name = "yata-admin"
+                if get(guild.channels, name=channel_name) is None:
+                    print(f"\tCreate channel {channel_name}")
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        bot_role: discord.PermissionOverwrite(read_messages=True)
+                        }
+                    channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
+                    await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or `!reviveServers`")
 
                 # create verified role and channels
                 if self.check_module(guild, "verify"):
@@ -230,43 +259,21 @@ class YataBot(Bot):
                             print(f"\tCreate common role {com}")
                             await guild.create_role(name=com)
 
-                    # create admin channel
-                    channel_name = "yata-admin"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        overwrites = {
-                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                            bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
-                        channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
-                        await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or any other command")
-
-                    # create readme channel
-                    # channel_name = "readme"
-                    # if get(guild.channels, name=channel_name) is None:
-                    #     print(f"\tCreate channel {channel_name}")
-                    #     channel_readme = await guild.create_text_channel(channel_name, topic="User information about the YATA bot", category=yata_category)
-
-                    channel_name = "verify-id"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        channel_verif = await guild.create_text_channel(channel_name, topic="Verification channel for the YATA bot", category=yata_category)
-                        await channel_verif.send(f"If you haven't been assigned the {role_verified.mention} that's where you can type `!verify` or `!verify tornId` to verify another member")
-                        try:
-                            await guild.edit(system_channel=channel_verif)
-                            await channel_verif.send(f"This channel is now the system channel")
-                        except BaseException:
-                            pass
+                    for channel_name in [c for c in config["verify"].get("channels", ["verify"]) if c != "*"]:
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            channel_verif = await guild.create_text_channel(channel_name, topic="Verification channel for the YATA bot", category=yata_category)
+                            await channel_verif.send(f"If you haven't been assigned the {role_verified.mention} that's where you can type `!verify` or `!verify tornId` to verify another member")
 
                 if self.check_module(guild, "chain"):
                     # create chain channel
-                    channel_name = self.get_config(guild).get("chain").get("channel", "chain")
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
-                        await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
-                    if reboot:
-                        await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
+                    for channel_name in [c for c in config["chain"].get("channels", ["chain"]) if c != "*"]:
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
+                            await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
+                        if reboot:
+                            await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
 
                 if self.check_module(guild, "loot"):
                     # create Looter role
@@ -276,18 +283,18 @@ class YataBot(Bot):
                         role_loot = await guild.create_role(name="Looter", mentionable=True)
 
                     # create loot channel
-                    channel_name = "loot"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        overwrites = {
-                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                            role_loot: discord.PermissionOverwrite(read_messages=True),
-                            bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
-                        channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
-                        await channel_loot.send(f"{role_loot.mention} will reveive notification here")
-                        await channel_loot.send("Type `!loot` here to get the npc timings")
-                        await channel_loot.send(f"Type `!looter` to remove your {role_loot.mention} role")
+                    for channel_name in [c for c in config["loot"].get("channels", ["loot"]) if c != "*"]:
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            overwrites = {
+                                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                                role_loot: discord.PermissionOverwrite(read_messages=True),
+                                bot_role: discord.PermissionOverwrite(read_messages=True)
+                                }
+                            channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
+                            await channel_loot.send(f"{role_loot.mention} will reveive notification here")
+                            await channel_loot.send("Type `!loot` here to get the npc timings")
+                            await channel_loot.send(f"Type `!looter` to remove your {role_loot.mention} role")
 
                 if self.check_module(guild, "revive"):
                     # create Reviver role
@@ -297,20 +304,28 @@ class YataBot(Bot):
                         reviver = await guild.create_role(name="Reviver", mentionable=True)
 
                     # create revive channel
-                    channel_name = "revive"
-                    if get(guild.channels, name=channel_name) is None:
-                        print(f"\tCreate channel {channel_name}")
-                        channel_revive = await guild.create_text_channel(channel_name, topic="Revive channel for the YATA bot", category=yata_category)
-                        await channel_revive.send(f"{reviver.mention} will reveive notifications here")
-                        await channel_revive.send("Type `!revive` or `!r` here to send a revive call")
-                        await channel_revive.send(f"Type `!reviver` to add or remove your {reviver.mention} role")
+                    for channel_name in [c for c in config["revive"].get("channels", ["revive"]) if c != "*"]:
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            channel_revive = await guild.create_text_channel(channel_name, topic="Revive channel for the YATA bot", category=yata_category)
+                            await channel_revive.send(f"{reviver.mention} will reveive notifications here")
+                            await channel_revive.send("Type `!revive` or `!r` here to send a revive call")
+                            await channel_revive.send(f"Type `!reviver` to add or remove your {reviver.mention} role")
+
+                if self.check_module(guild, "api"):
+                    # create api channels
+                    for channel_name in [c for c in config["api"].get("channels", ["api"]) if c != "*"]:
+                        if get(guild.channels, name=channel_name) is None:
+                            print(f"\tCreate channel {channel_name}")
+                            channel_api = await guild.create_text_channel(channel_name, topic="API channel for the YATA bot", category=yata_category)
+                            await channel_api.send("Use the API module commands here")
 
                 # create socks role and channels
                 if self.check_module(guild, "stocks"):
                     stocks = config.get("stocks")
 
                     # wssb and tcb
-                    for stock in [s for s in stocks if s not in ["active", "channel", 'alerts']]:
+                    for stock in [s for s in stocks if s not in ["active", "channels", 'alerts']]:
                         stock_role = get(guild.roles, name=stock)
                         if stock_role is None:
                             print(f"\tCreate role {stock}")
@@ -333,16 +348,17 @@ class YataBot(Bot):
                         if stock_role is None:
                             print(f"\tCreate role Trader")
                             stock_role = await guild.create_role(name="Trader", mentionable=True)
-                        channel_name = "stocks" if stocks.get("channel") is None else stocks.get("channel")
-                        if get(guild.channels, name=channel_name) is None:
-                            print(f"\tCreate channel {channel_name}")
-                            overwrites = {
-                                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                                stock_role: discord.PermissionOverwrite(read_messages=True),
-                                bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
-                            channel_stock = await guild.create_text_channel(channel_name, topic=f"Alerts stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
-                            await channel_stock.send(f"{stock_role.mention} will be notified here")
+
+                        for channel_name in [c for c in config["stocks"].get("channels", ["stocks"]) if c != "*"]:
+                            if get(guild.channels, name=channel_name) is None:
+                                print(f"\tCreate channel {channel_name}")
+                                overwrites = {
+                                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                                    stock_role: discord.PermissionOverwrite(read_messages=True),
+                                    bot_role: discord.PermissionOverwrite(read_messages=True)
+                                    }
+                                channel_stock = await guild.create_text_channel(channel_name, topic=f"Alerts stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
+                                await channel_stock.send(f"{stock_role.mention} will be notified here")
 
             except BaseException as e:
                 print(f"[SETUP] Error in guild {guild}: {e}")

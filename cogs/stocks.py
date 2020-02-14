@@ -147,15 +147,15 @@ class Stocks(commands.Cog):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
                 plot_stocks(lst, v.get("graph", []))
 
-            # if alerts.get("below", False):
-            #     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-            #     plot_stocks(lst, v.get("graph", []))
+            if alerts.get("below", False):
+                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+                plot_stocks(lst, v.get("graph", []))
 
-            # if alerts.get("below", False) and v.get("shares"):
-            #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
+            if alerts.get("below", False) and v.get("shares"):
+                lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
 
-            # if alerts.get("new", False) and alerts.get("enough", False):
-            #     lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+            if alerts.get("new", False) and alerts.get("enough", False):
+                lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
 
             if alerts.get("injection", False):
                 lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
@@ -170,27 +170,29 @@ class Stocks(commands.Cog):
         async for guild in self.bot.fetch_guilds(limit=100):
             try:
                 # check if module activated
-                if not self.bot.get_config(guild).get("stocks", dict({})).get("alerts", False):
+                config = self.bot.get_config(guild)
+                if not config.get("stocks", dict({})).get("alerts", False):
                     print(f"[STOCK] guild {guild}: ignore notifications")
                     continue
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-
-                # get channel and role
-                channelName = self.bot.get_config(guild).get("stocks").get("channel", "stocks")
-                channel = get(guild.channels, name=channelName)
                 role = get(guild.roles, name="Trader")
 
-                if channel is not None:
-                    if role is None:
-                        print(f"[STOCK] guild {guild}: no role @Trader")
+                # loop over channels and role
+                for channelName in self.bot.get_allowed_channels(config, "stocks"):
+                    channel = get(guild.channels, name=channelName)
+
+                    if channel is not None:
+                        if role is None:
+                            print(f"[STOCK] guild {guild}: no role @Trader")
+                        else:
+                            print(f"[STOCK] guild {guild}: alert")
+                            s = "" if len(lst) == 1 else "s"
+                            await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
+                        await fmt.send_tt(channel, lst)
                     else:
-                        s = "" if len(lst) == 1 else "s"
-                        await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
-                    await fmt.send_tt(channel, lst)
-                else:
-                    print(f"[STOCK] guild {guild}: no channel {channelName}")
+                        print(f"[STOCK] guild {guild}: no channel {channelName}")
 
             except BaseException as e:
                 print(f"[STOCK] Error with  {guild} {e}")

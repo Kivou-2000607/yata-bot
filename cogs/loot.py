@@ -32,7 +32,8 @@ class Loot(commands.Cog):
             return
 
         # check role and channel
-        ALLOWED_CHANNELS = ["loot"]
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "loot")
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:

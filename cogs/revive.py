@@ -31,8 +31,7 @@ class Revive(commands.Cog):
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
-        channelName = config.get("revive", dict({})).get("channel", False)
-        ALLOWED_CHANNELS = [channelName] if channelName else ["revive"]
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "revive")
         if await checks.channels(ctx, ALLOWED_CHANNELS):
             pass
         else:
@@ -49,7 +48,7 @@ class Revive(commands.Cog):
         # return -4, id, None, master_key: did not find torn id in yata db
         # return -5, id, Name, master_key: member did not give perm
 
-        sendFrom = f'Send from {ctx.guild}'
+        sendFrom = f'Sent from {ctx.guild}'
 
         # in this case it's not possible to link discordID with torn player
         # -> backup is to have the id as an argument
@@ -74,7 +73,7 @@ class Revive(commands.Cog):
 
         if key is None:
             # should be for case -1, -2
-            req = dict({})
+            req = dict({"name": "Player"})
 
         else:
             # api call to get potential status and faction
@@ -94,8 +93,8 @@ class Revive(commands.Cog):
                 errors.append(":x: I cannot specify faction or hospitalization time")
 
         # get reviver role
-        name = req["name"]
         role = get(ctx.guild.roles, name="Reviver")
+        name = req["name"]
         url = f'https://www.torn.com/profiles.php?XID={tornId}'
         if req.get('faction', False) and req["faction"]["faction_id"]:
             lst.append(f'**{name} [{tornId}]** from **{req["faction"]["faction_name"]} [{req["faction"]["faction_id"]}]** needs a revive {url}')
@@ -126,9 +125,11 @@ class Revive(commands.Cog):
                     # get guild, role and channel
                     guild = self.bot.get_guild(id)
                     role = get(guild.roles, name="Reviver")
-                    channel = get(guild.channels, name="revive")
-                    m = await channel.send('{} {}\n*{}*'.format(role.mention, msg, sendFrom))
-                    msgList.append([m, channel])
+                    localConf = self.bot.get_config(guild)
+                    for channelName in self.bot.get_allowed_channels(localConf, "revive"):
+                        channel = get(guild.channels, name=channelName)
+                        m = await channel.send('{} {}\n*{}*'.format(role.mention, msg, sendFrom))
+                        msgList.append([m, channel])
                     # await ctx.send(f'Sent to {id}')
             except BaseException as e:
                 await ctx.send(f":x: Error with guild {id}: {e}")
