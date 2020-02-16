@@ -26,7 +26,7 @@ class Misc(commands.Cog):
     @commands.command()
     async def crimes2(self, ctx):
         """gives latest update on crimes 2.0"""
-        await ctx.send("https://www.torn.com/images/v2/main/ajax-loader.gif")
+        await ctx.send("https://yata.alwaysdata.net/static/images/crimes2.gif")
 
 
     @commands.command()
