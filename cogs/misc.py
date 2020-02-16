@@ -24,6 +24,12 @@ class Misc(commands.Cog):
 
 
     @commands.command()
+    async def crimes2(self, ctx):
+        """gives latest update on crimes 2.0"""
+        await ctx.send("https://www.torn.com/images/v2/main/ajax-loader.gif")
+
+
+    @commands.command()
     async def banners(self, ctx, *args):
         """Gives missing honor banners or displays banner if id given"""
 

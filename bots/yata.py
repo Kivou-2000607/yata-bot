@@ -272,8 +272,8 @@ class YataBot(Bot):
                             print(f"\tCreate channel {channel_name}")
                             channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
                             await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
-                        if reboot:
-                            await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
+                        # if reboot:
+                        #     await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
 
                 if self.check_module(guild, "loot"):
                     # create Looter role

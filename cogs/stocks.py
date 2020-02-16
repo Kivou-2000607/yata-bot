@@ -137,35 +137,44 @@ class Stocks(commands.Cog):
                 req = await r.json()
 
         # set alerts
+        print(req)
         lst = []
         for k, v in req.items():
             alerts = v.get("alerts", dict({}))
+            print("a", alerts)
             if not len(alerts):
                 continue
+            print("b", alerts)
 
             if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
                 plot_stocks(lst, v.get("graph", []))
+                print("1")
 
             if alerts.get("below", False):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
                 plot_stocks(lst, v.get("graph", []))
+                print("2")
 
             if alerts.get("below", False) and v.get("shares"):
                 lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
+                print("3")
 
             if alerts.get("new", False) and alerts.get("enough", False):
                 lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+                print("4")
 
             if alerts.get("injection", False):
                 lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
                 plot_stocks(lst, v.get("graph", []))
+                print("5")
 
         # create message to send
         if not len(lst):
             print("[STOCK] no alerts")
             return
 
+        print("[STOCK] alerts", len(lst))
         # loop over guilds to send alerts
         async for guild in self.bot.fetch_guilds(limit=100):
             try:

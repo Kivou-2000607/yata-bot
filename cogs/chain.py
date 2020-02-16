@@ -568,7 +568,7 @@ class Chain(commands.Cog):
                 await channel.send(f':rage: `{fName} [{fId}]` **{v["attacker_name"]} [{v["attacker_id"]}]** retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
                 retal["mentions"].append(k)
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=10)
     async def retalTask(self):
         print("[RETAL] start task")
 
@@ -582,7 +582,6 @@ class Chain(commands.Cog):
                 # ignore servers with no option daily check
                 config = self.bot.get_config(guild)
                 if not config["chain"].get("retal", False):
-                    print(f"[RETAL] retal {guild}: skip")
                     continue
 
                 print(f"[RETAL] retal {guild}: start")
@@ -590,6 +589,7 @@ class Chain(commands.Cog):
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
                 for tornId, retal in config["chain"]["retal"].items():
+                    print(f"[RETAL] retal {guild}: {retal}")
 
                     # call retal faction
                     await self._retal(guild, retal)
