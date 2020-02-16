@@ -145,11 +145,11 @@ class Stocks(commands.Cog):
 
                 if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    plot_stocks(lst, v.get("graph", []))
+                    # plot_stocks(lst, v.get("graph", []))
 
                 if alerts.get("below", False):
                     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    plot_stocks(lst, v.get("graph", []))
+                    # plot_stocks(lst, v.get("graph", []))
 
                 # if alerts.get("below", False) and v.get("shares"):
                 #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
@@ -159,7 +159,7 @@ class Stocks(commands.Cog):
 
                 if alerts.get("injection", False):
                     lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    plot_stocks(lst, v.get("graph", []))
+                    # plot_stocks(lst, v.get("graph", []))
 
             # create message to send
             if not len(lst):

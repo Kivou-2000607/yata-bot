@@ -191,7 +191,7 @@ class YataBot(Bot):
         # loop over guilds
         for guild in self.guilds:
             try:
-                print(f'[SETUP] Server {guild} [{guild.id}]')
+                print(f'[SETUP] [{guild.id}] {guild}')
                 config = self.get_config(guild)
 
                 # leave guild not in YATA database
