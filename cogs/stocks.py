@@ -137,14 +137,11 @@ class Stocks(commands.Cog):
                 req = await r.json()
 
         # set alerts
-        print(req)
         lst = []
         for k, v in req.items():
+            del v["graph"]
             alerts = v.get("alerts", dict({}))
-            print("a", alerts)
-            if not len(alerts):
-                continue
-            print("b", alerts)
+            print(v)
 
             if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                 lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
