@@ -142,30 +142,24 @@ class Stocks(commands.Cog):
             for k, v in req.items():
                 del v["graph"]
                 alerts = v.get("alerts", dict({}))
-                print(v)
 
                 if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
-                    print("1")
                     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    # plot_stocks(lst, v.get("graph", []))
+                    plot_stocks(lst, v.get("graph", []))
 
                 if alerts.get("below", False):
-                    print("2")
                     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    # plot_stocks(lst, v.get("graph", []))
+                    plot_stocks(lst, v.get("graph", []))
 
-                if alerts.get("below", False) and v.get("shares"):
-                    print("3")
-                    lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
+                # if alerts.get("below", False) and v.get("shares"):
+                #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
 
-                if alerts.get("new", False) and alerts.get("enough", False):
-                    print("4")
-                    lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
+                # if alerts.get("new", False) and alerts.get("enough", False):
+                #     lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
 
                 if alerts.get("injection", False):
-                    print("5")
                     lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
-                    # plot_stocks(lst, v.get("graph", []))
+                    plot_stocks(lst, v.get("graph", []))
 
             # create message to send
             if not len(lst):
@@ -181,7 +175,7 @@ class Stocks(commands.Cog):
                 # check if module activated
                 config = self.bot.get_config(guild)
                 if not config.get("stocks", dict({})).get("alerts", False):
-                    print(f"[STOCK] guild {guild}: ignore notifications")
+                    # print(f"[STOCK] guild {guild}: ignore notifications")
                     continue
 
                 # get full guild (async iterator doesn't return channels)
