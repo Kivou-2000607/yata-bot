@@ -127,49 +127,52 @@ class Stocks(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
-        print("[STOCK] start task")
+        try:
+            print("[STOCK] start task")
 
-        # YATA api
-        url = "https://yata.alwaysdata.net/stock/alerts/"
-        # req = requests.get(url).json()
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
+            # YATA api
+            url = "https://yata.alwaysdata.net/stock/alerts/"
+            # req = requests.get(url).json()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
 
-        # set alerts
-        lst = []
-        for k, v in req.items():
-            del v["graph"]
-            alerts = v.get("alerts", dict({}))
-            print(v)
+            # set alerts
+            lst = []
+            for k, v in req.items():
+                del v["graph"]
+                alerts = v.get("alerts", dict({}))
+                print(v)
 
-            if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
-                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                plot_stocks(lst, v.get("graph", []))
-                print("1")
+                if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
+                    print("1")
+                    lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+                    # plot_stocks(lst, v.get("graph", []))
 
-            if alerts.get("below", False):
-                lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
-                plot_stocks(lst, v.get("graph", []))
-                print("2")
+                if alerts.get("below", False):
+                    print("2")
+                    lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
+                    # plot_stocks(lst, v.get("graph", []))
 
-            if alerts.get("below", False) and v.get("shares"):
-                lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
-                print("3")
+                if alerts.get("below", False) and v.get("shares"):
+                    print("3")
+                    lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
 
-            if alerts.get("new", False) and alerts.get("enough", False):
-                lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
-                print("4")
+                if alerts.get("new", False) and alerts.get("enough", False):
+                    print("4")
+                    lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
 
-            if alerts.get("injection", False):
-                lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
-                plot_stocks(lst, v.get("graph", []))
-                print("5")
+                if alerts.get("injection", False):
+                    print("5")
+                    lst.append(f'{k}: new shares have been injected by the system ({v["shares"]:,.0f} shares at ${v["price"]})')
+                    # plot_stocks(lst, v.get("graph", []))
 
-        # create message to send
-        if not len(lst):
-            print("[STOCK] no alerts")
-            return
+            # create message to send
+            if not len(lst):
+                print("[STOCK] no alerts")
+                return
+        except BaseException as e:
+            print(f"[STOCK] ERROR IN STOCKS {e}")
 
         print("[STOCK] alerts", len(lst))
         # loop over guilds to send alerts
