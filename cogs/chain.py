@@ -562,10 +562,10 @@ class Chain(commands.Cog):
         retal["mentions"] = cleanedMentions
 
         # delete old messages
-        fminutes = now - datetime.timedelta(minutes=5)
-        async for message in channel.history(limit=50, before=fminutes):
-            if message.author.bot:
-                await message.delete()
+        # fminutes = now - datetime.timedelta(minutes=5)
+        # async for message in channel.history(limit=50, before=fminutes):
+        #     if message.author.bot:
+        #         await message.delete()
 
     @tasks.loop(seconds=60)
     async def retalTask(self):
