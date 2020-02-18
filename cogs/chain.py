@@ -546,13 +546,11 @@ class Chain(commands.Cog):
                     lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** *{v["result"]}* {v["defender_name"]}',
                            f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
                     await channel.send('\n'.join(lst))
-                    attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
-                    await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                 attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
-                await channel.send(f':rage: `{fName} [{fId}] {v["attacker_name"]} [{v["attacker_id"]}] retaled on {v["defender_name"]} [{v["defender_id"]}] {delay:.1f} minutes ago at {attack_time}`')
+                await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
         # clean mentions
