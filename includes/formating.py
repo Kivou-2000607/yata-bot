@@ -61,7 +61,9 @@ def ts_to_date(timestamp):
 
 def ts_to_datetime(timestamp, fmt=None):
     d = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
-    if fmt == "short":
+    if fmt == "time":
+        return d.strftime("%H:%M:%S")
+    elif fmt == "short":
         return d.strftime("%m/%d %H:%M:%S")
     else:
         return d

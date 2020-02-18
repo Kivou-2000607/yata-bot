@@ -434,13 +434,13 @@ class Chain(commands.Cog):
         retals = config["chain"].get("retal")
         if retals is None:
             await ctx.send("You're not watching any retals.")
-        elif tornId not in retals:
+        elif str(tornId) not in retals:
             await ctx.send(f"Player {tornId} was not watching any retals.")
         else:
-            v = config["chain"]["retal"][tornId]
+            v = config["chain"]["retal"][str(tornId)]
             name = v.get("name")
             channel = get(ctx.guild.channels, id=v["channelId"])
-            del config["chain"]["retal"][tornId]
+            del config["chain"]["retal"][str(tornId)]
             await channel.send(f':x: **{name} [{tornId}]**: Stop watching retals on behalf of {ctx.author.nick}.')
 
             self.bot.configs[str(ctx.guild.id)] = config
@@ -464,12 +464,9 @@ class Chain(commands.Cog):
             return
 
         status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
-        # <debug>
-        # status = 0
-        # tornId = str(2000607)
-        # name = "Kivou"
-        # key = "aaa"
-        # </debug>
+
+        # just to be sure
+        tornId = str(tornId)
 
         if config["chain"].get("retal") is None:
             config["chain"]["retal"] = dict({})
@@ -481,23 +478,23 @@ class Chain(commands.Cog):
             else:
                 roleId = None
 
-            if tornId in config["chain"].get("retal"):
-                del config["chain"]["retal"][tornId]
+            if str(tornId) in config["chain"].get("retal"):
+                del config["chain"]["retal"][str(tornId)]
                 await ctx.send(f':x: **{name} [{tornId}]**: Stop watching retals.')
             else:
                 retal = {"name": name,
-                         "tornId": tornId,
+                         "tornId": str(tornId),
                          "key": key,
                          "roleId": roleId,
                          "channelId": ctx.channel.id}
-                config["chain"]["retal"][tornId] = retal
+                config["chain"]["retal"][str(tornId)] = retal
 
                 notified = "Nobody" if roleId is None else f"<@&{roleId}>"
                 await ctx.send(f':white_check_mark: **{name} [{tornId}]** Start watching retals for their faction in {ctx.channel.mention}. {notified} will be notified.')
 
         else:
-            if tornId in config["chain"].get("retal"):
-                del config["chain"]["retal"][tornId]
+            if str(tornId) in config["chain"].get("retal"):
+                del config["chain"]["retal"][str(tornId)]
                 await ctx.send(f':x: **{name} [{tornId}]**: Stop watching retals.')
 
         self.bot.configs[str(ctx.guild.id)] = config
@@ -506,36 +503,18 @@ class Chain(commands.Cog):
     async def _retal(self, guild, retal):
 
         key = retal.get("key")
-        tornId = retal.get("tornId")
+        tornId = str(retal.get("tornId"))
         name = retal.get("name")
         roleId = retal.get("roleId")
         channelId = retal.get("channelId")
 
         channel = get(guild.channels, id=channelId)
-        notified = "" if roleId is None else f"<@&{roleId}>"
+        notified = " " if roleId is None else f" <@&{roleId}> "
 
         url = f'https://api.torn.com/faction/?selections=basic,attacks&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
-
-        # <debug>
-        # now = datetime.datetime.utcnow()
-        # epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        # nowts = (now - epoch).total_seconds()
-        # req = {"ID": 2004, "name": "my Faction",
-        #        "attacks": {"10": {"timestamp_ended": nowts - 67,
-        #                           "respect_gain": "4.5",
-        #                           "attacker_id": 67,
-        #                           "attacker_name": "My Ennemy",
-        #                           "attacker_faction": 786,
-        #                           "attacker_factionname": "Ennemy faction",
-        #                           "defender_id": 8979,
-        #                           "defender_name": "My Buddy",
-        #                           "defender_faction": 2004,
-        #                           "defender_factionname": "My faction",
-        #                          }}}
-        # </debug>
 
         # handle API error
         if 'error' in req:
@@ -552,23 +531,45 @@ class Chain(commands.Cog):
             retal["mentions"] = []
         for k, v in req["attacks"].items():
             delay = int(nowts - v["timestamp_ended"]) / float(60)
-            if k in retal["mentions"]:
+            if str(k) in retal["mentions"]:
                 continue
 
             if v["defender_faction"] == int(fId) and v["attacker_id"] and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
-                if v["attacker_faction"]:
-                    await channel.send(f':rage: `{fName} [{fId}]`{notified} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
+                timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
+                if not v["attacker_faction"]:
+                    lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** *{v["result"]}* {v["defender_name"]}',
+                           f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
+                    await channel.send('\n'.join(lst))
 
                 else:
-                    await channel.send(f':rage: `{fName} [{fId}]`{notified} {tleft:.1f} minutes left to retal on **{v["attacker_name"]} [{v["attacker_id"]}]** https://www.torn.com/profiles.php?XID={v["attacker_id"]}')
-                retal["mentions"].append(k)
+                    lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** *{v["result"]}* {v["defender_name"]}',
+                           f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
+                    await channel.send('\n'.join(lst))
+                    attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
+                    await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
+                retal["mentions"].append(str(k))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
-                await channel.send(f':rage: `{fName} [{fId}]` **{v["attacker_name"]} [{v["attacker_id"]}]** retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago')
-                retal["mentions"].append(k)
+                attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
+                await channel.send(f':rage: `{fName} [{fId}] {v["attacker_name"]} [{v["attacker_id"]}] retaled on {v["defender_name"]} [{v["defender_id"]}] {delay:.1f} minutes ago at {attack_time}`')
+                retal["mentions"].append(str(k))
 
-    @tasks.loop(seconds=10)
+        # clean mentions
+        cleanedMentions = []
+        for k in retal["mentions"]:
+            if str(k) in req["attacks"]:
+                cleanedMentions.append(str(k))
+
+        retal["mentions"] = cleanedMentions
+
+        # delete old messages
+        fminutes = now - datetime.timedelta(minutes=5)
+        async for message in channel.history(limit=50, before=fminutes):
+            if message.author.bot:
+                await message.delete()
+
+    @tasks.loop(seconds=60)
     async def retalTask(self):
         print("[RETAL] start task")
 
@@ -589,18 +590,20 @@ class Chain(commands.Cog):
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
                 for tornId, retal in config["chain"]["retal"].items():
-                    print(f"[RETAL] retal {guild}: {retal}")
+                    print(f"[RETAL] retal {guild}: {tornId}: {retal}")
 
                     # call retal faction
                     await self._retal(guild, retal)
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
-                    self.bot.configs[str(guild.id)]["chain"]["retal"][tornId] = retal
+                    self.bot.configs[str(guild.id)]["chain"]["retal"][str(tornId)] = retal
 
                 print(f"[RETAL] retal {guild}: end")
 
             except BaseException as e:
                 print(f"[RETAL] guild {guild}: retal failed {e}.")
+
+        print("[RETAL] end task")
 
     @retalTask.before_loop
     async def before_retalTask(self):
