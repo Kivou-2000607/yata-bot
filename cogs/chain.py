@@ -537,7 +537,7 @@ class Chain(commands.Cog):
             if v["defender_faction"] == int(fId) and v["attacker_id"] and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
                 timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
-                if not v["attacker_faction"]:
+                if v["attacker_faction"]:
                     lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** *{v["result"]}* {v["defender_name"]}',
                            f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
                     await channel.send('\n'.join(lst))
