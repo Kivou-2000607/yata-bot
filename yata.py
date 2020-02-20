@@ -24,10 +24,10 @@ bot_id = os.environ.get("YATA_ID", 1)
 prefix = os.environ.get("BOT_PREFIX", "!")
 
 # get configurations from YATA's database
-token, configs = load_configurations(bot_id)
+token, configs, administrators = load_configurations(bot_id)
 
 # init yata bot
-bot = YataBot(configs=json.loads(configs), command_prefix=prefix, bot_id=bot_id)
+bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id)
 
 # load classes
 bot.add_cog(Verify(bot))

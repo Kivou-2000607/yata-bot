@@ -43,15 +43,15 @@ async def push_guild_name(guild):
     await con.close()
 
 
-def load_configurations(bot_id):
+def load_configurations(bot_id, verbose=False):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     con = psycopg2.connect(**db_cred)
     cur = con.cursor()
-    cur.execute(f"SELECT token, variables FROM bot_discordapp WHERE id = {bot_id};")
-    token, configs = cur.fetchone()
+    cur.execute(f"SELECT token, variables, administrators FROM bot_discordapp WHERE id = {bot_id};")
+    token, configs, administrators = cur.fetchone()
     cur.close()
-    con.close()
-    return token, configs
+    con.close()    
+    return token, configs, administrators
 
 
 async def push_configurations(bot_id, configs):

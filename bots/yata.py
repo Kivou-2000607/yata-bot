@@ -16,9 +16,10 @@ from includes.yata_db import *
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, configs=None, bot_id=0, **args):
+    def __init__(self, configs=None, administrators=None, bot_id=0, **args):
         Bot.__init__(self, **args)
         self.configs = configs
+        self.administrators = administrators
         self.bot_id = bot_id
 
     def get_config(self, guild):
@@ -184,10 +185,11 @@ class YataBot(Bot):
     async def on_guild_join(self, guild):
         """notifies me when joining a guild"""
         owner = self.get_user(guild.owner_id)
-        my_creator = self.get_user(227470975317311488)
-        await my_creator.send(f"I joined guild **{guild} [{guild.id}]** owned by **{owner}**")
+        for administratorId in self.bot.administrators:
+            administrator = self.get_user(int(administratorId))
+            await administrator.send(f"I **joined** guild **{guild} [{guild.id}]** owned by **{owner}**")
 
-    async def rebuild(self, reboot=False):
+    async def rebuild(self, reboot=False, verbose=False):
         # loop over guilds
         for guild in self.guilds:
             try:
@@ -206,8 +208,9 @@ class YataBot(Bot):
                     await guild.leave()
 
                     # send message to creator
-                    my_creator = self.get_user(227470975317311488)
-                    await my_creator.send(f"I left {guild} [{guild.id}] owned by {owner}")
+                    for administratorId in self.bot.administrators:
+                        administrator = self.get_user(int(administratorId))
+                        await administrator.send(f"I **left* **{guild} [{guild.id}]** owned by **{owner}**")
                     continue
 
                 # push guild name to yata
@@ -235,6 +238,9 @@ class YataBot(Bot):
                         }
                     channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
                     await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or `!reviveServers`")
+
+                if verbose:
+                    await verbose.send(f':arrows_counterclockwise: {guild} [{guild.id}]')
 
                 # create verified role and channels
                 if self.check_module(guild, "verify"):
@@ -362,3 +368,4 @@ class YataBot(Bot):
 
             except BaseException as e:
                 print(f"[SETUP] Error in guild {guild}: {e}")
+                await verbose.send(f':arrows_counterclockwise: Error in guild {guild} [{guild.id}]: {e}')

@@ -19,18 +19,24 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
         from includes.yata_db import push_guild_name
-        if ctx.author.id != 227470975317311488:
+
+        if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
-        _, c = load_configurations(self.bot.bot_id)
+
+        await ctx.send(":arrows_counterclockwise: Load configurations")
+        _, c, a = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
-        await self.bot.rebuild()
-        await ctx.send(":white_check_mark: Reboot done")
+        self.bot.administrators = json.loads(a)
+        for i, (k, v) in enumerate(self.bot.administrators.items()):
+            await ctx.send(f':arrows_counterclockwise: **Administartor {i+1}**: Discord [{k}] Torn [{v}]')
+        await self.bot.rebuild(verbose=ctx)
+        await ctx.send(":white_check_mark: Reload done")
 
     @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
-        if ctx.author.id != 227470975317311488:
+        if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
@@ -39,7 +45,7 @@ class Admin(commands.Cog):
     @commands.command()
     async def yata(self, ctx):
         """Admin tool for the bot owner"""
-        if ctx.author.id != 227470975317311488:
+        if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
 
@@ -56,7 +62,7 @@ class Admin(commands.Cog):
     @commands.command()
     async def hosts(self, ctx):
         """Admin tool for the bot owner"""
-        if ctx.author.id != 227470975317311488:
+        if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
 
@@ -97,7 +103,7 @@ class Admin(commands.Cog):
     async def check(self, ctx):
         """Admin tool for the bot owner"""
 
-        if ctx.author.id != 227470975317311488:
+        if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
 
@@ -140,7 +146,6 @@ class Admin(commands.Cog):
                 await self.channel_exists(ctx, guild, "verify-id")
                 for k, v in config.get("factions", dict({})).items():
                     await self.role_exists(ctx, guild, f"{v} [{k}]")
-
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
