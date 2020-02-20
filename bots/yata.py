@@ -185,7 +185,7 @@ class YataBot(Bot):
     async def on_guild_join(self, guild):
         """notifies me when joining a guild"""
         owner = self.get_user(guild.owner_id)
-        for administratorId in self.bot.administrators:
+        for administratorId in self.administrators:
             administrator = self.get_user(int(administratorId))
             await administrator.send(f"I **joined** guild **{guild} [{guild.id}]** owned by **{owner}**")
 
@@ -208,7 +208,7 @@ class YataBot(Bot):
                     await guild.leave()
 
                     # send message to creator
-                    for administratorId in self.bot.administrators:
+                    for administratorId in self.administrators:
                         administrator = self.get_user(int(administratorId))
                         await administrator.send(f"I **left* **{guild} [{guild.id}]** owned by **{owner}**")
                     continue
@@ -368,4 +368,5 @@ class YataBot(Bot):
 
             except BaseException as e:
                 print(f"[SETUP] Error in guild {guild}: {e}")
-                await verbose.send(f':arrows_counterclockwise: Error in guild {guild} [{guild.id}]: {e}')
+                if verbose:
+                    await verbose.send(f':arrows_counterclockwise: Error in guild {guild} [{guild.id}]: {e}')
