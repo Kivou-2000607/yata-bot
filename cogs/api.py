@@ -188,7 +188,7 @@ class API(commands.Cog):
         await fmt.send_tt(ctx.author, lst)
         return
 
-    @commands.command(aliases=['profile'])
+    @commands.command(aliases=['profile', 'p'])
     async def who(self, ctx, *args):
         """Gives information on a user"""
 
@@ -288,7 +288,7 @@ class API(commands.Cog):
         if int(r["faction"]["faction_id"]):
             f = r["faction"]
             lst.append(f'Faction: {f["faction_name"]} [{f["faction_id"]}]    <{linki}>')
-            links[linki] = f'https://www.torn.com/factions.php?&ID={f["faction_id"]}'
+            links[linki] = f'https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}'
             linki += 1
             lst.append(f'Position: {f["position"]} since {f["days_in_faction"]} days')
             lst.append('---')

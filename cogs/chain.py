@@ -400,8 +400,8 @@ class Chain(commands.Cog):
             channel = get(ctx.guild.channels, id=v["channelId"])
             admin = get(ctx.guild.channels, name="yata-admin")
             notify = 'nobody' if v["roleId"] is None else f'<@&{v["roleId"]}>'
-            lst = [f'{v["name"]} [{v["tornId"]}] is notifying {notify} for retals in {channel.mention}.',
-                   f'It can be stopped either by them typing `!retal` in {channel.mention} or anyone typing `!stopretal {v["tornId"]}` in {admin.mention}.']
+            lst = [f'{v["name"]} [{v["tornId"]}] is notifying {notify} for retals in #{channel}.',
+                   f'It can be stopped either by them typing `!retal` in #{channel} or anyone typing `!stopretal {v["tornId"]}` in #{admin}.']
             await ctx.send("\n".join(lst))
 
     @commands.command()
@@ -441,7 +441,8 @@ class Chain(commands.Cog):
             name = v.get("name")
             channel = get(ctx.guild.channels, id=v["channelId"])
             del config["chain"]["retal"][str(tornId)]
-            await channel.send(f':x: **{name} [{tornId}]**: Stop watching retals on behalf of {ctx.author.nick}.')
+            if channel is not None:
+                await channel.send(f':x: **{name} [{tornId}]**: Stop watching retals on behalf of {ctx.author.nick}.')
 
             self.bot.configs[str(ctx.guild.id)] = config
             await push_configurations(self.bot.bot_id, self.bot.configs)
@@ -510,6 +511,8 @@ class Chain(commands.Cog):
 
         channel = get(guild.channels, id=channelId)
         notified = " " if roleId is None else f" <@&{roleId}> "
+        if channel is None:
+            return False
 
         url = f'https://api.torn.com/faction/?selections=basic,attacks&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -519,7 +522,15 @@ class Chain(commands.Cog):
         # handle API error
         if 'error' in req:
             await channel.send(f':x: `{name} [{tornId}]` Problem with their key for retal: *{req["error"]["error"]}*')
-            return
+            if req["error"]["code"] in [1, 2, 6, 7, 10]:
+                await channel.send(f':x: `{name} [{tornId}]` retal stopped...')
+                return False
+            else:
+                return True
+
+        if not int(req["ID"]):
+            await channel.send(f':x: `{name} [{tornId}]` No factio found... retal stopped...')
+            return False
 
         fId = req["ID"]
         fName = req["name"]
@@ -567,7 +578,9 @@ class Chain(commands.Cog):
         #     if message.author.bot:
         #         await message.delete()
 
-    @tasks.loop(seconds=60)
+        return True
+
+    @tasks.loop(seconds=10)
     async def retalTask(self):
         print("[RETAL] start task")
 
@@ -587,14 +600,22 @@ class Chain(commands.Cog):
 
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
+                todel = []
                 for tornId, retal in config["chain"]["retal"].items():
                     print(f"[RETAL] retal {guild}: {tornId}: {retal}")
 
                     # call retal faction
-                    await self._retal(guild, retal)
+                    status = await self._retal(guild, retal)
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
-                    self.bot.configs[str(guild.id)]["chain"]["retal"][str(tornId)] = retal
+                    if status:
+                        self.bot.configs[str(guild.id)]["chain"]["retal"][str(tornId)] = retal
+                    else:
+                        todel.append(str(tornId))
+
+                for d in todel:
+                    del self.bot.configs[str(guild.id)]["chain"]["retal"][d]
+                    await push_configurations(self.bot.bot_id, self.bot.configs)
 
                 print(f"[RETAL] retal {guild}: end")
 
@@ -607,4 +628,4 @@ class Chain(commands.Cog):
     async def before_retalTask(self):
         print('[RETAL] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
+        # await asyncio.sleep(30)
