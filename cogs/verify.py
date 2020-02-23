@@ -49,6 +49,9 @@ class Verify(commands.Cog):
 
         # get config
         c = self.bot.get_config(member.guild)
+        for chName in c["verify"].get("channels", []):
+            ch = get(member.guild.channels, name=chName)
+            await ch.send(message)
 
         # if not Automatically verified send private message
         if not success and c["verify"].get("force", False):
@@ -145,8 +148,11 @@ class Verify(commands.Cog):
             if member is None:
                 continue
 
-            # get system channel and send message
-            welcome_channel = guild.system_channel
+            # get config
+            config = self.bot.get_config(guild)
+
+            # get verify channel and send message
+            verify_channel = get(guild.channels, name=config["verify"].get("channels", ["verify-id"])[0])
 
             # try to modify the nickname
             try:
@@ -161,17 +167,16 @@ class Verify(commands.Cog):
             try:
                 await member.add_roles(role)
                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {role.name}')
-            except BaseException:
-                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role.')
+            except BaseException as e:
+                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role ({e}).')
                 continue
 
             # Set Faction role
-            config = self.bot.get_config(guild)
             fId = str(user['faction']['faction_id'])
             if fId in config["factions"]:
                 faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
             else:
-                faction_name = "{faction_name} [{faction_id}]".format(**user) if config["verify"].get("id", False) else "{faction_name}".format(**user)
+                faction_name = "{faction_name} [{faction_id}]".format(**user["faction"]) if config["verify"].get("id", False) else "{faction_name}".format(**user["faction"])
 
             faction_role = get(guild.roles, name=faction_name)
             if faction_role is not None:
@@ -182,15 +187,15 @@ class Verify(commands.Cog):
                 common_role = get(guild.roles, name=config["verify"].get("common"))
                 if common_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
                     await member.add_roles(common_role)
-                    if welcome_channel is not None:
-                        await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
+                    if verify_channel is not None:
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
                     await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {common_role}')
                 else:
-                    if welcome_channel is not None:
-                        await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
+                    if verify_channel is not None:
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
             else:
-                if welcome_channel is not None:
-                    await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
+                if verify_channel is not None:
+                    await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
 
             # final message to member
@@ -442,7 +447,6 @@ class Verify(commands.Cog):
                 await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
                 continue
 
-            print("pass because force")
             if member.bot:
                 await channel.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
             elif role in member.roles:
