@@ -545,7 +545,7 @@ class Chain(commands.Cog):
             if str(k) in retal["mentions"]:
                 continue
 
-            if v["defender_faction"] == int(fId) and v["attacker_id"] and float(v["respect_gain"]) > 0 and delay < 5:
+            if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
                 timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
                 if v["attacker_faction"]:
@@ -580,7 +580,7 @@ class Chain(commands.Cog):
 
         return True
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=60)
     async def retalTask(self):
         print("[RETAL] start task")
 
@@ -628,4 +628,4 @@ class Chain(commands.Cog):
     async def before_retalTask(self):
         print('[RETAL] waiting...')
         await self.bot.wait_until_ready()
-        # await asyncio.sleep(30)
+        await asyncio.sleep(30)

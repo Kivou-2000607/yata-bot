@@ -50,6 +50,32 @@ class Admin(commands.Cog):
         await ctx.send("```html\n</reload>```")
 
     @commands.command()
+    async def check(self, ctx):
+        """Admin tool for the bot owner"""
+        if str(ctx.author.id) not in self.bot.administrators:
+            await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+
+        # loop over guilds
+        guildIds = []
+        for guild in self.bot.guilds:
+            if str(guild.id) in self.bot.configs:
+                guildIds.append(str(guild.id))
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
+            else:
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: no config in the db```")
+
+        for k, v in self.bot.configs.items():
+            if k not in guildIds:
+                await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
+
+
+
+
+    @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
@@ -123,57 +149,6 @@ class Admin(commands.Cog):
         r = get(guild.channels, name=f"{name}")
         s = f":white_check_mark: {name} channel present" if r is not None else f":x: no {name} channel"
         await ctx.send(s)
-
-    @commands.command()
-    async def check(self, ctx):
-        """Admin tool for the bot owner"""
-
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
-            return
-
-        # loop over guilds
-        for guild in self.bot.guilds:
-            await ctx.send(f"**Guild {guild} owned by {guild.owner} aka {guild.owner.display_name}**")
-            config = self.bot.get_config(guild)
-
-            await ctx.send("*general*")
-            # check 0.1: test if config
-            s = ":white_check_mark: configuration files" if len(config) else ":x: no configurations"
-            await ctx.send(s)
-
-            # check 0.2: test system channel
-            s = ":white_check_mark: system channel" if guild.system_channel else ":x: no system channel"
-            await ctx.send(s)
-
-            # check 0.3: test readme channel
-            await self.channel_exists(ctx, guild, "readme")
-
-            # check 1: loot module
-            if self.bot.check_module(guild, "loot"):
-                await ctx.send("*loot*")
-
-                # check 1.1: Looter role
-                await self.role_exists(ctx, guild, "Looter")
-
-                # check 1.2: #loot and #start-looting
-                await self.channel_exists(ctx, guild, "loot")
-                await self.channel_exists(ctx, guild, "start-looting")
-
-            # check 2: verify module
-            if self.bot.check_module(guild, "verify"):
-                await ctx.send("*verify*")
-
-                # check 1.1: Verified role
-                await self.role_exists(ctx, guild, "Verified")
-
-                # check 1.2: #verified-id
-                await self.channel_exists(ctx, guild, "verify-id")
-                for k, v in config.get("factions", dict({})).items():
-                    await self.role_exists(ctx, guild, f"{v} [{k}]")
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
