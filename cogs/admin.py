@@ -154,7 +154,7 @@ class Admin(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx, *args):
         """Clear not pinned messages"""
-        limit = int(args[0]) if (len(args) and args[0].isdigit()) else 100
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
         async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
                 await m.delete()

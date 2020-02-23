@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import datetime
 import json
+import re
 
 # import discord modules
 from discord.ext import commands
@@ -26,10 +27,8 @@ class Chain(commands.Cog):
     @commands.command()
     async def chain(self, ctx, *args):
         """ Watch the chain status of a factions and gives notifications
-            Use: !chain <factionId> <w=warningTime> <n=notificationTime>
+            Use: !chain <factionId> <@Role>
                  factionId: torn id of the faction (by default the author's faction)
-                 warningTime: time in seconds before timeout in second for a ping @faction (default 90s)
-                 notificationTime: time in seconds between each notifications default (600s)
         """
 
         # return if chain not active
@@ -49,23 +48,19 @@ class Chain(commands.Cog):
         deltaW = 90  # warning timeout in seconds
         deltaN = 600  # breathing messages every in second
         faction = ""  # use faction from key
+        role = None
 
         for arg in args:
-            splt = arg.split("=")
-            if arg.isdigit():
+            match = re.match(r'<@&([0-9])+>', arg)
+            if match is not None:
+                role = match.string
+                print(f"role = {role}")
+            elif arg.isdigit():
                 faction = int(arg)
+                print(f"factionId = {faction}")
                 continue
-            elif len(splt) != 2:
-                await ctx.send(f":chains: argument {arg} ignored")
-                continue
-            if splt[0] == 'f' and splt[1].isdigit():
-                faction = int(splt[1])
-            elif splt[0] == 'w' and splt[1].isdigit():
-                deltaW = int(splt[1])
-            elif splt[0] == 'n' and splt[1].isdigit():
-                deltaN = int(splt[1])
             else:
-                await ctx.send(f":chains: key/value pair {arg} ignored")
+                await ctx.send(f":x: ignore argument {arg}. syntax is ```!chain <factionId> <@Role>```")
 
         # Initial call to get faction name
         status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
@@ -89,18 +84,17 @@ class Chain(commands.Cog):
 
         # Set Faction role
         fId = str(req['ID'])
-        if fId in config.get("factions", []):
-            factionName = f'{config["factions"][fId]} [{fId}]' if config.get("verify", dict({})).get("id", False) else f'{config["factions"][fId]}'
-        else:
-            factionName = "{name} [{ID}]".format(**req) if config.get("verify", dict({})).get("id", False) else "{name}".format(**req)
-        factionRole = get(ctx.guild.roles, name=factionName)
+        factionName = "{name} [{ID}]".format(**req)
 
         # if no chain
         if req.get("chain", dict({})).get("current", 0) == 0:
             await ctx.send(f':x: `{factionName}` No chains on the horizon')
             return
 
-        await ctx.send(f":chains: `{factionName}` Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
+        if role is None:
+            await ctx.send(f":chains: `{factionName}` Start watching")
+        else:
+            await ctx.send(f":chains: `{factionName}` Start watching. Will notify {role} on timeout.")
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -164,10 +158,10 @@ class Chain(commands.Cog):
 
             # if warning
             elif timeout < deltaW:
-                if factionRole is None:
+                if role is None:
                     await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
                 else:
-                    await ctx.send(f':chains: {factionRole.mention} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
+                    await ctx.send(f':chains: `{factionName}` {role} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
