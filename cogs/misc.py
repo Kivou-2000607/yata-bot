@@ -5,9 +5,10 @@ import aiohttp
 
 # import discord modules
 from discord.ext import commands
+from discord.utils import get
 
 # import bot functions and classes
-# import includes.formating as fmt
+import includes.formating as fmt
 
 
 class Misc(commands.Cog):
@@ -22,12 +23,10 @@ class Misc(commands.Cog):
         await asyncio.sleep(15)
         await ctx.send(f"*{comic.getAltText()}*")
 
-
     @commands.command()
     async def crimes2(self, ctx):
         """gives latest update on crimes 2.0"""
         await ctx.send("https://yata.alwaysdata.net/static/images/crimes2.gif")
-
 
     @commands.command()
     async def banners(self, ctx, *args):
@@ -83,3 +82,41 @@ class Misc(commands.Cog):
             message = "Missing banners:\n{}".format("\n".join(honors))
 
             await ctx.send(message)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        """Welcome message"""
+
+        # check if bot
+        if member.bot:
+            return
+
+        # get system channel and send message
+        welcome_channel = member.guild.system_channel
+
+        # get config
+        c = self.bot.get_config(member.guild)
+
+        if welcome_channel is None or not c["admin"].get("welcome", False):
+            pass
+        else:
+            lst = [f"Welcome {member.mention}."]
+            msg = []
+            for w in c["admin"]["welcome"].split(" "):
+                if w[0] == "#":
+                    ch = get(member.guild.channels, name=w[1:])
+                    if ch is not None:
+                        msg.append(f'{ch.mention}')
+                    else:
+                        msg.append(f'`{w}`')
+                elif w[0] == "@":
+                    ro = get(member.guild.roles, name=w[1:])
+                    if ro is not None:
+                        msg.append(f'{ro.mention}')
+                    else:
+                        msg.append(f'`{w}`')
+                else:
+                    msg.append(w)
+
+            lst.append(" ".join(msg))
+            await fmt.send_tt(welcome_channel, lst, tt=False)

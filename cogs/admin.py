@@ -9,13 +9,16 @@ from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
 
+# import bot functions and classes
+import includes.formating as fmt
+
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    async def reload(self, ctx):
+    async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
         from includes.yata_db import push_guild_name
@@ -23,21 +26,37 @@ class Admin(commands.Cog):
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
 
-        await ctx.send(":arrows_counterclockwise: Load configurations")
+        await ctx.send("```html\n<reload>```")
         _, c, a = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
         self.bot.administrators = json.loads(a)
+        lst = []
         for i, (k, v) in enumerate(self.bot.administrators.items()):
-            await ctx.send(f':arrows_counterclockwise: **Administartor {i+1}**: Discord [{k}] Torn [{v}]')
-        await self.bot.rebuild(verbose=ctx)
-        await ctx.send(":white_check_mark: Reload done")
+            lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
+        await fmt.send_tt(ctx, lst)
+        print(args)
+        if len(args) and args[0].isdigit():
+            guild = get(self.bot.guilds, id=int(args[0]))
+            if guild is not None:
+                await self.bot.rebuildGuild(guild, verbose=ctx)
+            else:
+                await ctx.send(f"```ERROR: guild id {args[0]} bot found```")
+        else:
+            await self.bot.rebuildGuilds(verbose=ctx)
+        await ctx.send("```html\n</reload>```")
 
     @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
@@ -47,6 +66,9 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # loop over member
@@ -64,6 +86,9 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # get all contacts
@@ -105,6 +130,9 @@ class Admin(commands.Cog):
 
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # loop over guilds
@@ -149,8 +177,9 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx):
+    async def clear(self, ctx, *args):
         """Clear not pinned messages"""
-        async for m in ctx.channel.history():
+        limit = int(args[0]) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
                 await m.delete()

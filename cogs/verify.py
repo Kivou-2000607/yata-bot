@@ -13,6 +13,7 @@ from discord.ext import tasks
 import includes.checks as checks
 # import includes.verify as verify
 from includes.yata_db import get_yata_user
+import includes.formating as fmt
 
 
 class Verify(commands.Cog):
@@ -46,24 +47,10 @@ class Verify(commands.Cog):
         role = get(member.guild.roles, name="Verified")
         message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
-        # get system channel and send message
-        welcome_channel = member.guild.system_channel
-
-        if welcome_channel is None:
-            pass
-        else:
-            # get readme channel
-            readme_channel = get(member.guild.channels, name="readme")
-
-            # send welcome messages
-            if readme_channel is None:
-                await welcome_channel.send(f"Welcome {member.mention}.")
-            else:
-                await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
-            await welcome_channel.send(message)
+        # get config
+        c = self.bot.get_config(member.guild)
 
         # if not Automatically verified send private message
-        c = self.bot.get_config(member.guild)
         if not success and c["verify"].get("force", False):
             msg = [f'**Welcome to the {member.guild}\'s discord server {member} o/**']
             msg.append('This server requires that you verify your account in order to identify who you are in Torn.')
@@ -209,7 +196,7 @@ class Verify(commands.Cog):
             # final message to member
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
-    @commands.command()
+    @commands.command(aliases=["verifyall"])
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
 
@@ -231,7 +218,7 @@ class Verify(commands.Cog):
 
         await self._loop_verify(guild, channel, ctx=ctx, force=force)
 
-    @commands.command()
+    @commands.command(aliases=["checkfactions"])
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members
 
