@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import datetime
 import json
+import re
 
 # import discord modules
 from discord.ext import commands
@@ -26,10 +27,8 @@ class Chain(commands.Cog):
     @commands.command()
     async def chain(self, ctx, *args):
         """ Watch the chain status of a factions and gives notifications
-            Use: !chain <factionId> <w=warningTime> <n=notificationTime>
+            Use: !chain <factionId> <@Role>
                  factionId: torn id of the faction (by default the author's faction)
-                 warningTime: time in seconds before timeout in second for a ping @faction (default 90s)
-                 notificationTime: time in seconds between each notifications default (600s)
         """
 
         # return if chain not active
@@ -49,23 +48,19 @@ class Chain(commands.Cog):
         deltaW = 90  # warning timeout in seconds
         deltaN = 600  # breathing messages every in second
         faction = ""  # use faction from key
+        role = None
 
         for arg in args:
-            splt = arg.split("=")
-            if arg.isdigit():
+            match = re.match(r'<@&([0-9])+>', arg)
+            if match is not None:
+                role = match.string
+                print(f"role = {role}")
+            elif arg.isdigit():
                 faction = int(arg)
+                print(f"factionId = {faction}")
                 continue
-            elif len(splt) != 2:
-                await ctx.send(f":chains: argument {arg} ignored")
-                continue
-            if splt[0] == 'f' and splt[1].isdigit():
-                faction = int(splt[1])
-            elif splt[0] == 'w' and splt[1].isdigit():
-                deltaW = int(splt[1])
-            elif splt[0] == 'n' and splt[1].isdigit():
-                deltaN = int(splt[1])
             else:
-                await ctx.send(f":chains: key/value pair {arg} ignored")
+                await ctx.send(f":x: ignore argument {arg}. syntax is ```!chain <factionId> <@Role>```")
 
         # Initial call to get faction name
         status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
@@ -89,18 +84,17 @@ class Chain(commands.Cog):
 
         # Set Faction role
         fId = str(req['ID'])
-        if fId in config.get("factions", []):
-            factionName = f'{config["factions"][fId]} [{fId}]' if config.get("verify", dict({})).get("id", False) else f'{config["factions"][fId]}'
-        else:
-            factionName = "{name} [{ID}]".format(**req) if config.get("verify", dict({})).get("id", False) else "{name}".format(**req)
-        factionRole = get(ctx.guild.roles, name=factionName)
+        factionName = "{name} [{ID}]".format(**req)
 
         # if no chain
         if req.get("chain", dict({})).get("current", 0) == 0:
             await ctx.send(f':x: `{factionName}` No chains on the horizon')
             return
 
-        await ctx.send(f":chains: `{factionName}` Start watching: will notify if timeout < {deltaW}s and give status every {deltaN/60:.1f}min")
+        if role is None:
+            await ctx.send(f":chains: `{factionName}` Start watching")
+        else:
+            await ctx.send(f":chains: `{factionName}` Start watching. Will notify {role} on timeout.")
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -164,10 +158,10 @@ class Chain(commands.Cog):
 
             # if warning
             elif timeout < deltaW:
-                if factionRole is None:
+                if role is None:
                     await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
                 else:
-                    await ctx.send(f':chains: {factionRole.mention} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
+                    await ctx.send(f':chains: `{factionName}` {role} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
@@ -400,8 +394,8 @@ class Chain(commands.Cog):
             channel = get(ctx.guild.channels, id=v["channelId"])
             admin = get(ctx.guild.channels, name="yata-admin")
             notify = 'nobody' if v["roleId"] is None else f'<@&{v["roleId"]}>'
-            lst = [f'{v["name"]} [{v["tornId"]}] is notifying {notify} for retals in {channel.mention}.',
-                   f'It can be stopped either by them typing `!retal` in {channel.mention} or anyone typing `!stopretal {v["tornId"]}` in {admin.mention}.']
+            lst = [f'{v["name"]} [{v["tornId"]}] is notifying {notify} for retals in #{channel}.',
+                   f'It can be stopped either by them typing `!retal` in #{channel} or anyone typing `!stopretal {v["tornId"]}` in #{admin}.']
             await ctx.send("\n".join(lst))
 
     @commands.command()
@@ -441,7 +435,8 @@ class Chain(commands.Cog):
             name = v.get("name")
             channel = get(ctx.guild.channels, id=v["channelId"])
             del config["chain"]["retal"][str(tornId)]
-            await channel.send(f':x: **{name} [{tornId}]**: Stop watching retals on behalf of {ctx.author.nick}.')
+            if channel is not None:
+                await channel.send(f':x: **{name} [{tornId}]**: Stop watching retals on behalf of {ctx.author.nick}.')
 
             self.bot.configs[str(ctx.guild.id)] = config
             await push_configurations(self.bot.bot_id, self.bot.configs)
@@ -510,6 +505,8 @@ class Chain(commands.Cog):
 
         channel = get(guild.channels, id=channelId)
         notified = " " if roleId is None else f" <@&{roleId}> "
+        if channel is None:
+            return False
 
         url = f'https://api.torn.com/faction/?selections=basic,attacks&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -519,7 +516,15 @@ class Chain(commands.Cog):
         # handle API error
         if 'error' in req:
             await channel.send(f':x: `{name} [{tornId}]` Problem with their key for retal: *{req["error"]["error"]}*')
-            return
+            if req["error"]["code"] in [1, 2, 6, 7, 10]:
+                await channel.send(f':x: `{name} [{tornId}]` retal stopped...')
+                return False
+            else:
+                return True
+
+        if not int(req["ID"]):
+            await channel.send(f':x: `{name} [{tornId}]` No factio found... retal stopped...')
+            return False
 
         fId = req["ID"]
         fName = req["name"]
@@ -534,7 +539,7 @@ class Chain(commands.Cog):
             if str(k) in retal["mentions"]:
                 continue
 
-            if v["defender_faction"] == int(fId) and v["attacker_id"] and float(v["respect_gain"]) > 0 and delay < 5:
+            if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
                 timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
                 if v["attacker_faction"]:
@@ -567,6 +572,8 @@ class Chain(commands.Cog):
         #     if message.author.bot:
         #         await message.delete()
 
+        return True
+
     @tasks.loop(seconds=60)
     async def retalTask(self):
         print("[RETAL] start task")
@@ -587,14 +594,22 @@ class Chain(commands.Cog):
 
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
+                todel = []
                 for tornId, retal in config["chain"]["retal"].items():
                     print(f"[RETAL] retal {guild}: {tornId}: {retal}")
 
                     # call retal faction
-                    await self._retal(guild, retal)
+                    status = await self._retal(guild, retal)
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
-                    self.bot.configs[str(guild.id)]["chain"]["retal"][str(tornId)] = retal
+                    if status:
+                        self.bot.configs[str(guild.id)]["chain"]["retal"][str(tornId)] = retal
+                    else:
+                        todel.append(str(tornId))
+
+                for d in todel:
+                    del self.bot.configs[str(guild.id)]["chain"]["retal"][d]
+                    await push_configurations(self.bot.bot_id, self.bot.configs)
 
                 print(f"[RETAL] retal {guild}: end")
 

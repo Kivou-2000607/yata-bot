@@ -9,13 +9,16 @@ from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
 
+# import bot functions and classes
+import includes.formating as fmt
+
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    async def reload(self, ctx):
+    async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
         from includes.yata_db import push_guild_name
@@ -23,21 +26,63 @@ class Admin(commands.Cog):
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
 
-        await ctx.send(":arrows_counterclockwise: Load configurations")
+        await ctx.send("```html\n<reload>```")
         _, c, a = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
         self.bot.administrators = json.loads(a)
+        lst = []
         for i, (k, v) in enumerate(self.bot.administrators.items()):
-            await ctx.send(f':arrows_counterclockwise: **Administartor {i+1}**: Discord [{k}] Torn [{v}]')
-        await self.bot.rebuild(verbose=ctx)
-        await ctx.send(":white_check_mark: Reload done")
+            lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
+        await fmt.send_tt(ctx, lst)
+        print(args)
+        if len(args) and args[0].isdigit():
+            guild = get(self.bot.guilds, id=int(args[0]))
+            if guild is not None:
+                await self.bot.rebuildGuild(guild, verbose=ctx)
+            else:
+                await ctx.send(f"```ERROR: guild id {args[0]} bot found```")
+        else:
+            await self.bot.rebuildGuilds(verbose=ctx)
+        await ctx.send("```html\n</reload>```")
+
+    @commands.command()
+    async def check(self, ctx):
+        """Admin tool for the bot owner"""
+        if str(ctx.author.id) not in self.bot.administrators:
+            await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+
+        # loop over guilds
+        guildIds = []
+        for guild in self.bot.guilds:
+            if str(guild.id) in self.bot.configs:
+                guildIds.append(str(guild.id))
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
+            else:
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: no config in the db```")
+
+        for k, v in self.bot.configs.items():
+            if k not in guildIds:
+                await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
+
+
+
 
     @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
@@ -47,6 +92,9 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # loop over member
@@ -64,6 +112,9 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # get all contacts
@@ -100,57 +151,10 @@ class Admin(commands.Cog):
         await ctx.send(s)
 
     @commands.command()
-    async def check(self, ctx):
-        """Admin tool for the bot owner"""
-
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-
-        # loop over guilds
-        for guild in self.bot.guilds:
-            await ctx.send(f"**Guild {guild} owned by {guild.owner} aka {guild.owner.display_name}**")
-            config = self.bot.get_config(guild)
-
-            await ctx.send("*general*")
-            # check 0.1: test if config
-            s = ":white_check_mark: configuration files" if len(config) else ":x: no configurations"
-            await ctx.send(s)
-
-            # check 0.2: test system channel
-            s = ":white_check_mark: system channel" if guild.system_channel else ":x: no system channel"
-            await ctx.send(s)
-
-            # check 0.3: test readme channel
-            await self.channel_exists(ctx, guild, "readme")
-
-            # check 1: loot module
-            if self.bot.check_module(guild, "loot"):
-                await ctx.send("*loot*")
-
-                # check 1.1: Looter role
-                await self.role_exists(ctx, guild, "Looter")
-
-                # check 1.2: #loot and #start-looting
-                await self.channel_exists(ctx, guild, "loot")
-                await self.channel_exists(ctx, guild, "start-looting")
-
-            # check 2: verify module
-            if self.bot.check_module(guild, "verify"):
-                await ctx.send("*verify*")
-
-                # check 1.1: Verified role
-                await self.role_exists(ctx, guild, "Verified")
-
-                # check 1.2: #verified-id
-                await self.channel_exists(ctx, guild, "verify-id")
-                for k, v in config.get("factions", dict({})).items():
-                    await self.role_exists(ctx, guild, f"{v} [{k}]")
-
-    @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx):
+    async def clear(self, ctx, *args):
         """Clear not pinned messages"""
-        async for m in ctx.channel.history():
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
                 await m.delete()
