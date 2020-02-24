@@ -126,7 +126,7 @@ class YataBot(Bot):
             return -2, None, None, None
         elif tornId == -2:
             # print(f'[GET MEMBER KEY] status -2: user not verified')
-            m = await ctx.send(f':x: {member.mention} is not verified')
+            m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
             if delError:
                 await asyncio.sleep(5)
                 await m.delete()
@@ -139,7 +139,7 @@ class YataBot(Bot):
         # handle user not on YATA
         if not len(user):
             # print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
-            m = await ctx.send(f':x: **{member}** not found in YATA\'s database')
+            m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
             if delError:
                 await asyncio.sleep(5)
                 await m.delete()
@@ -150,7 +150,7 @@ class YataBot(Bot):
         user = tuple(user[0])
         if not user[3] and needPerm:
             # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
-            m = await ctx.send(f':x: {member.mention} didn\'t give permission to use their API key (https://yata.alwaysdata.net/bot/)')
+            m = await ctx.send(f':x: {member.mention} didn\'t give their permission to use their API key. They need to check out the API keys management section here: https://yata.alwaysdata.net/bot/documentation/')
             if delError:
                 await asyncio.sleep(5)
                 await m.delete()
@@ -179,16 +179,19 @@ class YataBot(Bot):
             await adminChannel.send(msg)
 
     async def on_disconnect(self):
-        """ on_disconnect
-            send message if offline
-        """
-        await self.sendAdminChannel(":red_circle: Going offline")
+        await self.sendAdminChannel(":red_circle: disconnect")
+
+    async def on_connect(self):
+        await self.sendAdminChannel(":green_circle: connect")
+
+    async def on_resume(self):
+        await self.sendAdminChannel(":green_circle: resume")
 
     async def on_ready(self):
         """ on_ready
             loop over the bot guilds and do the setup
         """
-        await self.sendAdminChannel(":green_circle: I'm back online")
+        await self.sendAdminChannel(":green_circle: ready")
         await self.rebuildGuilds(reboot=True)
 
         # change activity
@@ -260,7 +263,7 @@ class YataBot(Bot):
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=False),
                     bot_role: discord.PermissionOverwrite(read_messages=True)
-                    }
+                }
                 channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
                 await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or `!reviveServers`")
 
@@ -318,7 +321,7 @@ class YataBot(Bot):
                             guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             role_loot: discord.PermissionOverwrite(read_messages=True),
                             bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
+                        }
                         channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_loot.send(f"{role_loot.mention} will reveive notification here")
                         await channel_loot.send("Type `!loot` here to get the npc timings")
@@ -366,7 +369,7 @@ class YataBot(Bot):
                             guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             stock_role: discord.PermissionOverwrite(read_messages=True),
                             bot_role: discord.PermissionOverwrite(read_messages=True)
-                            }
+                        }
                         channel_stock = await guild.create_text_channel(stock, topic=f"{stock} stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_stock.send(f"Type `!{stock}` to see the {stock} BB status amoung the members")
 
@@ -384,7 +387,7 @@ class YataBot(Bot):
                                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                                 stock_role: discord.PermissionOverwrite(read_messages=True),
                                 bot_role: discord.PermissionOverwrite(read_messages=True)
-                                }
+                            }
                             channel_stock = await guild.create_text_channel(channel_name, topic=f"Alerts stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                             await channel_stock.send(f"{stock_role.mention} will be notified here")
 
@@ -394,7 +397,6 @@ class YataBot(Bot):
         except BaseException as e:
             if verbose:
                 await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
-
 
     async def rebuildGuilds(self, reboot=False, verbose=False):
         # loop over guilds

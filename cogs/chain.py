@@ -623,3 +623,54 @@ class Chain(commands.Cog):
         print('[RETAL] waiting...')
         await self.bot.wait_until_ready()
         await asyncio.sleep(30)
+
+    @commands.command()
+    async def vault(self, ctx, *args):
+        """ For AA users: gives the vault balance of a user
+        """
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "chain"):
+            await ctx.send(":x: Chain module not activated")
+            return
+
+        if len(args) and args[0].isdigit():
+            checkVaultId = str(args[0])
+        else:
+            await ctx.send(":x: Enter a torn id `!vault <tornId>`")
+            return
+
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+
+        if status != 0:
+            return
+
+        url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        if 'error' in req:
+            await ctx.send(f':x: Error code {req["error"]["code"]}: {req["error"]["error"]}')
+            return
+
+        factionName = f'{req["name"]} [{req["ID"]}]'
+        members = req["members"]
+        donations = req["donations"]
+        lst = [f'Faction: {factionName}']
+        if checkVaultId in members:
+            member = members[checkVaultId]
+            lst.append(f'User: {member["name"]} [{checkVaultId}]')
+            lst.append(f'Action: {member["last_action"]["relative"]}')
+        else:
+            lst.append(f'User: Member [{checkVaultId}]')
+            lst.append(f'Action: Not in faction')
+
+        if checkVaultId in donations:
+            member = donations[checkVaultId]
+            lst.append(f'Money: ${member["money_balance"]:,d}')
+            lst.append(f'Points: {member["points_balance"]:,d}')
+        else:
+            lst.append(f'Money: No vault records')
+            lst.append(f'Points: No vault records')
+
+        await fmt.send_tt(ctx, lst)
