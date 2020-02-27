@@ -72,9 +72,6 @@ class Admin(commands.Cog):
             if k not in guildIds:
                 await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
 
-
-
-
     @commands.command()
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
