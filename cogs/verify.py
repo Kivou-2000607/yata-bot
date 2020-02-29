@@ -368,12 +368,12 @@ class Verify(commands.Cog):
                 common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
                 if common_role is not None and fId in config.get("factions"):
                     await author.add_roles(common_role)
-                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
                 else:
-                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}*. o7", True
+                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}*. o7", True
 
             else:
-                return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}**. o/", True
+                return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}**. o/", True
 
         else:
             # loop over all members to check if the id exists
