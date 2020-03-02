@@ -240,7 +240,8 @@ class YataBot(Bot):
                 return
 
             # push guild name to yata
-            await push_guild_name(guild)
+            bot = get(guild.members, id=self.user.id)
+            await push_guild_info(guild, bot, self.bot_id)
 
             # stop if not managing channels
             if not config["admin"].get("manage", False):
@@ -395,6 +396,7 @@ class YataBot(Bot):
                 await fmt.send_tt(verbose, lst)
 
         except BaseException as e:
+            print(f'```ERROR in {guild} [{guild.id}]: {e}```')
             if verbose:
                 await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
 

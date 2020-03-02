@@ -21,7 +21,6 @@ class Admin(commands.Cog):
     async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
-        from includes.yata_db import push_guild_name
 
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
