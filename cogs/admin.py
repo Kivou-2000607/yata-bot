@@ -84,6 +84,25 @@ class Admin(commands.Cog):
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
 
     @commands.command()
+    async def talk(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        if str(ctx.author.id) not in self.bot.administrators:
+            await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+        if len(args) > 1 and args[0].isdigit():
+            member = get(ctx.guild.members, id=int(args[0]))
+            if member is None:
+                await ctx.send(f":x: Member id `{args[0]}` not known on {ctx.guild}.")
+            else:
+                await member.send(" ".join(args[1:]))
+        else:
+            await ctx.send(f":x: You need to enter a discord user id and a message `!talk <userid> Hello there!`")
+
+
+    @commands.command()
     async def yata(self, ctx):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
