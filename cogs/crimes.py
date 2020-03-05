@@ -189,11 +189,17 @@ class Crimes(commands.Cog):
         if "mentions" not in oc:
             oc["mentions"] = []
         for k, v in req["crimes"].items():
-            # delay = int(nowts - v["timestamp_ended"]) / float(60)
-            if str(k) in oc["mentions"]:
+            # bool that defines if OC already mentionned
+            mentionned = True if str(k) in oc["mentions"] else False
+
+            # is crime ready (without members)
+            ready = v["time_left"] == 0 and v["time_completed"] == 0
+
+            # exit if not ready
+            if not ready:
                 continue
 
-            ready = True
+            # change ready based on participants
             participants = [list(p.values())[0] for p in v["participants"]]
             if participants[0] is None:
                 ready = False
@@ -203,10 +209,17 @@ class Crimes(commands.Cog):
                 if p["state"] != "Okay":
                     ready = False
 
-            if v["time_left"] == 0 and v["time_completed"] == 0 and ready:
-                lst = [f'{notified}{fName}: a {v["crime_name"]} ready.']
+            # if ready and not already mentionned -> mention
+            if ready and not mentionned:
+                lst = [f'{notified}{fName}: {v["crime_name"]} #{k} is ready.']
                 await channel.send('\n'.join(lst))
                 oc["mentions"].append(str(k))
+
+            # if not ready (because of participants) and already mentionned -> remove the already mentionned
+            if not ready and mentionned:
+                lst = [f'{fName}: {v["crime_name"]} #{k} is not ready anymore because of non Okay participants.']
+                await channel.send('\n'.join(lst))
+                oc["mentions"].remove(str(k))
 
         # clean mentions
         cleanedMentions = []
