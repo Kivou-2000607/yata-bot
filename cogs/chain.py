@@ -523,7 +523,7 @@ class Chain(commands.Cog):
                 return True
 
         if not int(req["ID"]):
-            await channel.send(f':x: `{name} [{tornId}]` No factio found... retal stopped...')
+            await channel.send(f':x: `{name} [{tornId}]` No factions found... retal stopped...')
             return False
 
         fId = req["ID"]

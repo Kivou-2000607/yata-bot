@@ -303,9 +303,17 @@ class YataBot(Bot):
                     if get(guild.channels, name=channel_name) is None:
                         lst.append(f"\tCreate channel {channel_name}")
                         channel_chain = await guild.create_text_channel(channel_name, topic="Chain channel for the YATA bot", category=yata_category)
-                        await channel_chain.send("Type `!chain` here to start getting notifications and `!stop` to stop them.")
+                        await channel_chain.send("Type `!chain` here to start getting notifications and `!stopchain` to stop them.")
                     # if reboot:
                     #     await get(guild.channels, name=channel_name).send(":arrows_counterclockwise: I had to reboot which stop all potential chains and retals watching. Please relaunch them.")
+
+            if self.check_module(guild, "crimes"):
+                # create crimes channel
+                for channel_name in [c for c in config["crimes"].get("channels", ["oc"]) if c != "*"]:
+                    if get(guild.channels, name=channel_name) is None:
+                        lst.append(f"\tCreate channel {channel_name}")
+                        channel_oc = await guild.create_text_channel(channel_name, topic="Crimes channel for the YATA bot", category=yata_category)
+                        await channel_oc.send("Type `!oc` here to start/stop getting notifications when ocs are ready.")
 
             if self.check_module(guild, "loot"):
                 # create Looter role

@@ -15,6 +15,7 @@ from cogs.chain import Chain
 from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
+from cogs.crimes import Crimes
 
 # import includes
 from includes.yata_db import load_configurations
@@ -38,6 +39,7 @@ bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(Revive(bot))
 bot.add_cog(Misc(bot))
+bot.add_cog(Crimes(bot))
 
 # run bot
 bot.run(token)
