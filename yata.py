@@ -29,6 +29,7 @@ token, configs, administrators = load_configurations(bot_id)
 
 # init yata bot
 bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id)
+bot.remove_command('help')
 
 # load classes
 bot.add_cog(Verify(bot))

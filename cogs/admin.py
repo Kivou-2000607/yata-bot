@@ -2,6 +2,8 @@
 import re
 import json
 import aiohttp
+import traceback
+import sys
 
 # import discord modules
 import discord
@@ -37,7 +39,7 @@ class Admin(commands.Cog):
         for i, (k, v) in enumerate(self.bot.administrators.items()):
             lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
         await fmt.send_tt(ctx, lst)
-        print(args)
+
         if len(args) and args[0].isdigit():
             guild = get(self.bot.guilds, id=int(args[0]))
             if guild is not None:
@@ -173,3 +175,43 @@ class Admin(commands.Cog):
         async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
                 await m.delete()
+
+    @commands.command()
+    async def help(self, ctx):
+        """help command"""
+        await ctx.send("https://yata.alwaysdata.net/bot/documentation/")
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """The event triggered when an error is raised while invoking a command.
+        ctx   : Context
+        error : Exception"""
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        ignored = (commands.CommandNotFound, commands.UserInputError)
+
+        # Allows us to check for original exceptions raised and sent to CommandInvokeError.
+        # If nothing is found. We keep the exception passed to on_command_error.
+        error = getattr(error, 'original', error)
+
+        # Anything in ignored will return and prevent anything happening.
+        if isinstance(error, ignored):
+            return
+
+        # All other Errors not returned come here... And we can just print the default TraceBack.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+        lst = ["```YAML",
+               f"Log:     Command error",
+               f"Server:  {ctx.guild} [{ctx.guild.id}]",
+               f"Channel: {ctx.message.channel.name}",
+               f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
+               f"Message: {ctx.message.content}",
+               f"",
+               f"{error}",
+               f"```"]
+        await self.bot.sendLogChannel("\n".join(lst))

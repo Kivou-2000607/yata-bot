@@ -174,12 +174,19 @@ class YataBot(Bot):
     async def sendAdminChannel(self, msg, channelId=651386992898342912):
         """ sends message to yata admin channel by default
         """
-        adminChannel = self.get_channel(channelId)
-        if adminChannel is not None:
-            await adminChannel.send(msg)
+        channel = self.get_channel(channelId)
+        if channel is not None:
+            await channel.send(msg)
 
-    async def on_disconnect(self):
-        await self.sendAdminChannel(":red_circle: disconnect")
+    async def sendLogChannel(self, msg, channelId=685470217002156098):
+        """ sends message to yata admin channel by default
+        """
+        channel = self.get_channel(channelId)
+        if channel is not None:
+            await channel.send(msg)
+
+    # async def on_disconnect(self):
+    #     await self.sendAdminChannel(":red_circle: disconnect")
 
     async def on_connect(self):
         await self.sendAdminChannel(":green_circle: connect")
