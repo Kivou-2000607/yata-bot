@@ -96,6 +96,55 @@ class Crimes(commands.Cog):
             await push_configurations(self.bot.bot_id, self.bot.configs)
 
     @commands.command()
+    async def ocready(self, ctx, *args):
+        """ list oc ready
+        """
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "crimes"):
+            await ctx.send(":x: Crimes module not activated")
+            return
+
+        # check channels
+        config = self.bot.get_config(ctx.guild)
+        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
+        if await checks.channels(ctx, ALLOWED_CHANNELS):
+            pass
+        else:
+            return
+
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
+
+        if status < 0:
+            return
+
+        # make api call
+        url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # handle API error
+        if "error" in req:
+            await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
+            return
+
+        crimes = req["crimes"]
+        members = req["members"]
+        for k, v in crimes.items():
+            ready = not v["time_left"] and not v["time_completed"]
+            if ready:
+                lst = ['```YAML', f'{v["crime_name"]}: #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
+                # print(k, v)
+                for p in v["participants"]:
+                    tId = list(p)[0]
+                    name = members.get(tId, dict({"name": "Player"}))["name"]
+                    status = list(p.values())[0]
+                    lst.append(f'    {name}: {status["state"]} ({status["description"]})')
+
+                lst.append('```')
+                await ctx.send(f"\n".join(lst))
+
+    @commands.command()
     async def oc(self, ctx, *args):
         """ start / stop watching for organized crimes
         """
@@ -189,7 +238,7 @@ class Crimes(commands.Cog):
         if "mentions" not in oc:
             oc["mentions"] = []
         for k, v in req["crimes"].items():
-            
+
             # is already mentionned
             mentionned = True if str(k) in oc["mentions"] else False
 
