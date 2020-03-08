@@ -254,7 +254,7 @@ class Crimes(commands.Cog):
 
             # if completed and already mentionned -> remove the already mentionned
             if completed and mentionned:
-                await channel.send(f'{fName}: {v["crime_name"]} #{k} as been completed.')
+                await channel.send(f'{fName}: {v["crime_name"]} #{k} has been completed.')
                 oc["mentions"].remove(str(k))
 
             # exit if completed
