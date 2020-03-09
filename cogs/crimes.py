@@ -133,7 +133,7 @@ class Crimes(commands.Cog):
         for k, v in crimes.items():
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
-                lst = ['```YAML', f'{v["crime_name"]}: #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
+                lst = ['```YAML', f'OC: {v["crime_name"]} #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
                 # print(k, v)
                 for p in v["participants"]:
                     tId = list(p)[0]

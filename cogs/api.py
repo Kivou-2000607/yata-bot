@@ -265,7 +265,7 @@ class API(commands.Cog):
         lst.append(f'Name: {r["name"]} [{r["player_id"]}]    <{linki}>')
         links[linki] = f'https://www.torn.com/profiles.php?XID={tornId}'
         linki += 1
-        lst.append(f'Action: {r["last_action"]["relative"]}')
+        lst.append(f'Action: {r["last_action"]["relative"]} ({r["last_action"]["status"]})')
         s = r["status"]
         # lst.append(f'State: {s["state"]}')
         lst.append(f'Status: {s["description"]}')
@@ -287,16 +287,17 @@ class API(commands.Cog):
         # faction
         if int(r["faction"]["faction_id"]):
             f = r["faction"]
-            lst.append(f'Faction: {f["faction_name"]} [{f["faction_id"]}]    <{linki}>')
+            lst.append(f'Faction: {f["position"]} of {f["faction_name"]} [{f["faction_id"]}]    <{linki}>')
             links[linki] = f'https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}'
             linki += 1
-            lst.append(f'Position: {f["position"]} since {f["days_in_faction"]} days')
+            lst.append(f'Days: In faction since {f["days_in_faction"]} days')
             lst.append('---')
 
         # company
         if int(r["job"]["company_id"]):
             j = r["job"]
-            lst.append(f'Company: {j["position"]} at {j["company_name"]} [{j["company_id"]}]    <{linki}>')
+            lst.append(f'Company: {j["company_name"]} [{j["company_id"]}]    <{linki}>')
+            lst.append(f'Position: {j["position"]}')
             links[linki] = f'https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]}'
             linki += 1
             lst.append('---')
