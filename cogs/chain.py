@@ -576,7 +576,7 @@ class Chain(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def retalTask(self):
-        print("[RETAL] start task")
+        # print("[RETAL] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=100):
@@ -590,13 +590,13 @@ class Chain(commands.Cog):
                 if not config["chain"].get("retal", False):
                     continue
 
-                print(f"[RETAL] retal {guild}: start")
+                # print(f"[RETAL] retal {guild}: start")
 
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, retal in config["chain"]["retal"].items():
-                    print(f"[RETAL] retal {guild}: {tornId}: {retal}")
+                    # print(f"[RETAL] retal {guild}: {tornId}: {retal}")
 
                     # call retal faction
                     status = await self._retal(guild, retal)
@@ -611,12 +611,12 @@ class Chain(commands.Cog):
                     del self.bot.configs[str(guild.id)]["chain"]["retal"][d]
                     await push_configurations(self.bot.bot_id, self.bot.configs)
 
-                print(f"[RETAL] retal {guild}: end")
+                # print(f"[RETAL] retal {guild}: end")
 
             except BaseException as e:
                 print(f"[RETAL] guild {guild}: retal failed {e}.")
 
-        print("[RETAL] end task")
+        # print("[RETAL] end task")
 
     @retalTask.before_loop
     async def before_retalTask(self):

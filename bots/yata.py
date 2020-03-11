@@ -2,6 +2,7 @@
 import json
 import os
 import aiohttp
+import traceback
 
 # import discord modules
 import discord
@@ -411,9 +412,12 @@ class YataBot(Bot):
                 await fmt.send_tt(verbose, lst)
 
         except BaseException as e:
-            print(f'```ERROR in {guild} [{guild.id}]: {e}```')
+            print(f'ERROR in {guild} [{guild.id}]: {e}')
+            print(f'{traceback.format_exc()}')
             if verbose:
                 await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
+                await verbose.send(f'```{traceback.format_exc()}```')
+
 
     async def rebuildGuilds(self, reboot=False, verbose=False):
         # loop over guilds

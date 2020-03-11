@@ -295,7 +295,7 @@ class Crimes(commands.Cog):
 
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        print("[OC] start task")
+        # print("[OC] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=100):
@@ -309,13 +309,13 @@ class Crimes(commands.Cog):
                 if not config["crimes"].get("oc", False):
                     continue
 
-                print(f"[OC] oc {guild}: start")
+                # print(f"[OC] oc {guild}: start")
 
                 # iteration over all members asking for oc watch
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
-                    print(f"[OC] oc {guild}: {tornId}: {oc}")
+                    # print(f"[OC] oc {guild}: {tornId}: {oc}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
@@ -330,12 +330,12 @@ class Crimes(commands.Cog):
                     del self.bot.configs[str(guild.id)]["crimes"]["oc"][d]
                     await push_configurations(self.bot.bot_id, self.bot.configs)
 
-                print(f"[OC] oc {guild}: end")
+                # print(f"[OC] oc {guild}: end")
 
             except BaseException as e:
                 print(f"[OC] guild {guild}: oc failed {e}.")
 
-        print("[OC] end task")
+        # print("[OC] end task")
 
     @ocTask.before_loop
     async def before_ocTask(self):
