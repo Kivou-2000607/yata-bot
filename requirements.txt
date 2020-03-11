@@ -4,7 +4,6 @@ pytz
 psycopg2-binary
 asyncio
 asyncpg
-traceback
 
 # for repo
 PyGithub
