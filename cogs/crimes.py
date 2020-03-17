@@ -229,14 +229,23 @@ class Crimes(commands.Cog):
             await channel.send(f':x: `{name} [{tornId}]` No factions found... oc stopped...')
             return False
 
+        # faction id and name
         fId = req["ID"]
         fName = req["name"]
 
+        # faction members
+        members = req["members"]
+
+        # get timestamps
         now = datetime.datetime.utcnow()
         epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
         nowts = (now - epoch).total_seconds()
+
+        # init mentions if empty
         if "mentions" not in oc:
             oc["mentions"] = []
+
+        # loop over crimes
         for k, v in req["crimes"].items():
 
             # is already mentionned
@@ -254,7 +263,12 @@ class Crimes(commands.Cog):
 
             # if completed and already mentionned -> remove the already mentionned
             if completed and mentionned:
-                await channel.send(f'{fName}: {v["crime_name"]} #{k} has been completed.')
+                initId = str(v["initiated_by"])
+                lst = [f'{fName}: {v["crime_name"]} #{k} has been completed by {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
+                       f'Money: ${v["money_gain"]:,}',
+                       f'Respect: {v["respect_gain"]:,}',
+                       ]
+                await channel.send("\n".join(lst))
                 oc["mentions"].remove(str(k))
 
             # exit if completed
@@ -315,7 +329,7 @@ class Crimes(commands.Cog):
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
-                    # print(f"[OC] oc {guild}: {tornId}: {oc}")
+                    print(f"[OC] oc {guild}: {tornId}: {oc}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
