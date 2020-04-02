@@ -3,6 +3,7 @@ import json
 import os
 import aiohttp
 import traceback
+import html
 
 # import discord modules
 import discord
@@ -286,7 +287,7 @@ class YataBot(Bot):
                 # create faction roles
                 fac = config.get("factions", dict({}))
                 for k, v in fac.items():
-                    role_name = f"{v} [{k}]" if config['verify'].get('id', False) else f"{v}"
+                    role_name = html.unescape(f"{v} [{k}]" if config['verify'].get('id', False) else f"{v}")
                     if get(guild.roles, name=role_name) is None:
                         lst.append(f"\tCreate faction role {role_name}")
                         await guild.create_role(name=role_name)
@@ -417,7 +418,6 @@ class YataBot(Bot):
             if verbose:
                 await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
                 await verbose.send(f'```{traceback.format_exc()}```')
-
 
     async def rebuildGuilds(self, reboot=False, verbose=False):
         # loop over guilds
