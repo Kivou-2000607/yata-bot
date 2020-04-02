@@ -1,5 +1,6 @@
 from discord import Webhook, AsyncWebhookAdapter
 
+import re
 import asyncio
 import websockets
 import cloudscraper
@@ -10,10 +11,9 @@ from includes.yata_db import get_secret
 import includes.formating as fmt
 
 room = "Trade"
-iud, secret, hookurl = get_secret(room)
+iud, secret, hooks = get_secret(room)
 
-
-async def chat(uid, secret, hookurl, room):
+async def chat(uid, secret, hooks, room):
 
     uri = f"wss://ws-chat.torn.com/chat/ws?uid={iud}&secret={secret}"
 
@@ -22,12 +22,20 @@ async def chat(uid, secret, hookurl, room):
 
     async with websockets.connect(uri, origin="https://www.torn.com", extra_headers=headers) as websocket:
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
+            webhooks = dict({})
+            for hookId, hookurl in hooks.items():  
+                webhooks[hookId] = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
+                
             while(True):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]
                 if d.get("roomId", "") == room and d.get("messageText"):
                     msg = fmt.chat_message(d)
-                    await webhook.send(msg)
+                    await webhooks["full"].send(msg)
 
-asyncio.get_event_loop().run_until_complete(chat(iud, secret, hookurl, room))
+                    for keyword in [k for k in webhooks if k != "full"]:
+                        if re.search(f"\W*({keyword})\W*", msg.lower()) is not None:
+                            await webhooks[keyword].send(msg)
+
+                    
+asyncio.get_event_loop().run_until_complete(chat(iud, secret, json.loads(hooks), room))
