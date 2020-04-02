@@ -6,7 +6,7 @@ import re
 import os
 import asyncpg
 import psycopg2
-
+from datetime import datetime
 
 # definition of the view linking Player to Key
 # Name of the view: player_view_player_key
@@ -32,14 +32,14 @@ async def get_yata_user(tornId):
     return user
 
 
-async def push_guild_name(guild):
+async def push_guild_info(guild, member, bot_pk):
     """Writes the actual guild name in YATA database"""
     # get YATA user
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3 WHERE "guildId"=$4', guild.name, guild.owner_id, guild.owner.name, guild.id)
+    await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3, "guildJoinedTime"=$4 WHERE "guildId"=$5 AND "configuration_id"=$6', guild.name, guild.owner_id, guild.owner.name, datetime.timestamp(member.joined_at), guild.id, int(bot_pk))
     await con.close()
 
 
@@ -50,7 +50,7 @@ def load_configurations(bot_id, verbose=False):
     cur.execute(f"SELECT token, variables, administrators FROM bot_discordapp WHERE id = {bot_id};")
     token, configs, administrators = cur.fetchone()
     cur.close()
-    con.close()    
+    con.close()
     return token, configs, administrators
 
 

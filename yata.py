@@ -15,6 +15,7 @@ from cogs.chain import Chain
 from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
+from cogs.crimes import Crimes
 
 # import includes
 from includes.yata_db import load_configurations
@@ -28,6 +29,7 @@ token, configs, administrators = load_configurations(bot_id)
 
 # init yata bot
 bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id)
+bot.remove_command('help')
 
 # load classes
 bot.add_cog(Verify(bot))
@@ -38,6 +40,7 @@ bot.add_cog(Chain(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(Revive(bot))
 bot.add_cog(Misc(bot))
+bot.add_cog(Crimes(bot))
 
 # run bot
 bot.run(token)

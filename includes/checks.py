@@ -11,9 +11,9 @@ async def channels(ctx, allowed):
 
     elif ctx.channel.name not in allowed:
         if None in allowed:
-            msg = await ctx.send("Sorry **{}**... This channel is not made for this kind of requests. Initiale a private conversation with me for that.".format(ctx.author.display_name, allowed_string))
+            msg = await ctx.send("Sorry **{}**... This channel is not made for this command. Initiate a private conversation with me for that.".format(ctx.author.display_name, allowed_string))
         else:
-            msg = await ctx.send("Sorry **{}**... This channel is not made for this kind of requests. Got to {}.".format(ctx.author.display_name, allowed_string))
+            msg = await ctx.send("Sorry **{}**... This channel is not made for this command. Goto {}.".format(ctx.author.display_name, allowed_string))
         await asyncio.sleep(10)
         await msg.delete()
         await ctx.message.delete()

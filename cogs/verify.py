@@ -13,6 +13,7 @@ from discord.ext import tasks
 import includes.checks as checks
 # import includes.verify as verify
 from includes.yata_db import get_yata_user
+import includes.formating as fmt
 
 
 class Verify(commands.Cog):
@@ -46,24 +47,13 @@ class Verify(commands.Cog):
         role = get(member.guild.roles, name="Verified")
         message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
-        # get system channel and send message
-        welcome_channel = member.guild.system_channel
-
-        if welcome_channel is None:
-            pass
-        else:
-            # get readme channel
-            readme_channel = get(member.guild.channels, name="readme")
-
-            # send welcome messages
-            if readme_channel is None:
-                await welcome_channel.send(f"Welcome {member.mention}.")
-            else:
-                await welcome_channel.send(f"Welcome {member.mention}. Have a look at {readme_channel.mention} to see what this server is all about!")
-            await welcome_channel.send(message)
+        # get config
+        c = self.bot.get_config(member.guild)
+        for chName in c["verify"].get("channels", []):
+            ch = get(member.guild.channels, name=chName)
+            await ch.send(message)
 
         # if not Automatically verified send private message
-        c = self.bot.get_config(member.guild)
         if not success and c["verify"].get("force", False):
             msg = [f'**Welcome to the {member.guild}\'s discord server {member} o/**']
             msg.append('This server requires that you verify your account in order to identify who you are in Torn.')
@@ -158,8 +148,11 @@ class Verify(commands.Cog):
             if member is None:
                 continue
 
-            # get system channel and send message
-            welcome_channel = guild.system_channel
+            # get config
+            config = self.bot.get_config(guild)
+
+            # get verify channel and send message
+            verify_channel = get(guild.channels, name=config["verify"].get("channels", ["verify-id"])[0])
 
             # try to modify the nickname
             try:
@@ -174,17 +167,16 @@ class Verify(commands.Cog):
             try:
                 await member.add_roles(role)
                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {role.name}')
-            except BaseException:
-                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role.')
+            except BaseException as e:
+                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role ({e}).')
                 continue
 
             # Set Faction role
-            config = self.bot.get_config(guild)
             fId = str(user['faction']['faction_id'])
             if fId in config["factions"]:
                 faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
             else:
-                faction_name = "{faction_name} [{faction_id}]".format(**user) if config["verify"].get("id", False) else "{faction_name}".format(**user)
+                faction_name = "{faction_name} [{faction_id}]".format(**user["faction"]) if config["verify"].get("id", False) else "{faction_name}".format(**user["faction"])
 
             faction_role = get(guild.roles, name=faction_name)
             if faction_role is not None:
@@ -195,21 +187,21 @@ class Verify(commands.Cog):
                 common_role = get(guild.roles, name=config["verify"].get("common"))
                 if common_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
                     await member.add_roles(common_role)
-                    if welcome_channel is not None:
-                        await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
+                    if verify_channel is not None:
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
                     await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {common_role}')
                 else:
-                    if welcome_channel is not None:
-                        await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
+                    if verify_channel is not None:
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
             else:
-                if welcome_channel is not None:
-                    await welcome_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
+                if verify_channel is not None:
+                    await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
 
             # final message to member
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
-    @commands.command()
+    @commands.command(aliases=["verifyall"])
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
 
@@ -231,7 +223,7 @@ class Verify(commands.Cog):
 
         await self._loop_verify(guild, channel, ctx=ctx, force=force)
 
-    @commands.command()
+    @commands.command(aliases=["checkfactions"])
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members
 
@@ -376,12 +368,12 @@ class Verify(commands.Cog):
                 common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
                 if common_role is not None and fId in config.get("factions"):
                     await author.add_roles(common_role)
-                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
                 else:
-                    return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}** from *{faction_name}*. o7", True
+                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}*. o7", True
 
             else:
-                return f":white_check_mark: **{author}**, you've been verified and are now kown as **{author.mention}**. o/", True
+                return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}**. o/", True
 
         else:
             # loop over all members to check if the id exists
@@ -455,7 +447,6 @@ class Verify(commands.Cog):
                 await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
                 continue
 
-            print("pass because force")
             if member.bot:
                 await channel.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
             elif role in member.roles:

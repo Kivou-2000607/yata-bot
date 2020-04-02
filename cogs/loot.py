@@ -187,7 +187,9 @@ class Loot(commands.Cog):
                 guild = self.bot.get_guild(guild.id)
 
                 # get channel
-                channel = get(guild.channels, name="loot")
+                config = self.bot.get_config(guild)
+                channel_name = self.bot.get_allowed_channels(config, "loot")[0]
+                channel = get(guild.channels, name=channel_name)
 
                 # get role
                 role = get(guild.roles, name="Looter")
@@ -199,6 +201,14 @@ class Loot(commands.Cog):
                     await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
+                lst = ["```YAML",
+                       f"Log:     Loot notification error",
+                       f"Server:  {guild} [{guild.id}]",
+                       f"Channel: {channel.name}",
+                       f"",
+                       f"{e}",
+                       f"```"]
+                await self.bot.sendLogChannel("\n".join(lst))
                 print(f"[LOOT] guild {guild}: mention failed {e}.")
 
             # await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")

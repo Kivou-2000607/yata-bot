@@ -2,6 +2,8 @@
 import re
 import json
 import aiohttp
+import traceback
+import sys
 
 # import discord modules
 import discord
@@ -9,29 +11,67 @@ from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
 
+# import bot functions and classes
+import includes.formating as fmt
+
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    async def reload(self, ctx):
+    async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
-        from includes.yata_db import push_guild_name
 
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
 
-        await ctx.send(":arrows_counterclockwise: Load configurations")
+        await ctx.send("```html\n<reload>```")
         _, c, a = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
         self.bot.administrators = json.loads(a)
+        lst = []
         for i, (k, v) in enumerate(self.bot.administrators.items()):
-            await ctx.send(f':arrows_counterclockwise: **Administartor {i+1}**: Discord [{k}] Torn [{v}]')
-        await self.bot.rebuild(verbose=ctx)
-        await ctx.send(":white_check_mark: Reload done")
+            lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
+        await fmt.send_tt(ctx, lst)
+
+        if len(args) and args[0].isdigit():
+            guild = get(self.bot.guilds, id=int(args[0]))
+            if guild is not None:
+                await self.bot.rebuildGuild(guild, verbose=ctx)
+            else:
+                await ctx.send(f"```ERROR: guild id {args[0]} bot found```")
+        else:
+            await self.bot.rebuildGuilds(verbose=ctx)
+        await ctx.send("```html\n</reload>```")
+
+    @commands.command()
+    async def check(self, ctx):
+        """Admin tool for the bot owner"""
+        if str(ctx.author.id) not in self.bot.administrators:
+            await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+
+        # loop over guilds
+        guildIds = []
+        for guild in self.bot.guilds:
+            if str(guild.id) in self.bot.configs:
+                guildIds.append(str(guild.id))
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
+            else:
+                await ctx.send(f"```Guild {guild} owned by {guild.owner}: no config in the db```")
+
+        for k, v in self.bot.configs.items():
+            if k not in guildIds:
+                await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
 
     @commands.command()
     async def invite(self, ctx):
@@ -39,14 +79,39 @@ class Admin(commands.Cog):
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
         # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
+
+    @commands.command()
+    async def talk(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        if str(ctx.author.id) not in self.bot.administrators:
+            await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+        if len(args) > 1 and args[0].isdigit():
+            member = get(ctx.guild.members, id=int(args[0]))
+            if member is None:
+                await ctx.send(f":x: Member id `{args[0]}` not known on {ctx.guild}.")
+            else:
+                await member.send(" ".join(args[1:]))
+        else:
+            await ctx.send(f":x: You need to enter a discord user id and a message `!talk <userid> Hello there!`")
+
 
     @commands.command()
     async def yata(self, ctx):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # loop over member
@@ -64,6 +129,9 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
+            return
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
         # get all contacts
@@ -100,57 +168,50 @@ class Admin(commands.Cog):
         await ctx.send(s)
 
     @commands.command()
-    async def check(self, ctx):
-        """Admin tool for the bot owner"""
-
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-
-        # loop over guilds
-        for guild in self.bot.guilds:
-            await ctx.send(f"**Guild {guild} owned by {guild.owner} aka {guild.owner.display_name}**")
-            config = self.bot.get_config(guild)
-
-            await ctx.send("*general*")
-            # check 0.1: test if config
-            s = ":white_check_mark: configuration files" if len(config) else ":x: no configurations"
-            await ctx.send(s)
-
-            # check 0.2: test system channel
-            s = ":white_check_mark: system channel" if guild.system_channel else ":x: no system channel"
-            await ctx.send(s)
-
-            # check 0.3: test readme channel
-            await self.channel_exists(ctx, guild, "readme")
-
-            # check 1: loot module
-            if self.bot.check_module(guild, "loot"):
-                await ctx.send("*loot*")
-
-                # check 1.1: Looter role
-                await self.role_exists(ctx, guild, "Looter")
-
-                # check 1.2: #loot and #start-looting
-                await self.channel_exists(ctx, guild, "loot")
-                await self.channel_exists(ctx, guild, "start-looting")
-
-            # check 2: verify module
-            if self.bot.check_module(guild, "verify"):
-                await ctx.send("*verify*")
-
-                # check 1.1: Verified role
-                await self.role_exists(ctx, guild, "Verified")
-
-                # check 1.2: #verified-id
-                await self.channel_exists(ctx, guild, "verify-id")
-                for k, v in config.get("factions", dict({})).items():
-                    await self.role_exists(ctx, guild, f"{v} [{k}]")
-
-    @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx):
+    async def clear(self, ctx, *args):
         """Clear not pinned messages"""
-        async for m in ctx.channel.history():
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
                 await m.delete()
+
+    @commands.command()
+    async def help(self, ctx):
+        """help command"""
+        await ctx.send("https://yata.alwaysdata.net/bot/documentation/")
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """The event triggered when an error is raised while invoking a command.
+        ctx   : Context
+        error : Exception"""
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        ignored = (commands.CommandNotFound, commands.UserInputError)
+
+        # Allows us to check for original exceptions raised and sent to CommandInvokeError.
+        # If nothing is found. We keep the exception passed to on_command_error.
+        error = getattr(error, 'original', error)
+
+        # Anything in ignored will return and prevent anything happening.
+        if isinstance(error, ignored):
+            return
+
+        # All other Errors not returned come here... And we can just print the default TraceBack.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+        lst = ["```YAML",
+               f"Log:     Command error",
+               f"Server:  {ctx.guild} [{ctx.guild.id}]",
+               f"Channel: {ctx.message.channel.name}",
+               f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
+               f"Message: {ctx.message.content}",
+               f"",
+               f"{error}",
+               f"```"]
+        await self.bot.sendLogChannel("\n".join(lst))
