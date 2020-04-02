@@ -31,12 +31,13 @@ async def chat(uid, secret, hooks, room):
             while(True):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]
-                if d.get("roomId", "") == room and d.get("messageText"):
+                txt = d.get("messageText")
+                if d.get("roomId", "") == room and txt:
                     msg = fmt.chat_message(d)
                     await webhooks["full"].send(msg)
 
                     for keyword in [k for k in webhooks if k != "full"]:
-                        if re.search(f"\W*({keyword})\W*", msg.lower()) is not None:
+                        if re.search(f"\W*({keyword})\W*", txt.lower()) is not None:
                             #msg += " <@&546769358744191006>"
                             await webhooks[keyword].send(msg)
 
