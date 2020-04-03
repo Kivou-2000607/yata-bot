@@ -59,7 +59,8 @@ class Verify(commands.Cog):
             msg.append('This server requires that you verify your account in order to identify who you are in Torn.')
             msg.append('There is two ways to do that:')
             msg.append(f'1 - You can go to the official discord server and get verified there: https://torn.com/discord, then come back in the {member.guild} server and type `!verify` in #verify-id.')
-            msg.append('2 - Or you can type **in this channel** `!verifyKey YOURAPIKEY (16 random letters)` *(key cant be found here: https://www.torn.com/preferences.php#tab=api)*')
+            msg.append('Or you can directly use this link if you don\'t want to join the official discord: https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify')
+            msg.append('2 - Or you can type **in this channel**: `!verifyKey YOURAPIKEY` *(the api key is 16 random letters that can be found here: https://www.torn.com/preferences.php#tab=api)*')
             msg.append(f'Either way, this process changes your nickname to your Torn name, gives you the {role} role and a role corresponding to your faction and you will have access to the main channels of the server.')
             msg.append(f'If you change your name or faction you can repeat this verification whenever you want.')
 
