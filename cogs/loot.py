@@ -175,7 +175,7 @@ class Loot(commands.Cog):
         print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=100):
+        async for guild in self.bot.fetch_guilds(limit=150):
             try:
                 # ignore non loot servers
                 if not self.bot.check_module(guild, "loot"):

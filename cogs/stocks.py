@@ -181,7 +181,7 @@ class Stocks(commands.Cog):
 
         print("[STOCK] alerts", len(lst))
         # loop over guilds to send alerts
-        async for guild in self.bot.fetch_guilds(limit=100):
+        async for guild in self.bot.fetch_guilds(limit=150):
             try:
                 # check if module activated
                 config = self.bot.get_config(guild)

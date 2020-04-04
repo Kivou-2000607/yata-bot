@@ -312,7 +312,7 @@ class Crimes(commands.Cog):
         # print("[OC] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=100):
+        async for guild in self.bot.fetch_guilds(limit=150):
             try:
                 # ignore servers with no verify
                 if not self.bot.check_module(guild, "crimes"):
