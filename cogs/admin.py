@@ -191,6 +191,7 @@ class Admin(commands.Cog):
         if hasattr(ctx.command, 'on_error'):
             return
 
+        print(type(error))
         ignored = (commands.CommandNotFound, commands.UserInputError)
 
         # Allows us to check for original exceptions raised and sent to CommandInvokeError.

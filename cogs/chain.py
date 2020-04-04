@@ -309,7 +309,7 @@ class Chain(commands.Cog):
             # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
             lst.append(line)
-
+        
         await fmt.send_tt(ctx, lst, tt=False)
 
     @commands.command(aliases=['ok'])

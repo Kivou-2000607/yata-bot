@@ -5,6 +5,7 @@ import asyncpg
 import json
 import re
 import os
+import html
 
 # import discord modules
 import discord
@@ -287,7 +288,7 @@ class API(commands.Cog):
         # faction
         if int(r["faction"]["faction_id"]):
             f = r["faction"]
-            lst.append(f'Faction: {f["position"]} of {f["faction_name"]} [{f["faction_id"]}]    <{linki}>')
+            lst.append(f'Faction: {f["position"]} of {html.unescape(f["faction_name"])} [{f["faction_id"]}]    <{linki}>')
             links[linki] = f'https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}'
             linki += 1
             lst.append(f'Days: In faction since {f["days_in_faction"]} days')
@@ -296,7 +297,7 @@ class API(commands.Cog):
         # company
         if int(r["job"]["company_id"]):
             j = r["job"]
-            lst.append(f'Company: {j["company_name"]} [{j["company_id"]}]    <{linki}>')
+            lst.append(f'Company: {html.unescape(j["company_name"])} [{j["company_id"]}]    <{linki}>')
             lst.append(f'Position: {j["position"]}')
             links[linki] = f'https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]}'
             linki += 1

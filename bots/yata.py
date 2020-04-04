@@ -187,8 +187,8 @@ class YataBot(Bot):
         if channel is not None:
             await channel.send(msg)
 
-    # async def on_disconnect(self):
-    #     await self.sendAdminChannel(":red_circle: disconnect")
+    async def on_disconnect(self):
+        await self.sendAdminChannel(":red_circle: disconnect")
 
     async def on_connect(self):
         await self.sendAdminChannel(":green_circle: connect")
