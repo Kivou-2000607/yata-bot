@@ -68,7 +68,7 @@ class Stocks(commands.Cog):
                 continue
 
             # get information from API key
-            url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord&key={key}'
+            url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord,timestamp&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
@@ -77,6 +77,17 @@ class Stocks(commands.Cog):
             if "error" in req:
                 await ctx.send(f':x: {member.mention} API key error: *{req["error"].get("error", "?")}*')
                 continue
+
+            # send pull request to member
+            info = 'bank investment' if stock == "tcb" else "education"
+            lst = [f'Your **{info} time** as just been pulled.',
+                  f'```YAML',
+                  f'Command: {stock}',
+                  f'Time: {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
+                  f'Server: {ctx.guild} [{ctx.guild.id}]',
+                  f'Channel: {ctx.channel}',
+                  f'Author: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
+            await member.send("\n".join(lst))
 
             # get stock owner
             user_stocks = req.get('stocks')
