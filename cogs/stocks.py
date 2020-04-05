@@ -80,7 +80,7 @@ class Stocks(commands.Cog):
 
             # send pull request to member
             info = 'bank investment' if stock == "tcb" else "education"
-            lst = [f'Your **{info} time** as just been pulled.',
+            lst = [f'Your **{info} time** has just been pulled.',
                   f'```YAML',
                   f'Command: {stock}',
                   f'Time: {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
