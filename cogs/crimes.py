@@ -219,6 +219,9 @@ class Crimes(commands.Cog):
         # handle API error
         if 'error' in req:
             await channel.send(f':x: `{name} [{tornId}]` Problem with their key for oc: *{req["error"]["error"]}*')
+            if req["error"]["code"] in [7]:
+                await channel.send("It means that you don't have the required AA permission (AA for API access) for this API request. This is an in-game permission that faction leader and co-leader can grant to their members.")
+
             if req["error"]["code"] in [1, 2, 6, 7, 10]:
                 await channel.send(f':x: `{name} [{tornId}]` oc stopped...')
                 return False

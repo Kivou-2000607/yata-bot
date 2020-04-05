@@ -309,7 +309,7 @@ class Chain(commands.Cog):
             # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
             lst.append(line)
-        
+
         await fmt.send_tt(ctx, lst, tt=False)
 
     @commands.command(aliases=['ok'])
@@ -516,6 +516,9 @@ class Chain(commands.Cog):
         # handle API error
         if 'error' in req:
             await channel.send(f':x: `{name} [{tornId}]` Problem with their key for retal: *{req["error"]["error"]}*')
+            if req["error"]["code"] in [7]:
+                await channel.send("It means that you don't have the required AA permission (AA for API access) for this API request. This is an in-game permission that faction leader and co-leader can grant to their members.")
+
             if req["error"]["code"] in [1, 2, 6, 7, 10]:
                 await channel.send(f':x: `{name} [{tornId}]` retal stopped...')
                 return False
