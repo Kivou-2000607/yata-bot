@@ -21,8 +21,12 @@ class Verify(commands.Cog):
         self.bot = bot
         self.dailyVerify.start()
         self.dailyCheck.start()
+        self.weeklyVerify.start()
+        self.weeklyCheck.start()
 
     def cog_unload(self):
+        self.weeklyVerify.cancel()
+        self.weeklyCheck.cancel()
         self.dailyVerify.cancel()
         self.dailyCheck.cancel()
 
@@ -543,7 +547,7 @@ class Verify(commands.Cog):
 
         await channel.send(f"Done checking")
 
-    @tasks.loop(seconds=43200)
+    @tasks.loop(hours=24)
     async def dailyVerify(self):
         print("[VERIFY] start task")
 
@@ -572,12 +576,41 @@ class Verify(commands.Cog):
             except BaseException as e:
                 print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
 
-    @tasks.loop(seconds=43200)
+    @tasks.loop(hours=168)
+    async def weeklyverify(self):
+        print("[VERIFY] start task")
+
+        # iteration over all guilds
+        async for guild in self.bot.fetch_guilds(limit=150):
+            try:
+                # ignore servers with no verify
+                if not self.bot.check_module(guild, "verify"):
+                    continue
+
+                # ignore servers with no option daily check
+                config = self.bot.get_config(guild)
+                if not config["verify"].get("weeklyverify", False):
+                    continue
+
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
+                print(f"[VERIFY] verifying all {guild}: start")
+                # get channel
+                channel = get(guild.channels, name="yata-admin")
+                await channel.send("Automatic verification of your members: **START**")
+                await self._loop_verify(guild, channel, force=True)
+                await channel.send("Automatic verification of your members: **DONE**")
+                print(f"[VERIFY] verifying all {guild}: end")
+
+            except BaseException as e:
+                print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
+
+    @tasks.loop(hours=24)
     async def dailyCheck(self):
         print("[VERIFY] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=100):
+        async for guild in self.bot.fetch_guilds(limit=150):
             try:
                 # ignore servers with no verify
                 if not self.bot.check_module(guild, "verify"):
@@ -601,14 +634,55 @@ class Verify(commands.Cog):
             except BaseException as e:
                 print(f"[VERIFY] guild {guild}: checkFactions failed {e}.")
 
+    @tasks.loop(hours=168)
+    async def weeklyCheck(self):
+        print("[VERIFY] start task")
+
+        # iteration over all guilds
+        async for guild in self.bot.fetch_guilds(limit=150):
+            try:
+                # ignore servers with no verify
+                if not self.bot.check_module(guild, "verify"):
+                    continue
+
+                # ignore servers with no option daily check
+                config = self.bot.get_config(guild)
+                if not config["verify"].get("weeklyCheck", False):
+                    continue
+
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
+                print(f"[VERIFY] verifying all {guild}: start")
+                # get channel
+                channel = get(guild.channels, name="yata-admin")
+                await channel.send("Automatic check of your members faction: **START**")
+                await self._loop_check(guild, channel, force=True)
+                await channel.send("Automatic check of your members faction: **DONE**")
+                print(f"[VERIFY] verifying all {guild}: end")
+
+            except BaseException as e:
+                print(f"[VERIFY] guild {guild}: checkFactions failed {e}.")
+
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
         await asyncio.sleep(30)
 
+    @weeklyVerify.before_loop
+    async def weeklyVerify(self):
+        print('[Verify] waiting...')
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(30)
+
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
+        print('[Verify] waiting...')
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(30)
+
+    @weeklyCheck.before_loop
+    async def before_weeklyCheck(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
         await asyncio.sleep(30)
