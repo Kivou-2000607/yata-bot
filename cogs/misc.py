@@ -2,6 +2,7 @@
 import xkcd
 import asyncio
 import aiohttp
+import random
 
 # import discord modules
 from discord.ext import commands
@@ -9,6 +10,7 @@ from discord.utils import get
 
 # import bot functions and classes
 import includes.formating as fmt
+from includes.torn_pages import  pages
 
 
 class Misc(commands.Cog):
@@ -120,3 +122,10 @@ class Misc(commands.Cog):
 
             lst.append(" ".join(msg))
             await fmt.send_tt(welcome_channel, lst, tt=False)
+
+    @commands.command()
+    async def egg(self, ctx):
+        p = random.choice(pages)
+        lst = [f'You want to find an egg? Try here:',
+               f'**{p.get("title", "here")}** https://www.torn.com{p.get("url", "")}']
+        await ctx.send("\n".join(lst))

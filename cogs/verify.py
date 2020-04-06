@@ -577,7 +577,7 @@ class Verify(commands.Cog):
                 print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
 
     @tasks.loop(hours=168)
-    async def weeklyverify(self):
+    async def weeklyVerify(self):
         print("[VERIFY] start task")
 
         # iteration over all guilds
@@ -670,7 +670,7 @@ class Verify(commands.Cog):
         await asyncio.sleep(30)
 
     @weeklyVerify.before_loop
-    async def weeklyVerify(self):
+    async def before_weeklyVerify(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
         await asyncio.sleep(30)
