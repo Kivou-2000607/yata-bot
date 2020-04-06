@@ -87,7 +87,11 @@ class Stocks(commands.Cog):
                   f'Server: {ctx.guild} [{ctx.guild.id}]',
                   f'Channel: {ctx.channel}',
                   f'Author: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
-            await member.send("\n".join(lst))
+            try:
+                await member.send("\n".join(lst))
+            except BaseException:
+                await ctx.send(f":x: DM couldn't be sent to **{member.nick}** (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.")
+                continue
 
             # get stock owner
             user_stocks = req.get('stocks')
