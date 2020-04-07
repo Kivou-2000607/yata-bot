@@ -133,14 +133,14 @@ class Racket(commands.Cog):
                 config = self.bot.get_config(guild)
 
                 # get role
-                role_name = config["rackets"].get("roles", [None])[0]
-                role = get(guild.roles, name=role_name)
+                role_names = config["rackets"].get("roles", False)
+                role = get(guild.roles, name=role_names[0]) if role_names and len(role_names) else None
+
                 # get channel
                 channel_name = config["rackets"].get("channels")[0]
                 channel = get(guild.channels, name=channel_name)
 
                 if channel is not None:
-                    mention = "" if role is None else f"{role.mention}"
                     for lst in mentions:
                         if role is not None:
                             lst[0] += f' {role.mention}'
