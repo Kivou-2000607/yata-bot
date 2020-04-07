@@ -217,4 +217,4 @@ class Admin(commands.Cog):
                f"",
                f"{errorMessage}",
                f"```"]
-            await self.bot.sendLogChannel("\n".join(lst))
+        await self.bot.sendLogChannel("\n".join(lst))
