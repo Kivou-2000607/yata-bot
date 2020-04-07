@@ -215,9 +215,14 @@ class API(commands.Cog):
             tornId = int(args[0])
 
         # check if arg is a mention of a discord user ID
-        elif args[0][:2] == '<@':
-            discordId = int(args[0][2:-1].replace("!", "").replace("&", ""))
-            member = ctx.guild.get_member(discordId)
+        elif args[0][:3] == '<@!':
+            discordId = args[0][3:].split(">")[0]
+            if discordId.isdigit():
+                # discordId = int(args[0][2:-1].replace("!", "").replace("&", ""))
+                member = ctx.guild.get_member(int(discordId))
+            else:
+                await ctx.send(helpMsg)
+                return
 
             # check if member
             if member is None:
@@ -320,7 +325,6 @@ class API(commands.Cog):
         await fmt.send_tt(ctx, lst)
         for k, v in links.items():
             await ctx.send(f'<{k}> {v}')
-
 
     @tasks.loop(minutes=1)
     async def notify(self):

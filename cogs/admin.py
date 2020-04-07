@@ -206,6 +206,8 @@ class Admin(commands.Cog):
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
+        errorMessage = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken.. #blamched"
+
         lst = ["```YAML",
                f"Log:     Command error",
                f"Server:  {ctx.guild} [{ctx.guild.id}]",
@@ -213,6 +215,6 @@ class Admin(commands.Cog):
                f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
                f"Message: {ctx.message.content}",
                f"",
-               f"{error}",
+               f"{errorMessage}",
                f"```"]
-        await self.bot.sendLogChannel("\n".join(lst))
+            await self.bot.sendLogChannel("\n".join(lst))

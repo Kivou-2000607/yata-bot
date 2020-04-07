@@ -324,6 +324,19 @@ class YataBot(Bot):
                         channel_oc = await guild.create_text_channel(channel_name, topic="Crimes channel for the YATA bot", category=yata_category)
                         await channel_oc.send("Type `!oc` here to start/stop getting notifications when ocs are ready.")
 
+            if self.check_module(guild, "rackets"):
+                # create rackets channel
+                for channel_name in [c for c in config["rackets"].get("channels", ["rackets"]) if c != "*"]:
+                    if get(guild.channels, name=channel_name) is None:
+                        lst.append(f"\tCreate channel {channel_name}")
+                        await guild.create_text_channel(channel_name, topic="Rackets channel for the YATA bot", category=yata_category)
+
+                # create rackets roles
+                for role_name in [c for c in config["rackets"].get("roles")]:
+                    if role_name is not None and get(guild.roles, name=role_name) is None:
+                        lst.append(f"\tCreate role {role_name}")
+                        channel_oc = await guild.create_role(name=role_name, mentionable=True)
+
             if self.check_module(guild, "loot"):
                 # create Looter role
                 role_loot = get(guild.roles, name="Looter")

@@ -72,3 +72,33 @@ def get_secret(name):
     cur.close()
     con.close()
     return uid, secret, hookurl
+
+
+async def push_rackets(timestamp, rackets):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = 1', timestamp, json.dumps(rackets))
+    await con.close()
+
+
+def get_rackets():
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    con = psycopg2.connect(**db_cred)
+    cur = con.cursor()
+    cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = 1;")
+    timestamp, rackets = cur.fetchone()
+    cur.close()
+    con.close()
+    return timestamp, json.loads(rackets)
+
+
+async def get_faction_name(tId):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    row = await con.fetchrow('SELECT name FROM faction_faction WHERE "tId" = $1', tId)
+    await con.close()
+    return f'Faction [{tId}]' if row is None else f'{row.get("name", "Faction")} [{tId}]'

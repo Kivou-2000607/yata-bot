@@ -12,6 +12,7 @@ from cogs.loot import Loot
 from cogs.stocks import Stocks
 from cogs.api import API
 from cogs.chain import Chain
+from cogs.racket import Racket
 from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
@@ -37,6 +38,7 @@ bot.add_cog(Loot(bot))
 bot.add_cog(Stocks(bot))
 bot.add_cog(API(bot))
 bot.add_cog(Chain(bot))
+bot.add_cog(Racket(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(Revive(bot))
 bot.add_cog(Misc(bot))

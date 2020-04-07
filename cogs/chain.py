@@ -20,9 +20,11 @@ class Chain(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.retalTask.start()
+        self.racketsTask.start()
 
     def cog_unload(self):
         self.retalTask.cancel()
+        self.racketsTask.cancel()
 
     @commands.command()
     async def chain(self, ctx, *args):
