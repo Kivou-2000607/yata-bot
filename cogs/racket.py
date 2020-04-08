@@ -27,7 +27,7 @@ class Racket(commands.Cog):
         self.racketsTask.cancel()
 
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=5)
     async def racketsTask(self):
         print("[RACKETS] start task")
 
@@ -80,6 +80,7 @@ class Racket(commands.Cog):
 
         for k, v in rackets_p.items():
             if k not in req["rackets"]:
+                factionO = await get_faction_name(v["faction"])
                 lst = [f'**Racket vanished**',
                        f'```YAML',
                        f'Territory: {k}',
@@ -88,7 +89,7 @@ class Racket(commands.Cog):
                        f'Level: {v["level"]}',
                        f'Created: {fmt.ts_to_datetime(v["created"], fmt="short")}',
                        f'Changed: {fmt.ts_to_datetime(v["changed"], fmt="short")}',
-                       f'Faction: {v["faction"]}'
+                       f'Faction: {factionO}'
                        f'```']
                 mentions.append(lst)
 
@@ -143,11 +144,11 @@ class Racket(commands.Cog):
                 if channel is not None:
                     for lst in mentions:
                         if role is not None:
-                            lst[0] += f' {role.mention}'
-                        await channel.send("\n".join(lst))
+                            await.send(f' {role.mention}')
+                        msg = await channel.send("\n".join(lst))
 
             except BaseException as e:
-                print(f"[Racket] guild {guild}: retal failed {e}.")
+                print(f"[Racket] guild {guild}: racket failed {e}.")
 
         await push_rackets(int(req["timestamp"]), req)
 
@@ -156,4 +157,3 @@ class Racket(commands.Cog):
     async def before_racketsTask(self):
         print('[racket] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
