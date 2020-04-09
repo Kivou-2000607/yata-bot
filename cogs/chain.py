@@ -625,7 +625,6 @@ class Chain(commands.Cog):
     async def before_retalTask(self):
         print('[RETAL] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
 
     @commands.command()
     async def vault(self, ctx, *args):

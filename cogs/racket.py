@@ -26,7 +26,6 @@ class Racket(commands.Cog):
     def cog_unload(self):
         self.racketsTask.cancel()
 
-
     @tasks.loop(minutes=5)
     async def racketsTask(self):
         print("[RACKETS] start task")
@@ -43,11 +42,10 @@ class Racket(commands.Cog):
                     req = {"error": e}
 
         if "error" in req:
-            print("racket", req)
             return
 
-        print("racket", req["timestamp"])
-        
+        print(f'[RACKETS] {req["timestamp"]}')
+
         timestamp_p, randt_p = get_rackets()
         rackets_p = randt_p["rackets"]
         territory_p = randt_p["territory"]
@@ -127,15 +125,15 @@ class Racket(commands.Cog):
                 lst.append(f'Assaulting: https://www.torn.com/factions.php?step=profile&ID={v["war"]["assaulting_faction"]}')
                 mentions.append(lst)
 
-        print("rackets", mentions)
-                
+        print(f'[RACKETS] mentions: {len(mentions)}')
+
         if not len(mentions):
             return
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
             try:
-                # ignore servers with no verify
+                # ignore servers with no rackets
                 if not self.bot.check_module(guild, "rackets"):
                     continue
 
@@ -157,8 +155,9 @@ class Racket(commands.Cog):
                         msg = await channel.send("\n".join(lst))
 
             except BaseException as e:
-                print(f"[Racket] guild {guild}: racket failed {e}.")
+                print(f"[RACKETS] guild {guild}: racket failed {e}.")
 
+        print(f"[RACKETS] push rackets")
         await push_rackets(int(req["timestamp"]), req)
 
 

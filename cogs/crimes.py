@@ -358,4 +358,3 @@ class Crimes(commands.Cog):
     async def before_ocTask(self):
         print('[OC] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)

@@ -667,22 +667,18 @@ class Verify(commands.Cog):
     async def before_dailyVerify(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
 
     @weeklyVerify.before_loop
     async def before_weeklyVerify(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
 
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
 
     @weeklyCheck.before_loop
     async def before_weeklyCheck(self):
         print('[Verify] waiting...')
         await self.bot.wait_until_ready()
-        await asyncio.sleep(30)
