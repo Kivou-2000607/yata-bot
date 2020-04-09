@@ -36,11 +36,18 @@ class Racket(commands.Cog):
         url = f'https://api.torn.com/torn/?selections=rackets,territory,timestamp&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except BaseException as e:
+                    print(f"[RACKETS] error json: {e}")
+                    req = {"error": e}
 
         if "error" in req:
+            print("racket", req)
             return
 
+        print("racket", req["timestamp"])
+        
         timestamp_p, randt_p = get_rackets()
         rackets_p = randt_p["rackets"]
         territory_p = randt_p["territory"]
@@ -120,6 +127,8 @@ class Racket(commands.Cog):
                 lst.append(f'Assaulting: https://www.torn.com/factions.php?step=profile&ID={v["war"]["assaulting_faction"]}')
                 mentions.append(lst)
 
+        print("rackets", mentions)
+                
         if not len(mentions):
             return
 
@@ -144,7 +153,7 @@ class Racket(commands.Cog):
                 if channel is not None:
                     for lst in mentions:
                         if role is not None:
-                            await.send(f' {role.mention}')
+                            await channel.send(f' {role.mention}')
                         msg = await channel.send("\n".join(lst))
 
             except BaseException as e:
