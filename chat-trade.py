@@ -1,3 +1,22 @@
+"""
+Copyright 2020 kivou.2000607@gmail.com
+
+This file is part of yata-bot.
+
+    yata is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    yata is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with yata-bot. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 from discord import Webhook, AsyncWebhookAdapter
 
 import re
@@ -23,9 +42,9 @@ async def chat(uid, secret, hooks, room):
     async with websockets.connect(uri, origin="https://www.torn.com", extra_headers=headers) as websocket:
         async with aiohttp.ClientSession() as session:
             webhooks = dict({})
-            for hookId, hookurl in hooks.items():  
+            for hookId, hookurl in hooks.items():
                 webhooks[hookId] = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
-                
+
             while(True):
                 data = await websocket.recv()
                 d = json.loads(data).get("data", [dict({})])[0]

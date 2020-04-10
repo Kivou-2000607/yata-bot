@@ -11,6 +11,25 @@ from discord.utils import get
 from discord.ext import tasks
 
 # import bot functions and classes
+"""
+Copyright 2020 kivou.2000607@gmail.com
+
+This file is part of yata-bot.
+
+    yata is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    yata is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with yata-bot. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import get_rackets
