@@ -121,7 +121,7 @@ class Racket(commands.Cog):
                 embed.set_footer(text=f'{fmt.ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
 
-        req["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
+        # req["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
 
         for k, v in req["territory"].items():
             title = False
