@@ -9,6 +9,7 @@ import re
 from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
+from discord import Embed
 
 # import bot functions and classes
 """
@@ -79,45 +80,48 @@ class Racket(commands.Cog):
             # New racket
             if k not in rackets_p:
                 title = "New racket"
+                color = 550000
 
             elif v["level"] != rackets_p[k]["level"]:
                 title = f'Racket moved {"up" if v["level"] > rackets_p[k]["level"] else "down"} from {rackets_p[k]["level"]} to {v["level"]}'
+                color = 550000
 
             if title:
                 factionO = await get_faction_name(v["faction"])
+                embed = Embed(title=title, description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
 
-                lst = [f'**{title}**',
-                       f'```YAML',
-                       f'Territory: {k}',
-                       f'Name: {v["name"]}',
-                       f'Reward: {v["reward"]}',
-                       f'Level: {v["level"]}',
-                       f'Created: {fmt.ts_to_datetime(v["created"], fmt="short")}',
-                       f'Changed: {fmt.ts_to_datetime(v["changed"], fmt="short")}',
-                       f'Faction: {html.unescape(factionO)}']
+                embed.add_field(name='Reward', value=f'{v["reward"]}')
+                embed.add_field(name='Territory', value=f'{k}')
+                embed.add_field(name='Level', value=f'{v["level"]}')
+
+                embed.add_field(name='Owner', value=f'[{html.unescape(factionO)}](https://www.torn.com/factions.php?step=profile&ID={v["faction"]})')
                 if war:
-                    factionA = await get_faction_name(v["war"]["assaulting_faction"])
-                    lst.append(f'Assault: {html.unescape(factionA)} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
-                lst.append(f'```Territory: https://www.torn.com/city.php#terrName={k}')
-                lst.append(f'Owner: https://www.torn.com/factions.php?step=profile&ID={v["faction"]}')
-                if war:
-                    lst.append(f'Assaulting: https://www.torn.com/factions.php?step=profile&ID={v["war"]["assaulting_faction"]}')
-                mentions.append(lst)
+                    warId = v["war"]["assaulting_faction"]
+                    factionA = await get_faction_name(warId)
+                    embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
+
+                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
+                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                mentions.append(embed)
 
         for k, v in rackets_p.items():
             if k not in req["rackets"]:
+                color = 550000
                 factionO = await get_faction_name(v["faction"])
-                lst = [f'**Racket vanished**',
-                       f'```YAML',
-                       f'Territory: {k}',
-                       f'Name: {v["name"]}',
-                       f'Reward: {v["reward"]}',
-                       f'Level: {v["level"]}',
-                       f'Created: {fmt.ts_to_datetime(v["created"], fmt="short")}',
-                       f'Changed: {fmt.ts_to_datetime(v["changed"], fmt="short")}',
-                       f'Faction: {html.unescape(factionO)}'
-                       f'```']
-                mentions.append(lst)
+                embed = Embed(title=f'Racket vanished', description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
+                embed.add_field(name='Reward', value=f'{v["reward"]}')
+                embed.add_field(name='Territory', value=f'{k}')
+                embed.add_field(name='Level', value=f'{v["level"]}')
+
+                embed.add_field(name='Owner', value=f'[{html.unescape(factionO)}](https://www.torn.com/factions.php?step=profile&ID={v["faction"]})')
+
+                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
+                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                mentions.append(embed)
+
+        req["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
 
         for k, v in req["territory"].items():
             title = False
@@ -126,33 +130,38 @@ class Racket(commands.Cog):
             if not (war and racket):
                 continue
 
-            # New racket
+            # New war
             if not territory_p[k].get("war", False):
                 factionO = await get_faction_name(v["faction"])
                 factionA = await get_faction_name(v["war"]["assaulting_faction"])
+                color = 550000
                 title = f'New war for a {racket["name"]}'
-                lst = [f'**{title}**',
-                       f'```YAML',
-                       f'Territory: {k}',
-                       f'Name: {v["racket"]["name"]}',
-                       f'Reward: {v["racket"]["reward"]}',
-                       f'Level: {v["racket"]["level"]}',
-                       f'Created: {fmt.ts_to_datetime(v["racket"]["created"], fmt="short")}',
-                       f'Changed: {fmt.ts_to_datetime(v["racket"]["changed"], fmt="short")}',
-                       f'Faction: {html.unescape(factionO)}']
-                lst.append(f'Assault: {html.unescape(factionA)} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
-                lst.append(f'```Territory: https://www.torn.com/city.php#terrName={k}')
-                lst.append(f'Owner: https://www.torn.com/factions.php?step=profile&ID={v["faction"]}')
-                lst.append(f'Assaulting: https://www.torn.com/factions.php?step=profile&ID={v["war"]["assaulting_faction"]}')
-                mentions.append(lst)
+                embed = Embed(title=title, description=f'[{racket["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
+
+                embed.add_field(name='Reward', value=f'{racket["reward"]}')
+                embed.add_field(name='Territory', value=f'{k}')
+                embed.add_field(name='Level', value=f'{racket["level"]}')
+
+                embed.add_field(name='Owner', value=f'[{html.unescape(factionO)}](https://www.torn.com/factions.php?step=profile&ID={v["faction"]})')
+                warId = v["war"]["assaulting_faction"]
+                embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
+
+                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
+                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{fmt.ts_to_datetime(racket["changed"], fmt="short")}')
+                mentions.append(embed)
 
         print(f'[RACKETS] mentions: {len(mentions)}')
+
+        print(f"[RACKETS] push rackets")
+        # await push_rackets(int(req["timestamp"]), req)
 
         if not len(mentions):
             return
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
+            print(guild)
             try:
                 # ignore servers with no rackets
                 if not self.bot.check_module(guild, "rackets"):
@@ -170,16 +179,11 @@ class Racket(commands.Cog):
                 channel = get(guild.channels, name=channel_name)
 
                 if channel is not None:
-                    for lst in mentions:
-                        if role is not None:
-                            await channel.send(f' {role.mention}')
-                        msg = await channel.send("\n".join(lst))
+                    for m in mentions:
+                        msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
 
             except BaseException as e:
                 print(f"[RACKETS] guild {guild}: racket failed {e}.")
-
-        print(f"[RACKETS] push rackets")
-        await push_rackets(int(req["timestamp"]), req)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
