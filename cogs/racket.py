@@ -30,6 +30,8 @@ This file is part of yata-bot.
     along with yata-bot. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import html
+
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import get_rackets
@@ -92,10 +94,10 @@ class Racket(commands.Cog):
                        f'Level: {v["level"]}',
                        f'Created: {fmt.ts_to_datetime(v["created"], fmt="short")}',
                        f'Changed: {fmt.ts_to_datetime(v["changed"], fmt="short")}',
-                       f'Faction: {factionO}']
+                       f'Faction: {html.unescape(factionO)}']
                 if war:
                     factionA = await get_faction_name(v["war"]["assaulting_faction"])
-                    lst.append(f'Assault: {factionA} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
+                    lst.append(f'Assault: {html.unescape(factionA)} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
                 lst.append(f'```Territory: https://www.torn.com/city.php#terrName={k}')
                 lst.append(f'Owner: https://www.torn.com/factions.php?step=profile&ID={v["faction"]}')
                 if war:
@@ -113,7 +115,7 @@ class Racket(commands.Cog):
                        f'Level: {v["level"]}',
                        f'Created: {fmt.ts_to_datetime(v["created"], fmt="short")}',
                        f'Changed: {fmt.ts_to_datetime(v["changed"], fmt="short")}',
-                       f'Faction: {factionO}'
+                       f'Faction: {html.unescape(factionO)}'
                        f'```']
                 mentions.append(lst)
 
@@ -137,8 +139,8 @@ class Racket(commands.Cog):
                        f'Level: {v["racket"]["level"]}',
                        f'Created: {fmt.ts_to_datetime(v["racket"]["created"], fmt="short")}',
                        f'Changed: {fmt.ts_to_datetime(v["racket"]["changed"], fmt="short")}',
-                       f'Faction: {factionO}']
-                lst.append(f'Assault: {factionA} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
+                       f'Faction: {html.unescape(factionO)}']
+                lst.append(f'Assault: {html.unescape(factionA)} since {fmt.ts_to_datetime(v["war"]["started"], fmt="short")}')
                 lst.append(f'```Territory: https://www.torn.com/city.php#terrName={k}')
                 lst.append(f'Owner: https://www.torn.com/factions.php?step=profile&ID={v["faction"]}')
                 lst.append(f'Assaulting: https://www.torn.com/factions.php?step=profile&ID={v["war"]["assaulting_faction"]}')
@@ -178,7 +180,6 @@ class Racket(commands.Cog):
 
         print(f"[RACKETS] push rackets")
         await push_rackets(int(req["timestamp"]), req)
-
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
