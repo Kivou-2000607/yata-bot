@@ -154,7 +154,7 @@ class Racket(commands.Cog):
         print(f'[RACKETS] mentions: {len(mentions)}')
 
         print(f"[RACKETS] push rackets")
-        # await push_rackets(int(req["timestamp"]), req)
+        await push_rackets(int(req["timestamp"]), req)
 
         if not len(mentions):
             return
