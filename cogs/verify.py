@@ -568,7 +568,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=24)
     async def dailyVerify(self):
-        print("[VERIFY] start task")
+        print("[dailyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -584,20 +584,20 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                print(f"[VERIFY] verifying all {guild}: start")
+                print(f"[dailyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Automatic verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("Automatic verification of your members: **DONE**")
-                print(f"[VERIFY] verifying all {guild}: end")
+                print(f"[dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
+                print(f"[dailyVerify] guild {guild}: verifyAll failed {e}.")
 
     @tasks.loop(hours=168)
     async def weeklyVerify(self):
-        print("[VERIFY] start task")
+        print("[weeklyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -613,20 +613,20 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                print(f"[VERIFY] verifying all {guild}: start")
+                print(f"[weeklyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Automatic verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("Automatic verification of your members: **DONE**")
-                print(f"[VERIFY] verifying all {guild}: end")
+                print(f"[weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[VERIFY] guild {guild}: verifyAll failed {e}.")
+                print(f"[weeklyVerify] guild {guild}: verifyAll failed {e}.")
 
     @tasks.loop(hours=24)
     async def dailyCheck(self):
-        print("[VERIFY] start task")
+        print("[dailyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -642,20 +642,20 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                print(f"[VERIFY] verifying all {guild}: start")
+                print(f"[dailyCheck] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Automatic check of your members faction: **START**")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("Automatic check of your members faction: **DONE**")
-                print(f"[VERIFY] verifying all {guild}: end")
+                print(f"[dailyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[VERIFY] guild {guild}: checkFactions failed {e}.")
+                print(f"[dailyCheck] guild {guild}: checkFactions failed {e}.")
 
     @tasks.loop(hours=168)
     async def weeklyCheck(self):
-        print("[VERIFY] start task")
+        print("[weeklyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -671,33 +671,33 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                print(f"[VERIFY] verifying all {guild}: start")
+                print(f"[weeklyCheck] weeklyCheck all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Automatic check of your members faction: **START**")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("Automatic check of your members faction: **DONE**")
-                print(f"[VERIFY] verifying all {guild}: end")
+                print(f"[weeklyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[VERIFY] guild {guild}: checkFactions failed {e}.")
+                print(f"[weeklyCheck] guild {guild}: checkFactions failed {e}.")
 
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
-        print('[Verify] waiting...')
+        print('[dailyVerify] waiting...')
         await self.bot.wait_until_ready()
 
     @weeklyVerify.before_loop
     async def before_weeklyVerify(self):
-        print('[Verify] waiting...')
+        print('[weeklyVerify] waiting...')
         await self.bot.wait_until_ready()
 
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
-        print('[Verify] waiting...')
+        print('[dailyCheck] waiting...')
         await self.bot.wait_until_ready()
 
     @weeklyCheck.before_loop
     async def before_weeklyCheck(self):
-        print('[Verify] waiting...')
+        print('[weeklyCheck] waiting...')
         await self.bot.wait_until_ready()
