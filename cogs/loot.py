@@ -216,7 +216,7 @@ class Loot(commands.Cog):
                     continue
 
                 # get role
-                role = get(guild.roles, name="Looters")
+                role = get(guild.roles, name="Looter")
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
