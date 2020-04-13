@@ -291,8 +291,9 @@ class YataBot(Bot):
                 lst.append(f"\tCreate channel {channel_name}")
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                    bot_role: discord.PermissionOverwrite(read_messages=True)
                 }
+                if bot_role is not None:
+                    overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
                 channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
                 await channel_admin.send(f"This is the admin channel for `!verifyAll`, `!checkFactions` or `!reviveServers`")
 
@@ -369,9 +370,12 @@ class YataBot(Bot):
                         lst.append(f"\tCreate channel {channel_name}")
                         overwrites = {
                             guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                            role_loot: discord.PermissionOverwrite(read_messages=True),
-                            bot_role: discord.PermissionOverwrite(read_messages=True)
                         }
+                        if role_loot is not None:
+                            overwrites[role_loot] = discord.PermissionOverwrite(read_messages=True)
+                        if bot_role is not None:
+                            overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
+                        print(overwrites)
                         channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_loot.send(f"{role_loot.mention} will reveive notification here")
                         await channel_loot.send("Type `!loot` here to get the npc timings")
@@ -417,9 +421,11 @@ class YataBot(Bot):
                         lst.append(f"\tCreate channel {stock}")
                         overwrites = {
                             guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                            stock_role: discord.PermissionOverwrite(read_messages=True),
-                            bot_role: discord.PermissionOverwrite(read_messages=True)
                         }
+                        if stock_role is not None:
+                            overwrites[stock_role] = discord.PermissionOverwrite(read_messages=True)
+                        if bot_role is not None:
+                            overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
                         channel_stock = await guild.create_text_channel(stock, topic=f"{stock} stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_stock.send(f"Type `!{stock}` to see the {stock} BB status amoung the members")
 
@@ -435,9 +441,11 @@ class YataBot(Bot):
                             lst.append(f"\tCreate channel {channel_name}")
                             overwrites = {
                                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                                stock_role: discord.PermissionOverwrite(read_messages=True),
-                                bot_role: discord.PermissionOverwrite(read_messages=True)
                             }
+                            if stock_role is not None:
+                                overwrites[stock_role] = discord.PermissionOverwrite(read_messages=True)
+                            if bot_role is not None:
+                                overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
                             channel_stock = await guild.create_text_channel(channel_name, topic=f"Alerts stock channel for the YATA bot", overwrites=overwrites, category=yata_category)
                             await channel_stock.send(f"{stock_role.mention} will be notified here")
 

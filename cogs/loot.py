@@ -137,12 +137,15 @@ class Loot(commands.Cog):
         # images and items
         thumbs = {
             '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
+            '7': "https://yata.alwaysdata.net/static/images/loot/npc_7.png",
             '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
-            '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png"}
+            '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png",
+            '19': "https://yata.alwaysdata.net/static/images/loot/npc_19.png"}
         items = {
             '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
             '10': ["Snow Cannon", "Diamond Icicle", "Snowball"],
-            '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"]}
+            '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"],
+            '19': ["Bread Knife"]}
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
@@ -209,15 +212,20 @@ class Loot(commands.Cog):
                 config = self.bot.get_config(guild)
                 channel_name = self.bot.get_allowed_channels(config, "loot")[0]
                 channel = get(guild.channels, name=channel_name)
+                if channel is None:
+                    continue
 
                 # get role
-                role = get(guild.roles, name="Looter")
+                role = get(guild.roles, name="Looters")
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
                     print(f"[LOOT] guild {guild}: mention {m}.")
                     # await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
-                    await channel.send(f'{role.mention}, go for {m}', embed=e)
+                    if role is None:
+                        await channel.send(f'Go for {m}', embed=e)
+                    else:
+                        await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
                 lst = ["```YAML",
