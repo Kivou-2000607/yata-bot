@@ -147,7 +147,7 @@ class Admin(commands.Cog):
                     print(f'[sendMessage] {guild}: no yata-admin channel')
                     continue
 
-                lst = [f"**Message send by {ctx.author.nick} ({ctx.author} [{ctx.author.id}]**",
+                lst = [f"**Message sent by {ctx.author.nick} ({ctx.author} [{ctx.author.id}]**",
                        f'```',
                        " ".join(args[0:]),
                        f'```']

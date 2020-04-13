@@ -1,8 +1,3 @@
-# import standard modules
-import re
-import aiohttp
-import asyncio
-
 """
 Copyright 2020 kivou.2000607@gmail.com
 
@@ -21,6 +16,11 @@ This file is part of yata-bot.
     You should have received a copy of the GNU General Public License
     along with yata-bot. If not, see <https://www.gnu.org/licenses/>.
 """
+# import standard modules
+import re
+import aiohttp
+import asyncio
+import html
 
 # import discord modules
 from discord.ext import commands
@@ -460,33 +460,37 @@ class Verify(commands.Cog):
         # loop over members
         members = guild.members
         for i, member in enumerate(members):
+            if member.bot:
+                # await channel.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
+                continue
+
             if force:
                 if ctx:
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = message.split(":")[2].replace("*", "")
+                msg = message.split(":")[2].strip()
                 emo = message.split(":")[1]
 
-                await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
+                if not _:
+                    await channel.send(f"`{i+1:03d}/{len(members):03d}` {msg} :{emo}:")
                 continue
 
-            if member.bot:
-                await channel.send(f":x: `{i+1:03d}/{len(members):03d} {member} is a bot`")
             elif role in member.roles:
-                if member.nick is None:
-                    await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified but no nickname has been assigned. Current display name: {member.display_name}`.")
-                else:
-                    await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified as {member.nick}`")
+                pass
+                # if member.nick is None:
+                #     await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified but no nickname has been assigned. Current display name: {member.display_name}`.")
+                # else:
+                #     await channel.send(f":white_check_mark: `{i+1:03d}/{len(members):03d} {member} already verified as {member.nick}`")
             else:
                 if ctx:
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = message.split(":")[2].replace("*", "")
+                msg = message.split(":")[2].strip()
                 emo = message.split(":")[1]
 
-                await channel.send(f":{emo}: `{i+1:03d}/{len(members):03d} {msg}`")
+                await channel.send(f"`{i+1:03d}/{len(members):03d}` {msg} :{emo}:")
 
     async def _loop_check(self, guild, channel, ctx=False, force=False):
 
@@ -500,7 +504,7 @@ class Verify(commands.Cog):
             # Get faction role
             faction_role_name = f'{faction_name} [{faction_id}]' if c['verify'].get('id', False) else f'{faction_name}'
             faction_role = get(guild.roles, name=faction_role_name)
-            await channel.send(f'\n**Checking faction {faction_role.name}**')
+            await channel.send(f'\n**Checking faction {html.unescape(faction_role.name)}**')
 
             # try to parse Torn faction ID
             # match = re.match(r'(.{1,}) \[(\d{1,7})\]', faction_role.name)
@@ -530,28 +534,29 @@ class Verify(commands.Cog):
 
             # loop over the members with this role
             members_with_role = [m for m in members if faction_role in m.roles]
-            for m in members_with_role:
+            for i, m in enumerate(members_with_role):
 
                 # try to parse Torn user ID
                 regex = re.findall(r'\[(\d{1,7})\]', m.display_name)
                 if len(regex) == 1 and regex[0].isdigit():
                     tornId = int(regex[0])
                 else:
-                    await channel.send(f":x: `{m.display_name}` could not find torn ID within their display name. So I'm not checking them.")
+                    await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** could not find torn ID within their display name. So I'm not checking them. :x:")
                     continue
 
                 # check if member still in faction
                 if str(tornId) in members_torn:
-                    await channel.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
+                    # await channel.send(f":white_check_mark: `{m.display_name} still in {faction_role.name}`")
+                    continue
                 else:
                     if force:
                         await m.remove_roles(faction_role)
                         common_role = get(guild.roles, name=c["verify"].get("common"))
                         if common_role is None:
-                            await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed`")
+                            await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not in @{faction_role.name} anymore, role has been removed :x:")
                         else:
                             await m.remove_roles(common_role)
-                            await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore, role has been removed along with @{common_role.name}`")
+                            await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not in @{faction_role.name} anymore, role has been removed along with @{common_role.name} :x:")
 
                         # verify him again see if he has a new faction on the server
                         vrole = get(guild.roles, name="Verified")
@@ -562,7 +567,7 @@ class Verify(commands.Cog):
                         await channel.send(message)
 
                     else:
-                        await channel.send(f":x: `{m.display_name} not in @{faction_role.name} anymore`")
+                        await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not in @{faction_role.name} anymore :x:`")
 
         await channel.send(f"Done checking")
 
@@ -587,9 +592,9 @@ class Verify(commands.Cog):
                 print(f"[dailyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
-                await channel.send("Automatic verification of your members: **START**")
+                await channel.send("Daily verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
-                await channel.send("Automatic verification of your members: **DONE**")
+                await channel.send("Daily verification of your members: **DONE**")
                 print(f"[dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -616,9 +621,9 @@ class Verify(commands.Cog):
                 print(f"[weeklyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
-                await channel.send("Automatic verification of your members: **START**")
+                await channel.send("Weekly verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
-                await channel.send("Automatic verification of your members: **DONE**")
+                await channel.send("Weekly verification of your members: **DONE**")
                 print(f"[weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -645,9 +650,9 @@ class Verify(commands.Cog):
                 print(f"[dailyCheck] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
-                await channel.send("Automatic check of your members faction: **START**")
+                await channel.send("Daily check of your faction members: **START**")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("Automatic check of your members faction: **DONE**")
+                await channel.send("Daily check of your faction members: **DONE**")
                 print(f"[dailyCheck] verifying all {guild}: end")
 
             except BaseException as e:
@@ -674,9 +679,9 @@ class Verify(commands.Cog):
                 print(f"[weeklyCheck] weeklyCheck all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
-                await channel.send("Automatic check of your members faction: **START**")
+                await channel.send("Weekly check of your faction members: **START**")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("Automatic check of your members faction: **DONE**")
+                await channel.send("Weekly check of your faction members: **DONE**")
                 print(f"[weeklyCheck] verifying all {guild}: end")
 
             except BaseException as e:
