@@ -567,7 +567,7 @@ class Verify(commands.Cog):
                         await channel.send(message)
 
                     else:
-                        await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not in @{faction_role.name} anymore :x:`")
+                        await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not in @{faction_role.name} anymore :x:")
 
         await channel.send(f"Done checking")
 

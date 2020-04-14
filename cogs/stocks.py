@@ -100,12 +100,12 @@ class Stocks(commands.Cog):
             # send pull request to member
             info = 'bank investment' if stock == "tcb" else "education"
             lst = [f'Your **{info} time** has just been pulled.',
-                  f'```YAML',
-                  f'Command: {stock}',
-                  f'Time: {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
-                  f'Server: {ctx.guild} [{ctx.guild.id}]',
-                  f'Channel: {ctx.channel}',
-                  f'Author: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
+                   f'```YAML',
+                   f'Command: {stock}',
+                   f'Time: {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
+                   f'Server: {ctx.guild} [{ctx.guild.id}]',
+                   f'Channel: {ctx.channel}',
+                   f'Author: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
             try:
                 await member.send("\n".join(lst))
             except BaseException:
@@ -184,10 +184,10 @@ class Stocks(commands.Cog):
                 # if alerts.get("below", False):
                 #     lst.append(f'{k}: below average and forecast moved from bad to good ({v["shares"]:,.0f} shares at ${v["price"]})')
                 #     # plot_stocks(lst, v.get("graph", []))
-
+                #
                 # if alerts.get("below", False) and v.get("shares"):
                 #     lst.append(f'{k}: below average ({v["shares"]:,.0f} shares at ${v["price"]})')
-
+                #
                 # if alerts.get("new", False) and alerts.get("enough", False):
                 #     lst.append(f'{k}: new shares available ({v["shares"]:,.0f} shares at ${v["price"]})')
 
@@ -199,8 +199,16 @@ class Stocks(commands.Cog):
             if not len(lst):
                 print("[STOCK] no alerts")
                 return
+
         except BaseException as e:
             print(f"[STOCK] ERROR IN STOCKS {e}")
+            lst = ["```YAML",
+                   f"Log: Stock notification error (YATA call)",
+                   f"",
+                   f"{e}",
+                   f"```"]
+            await self.bot.sendLogChannel("\n".join(lst), channelId=652285635394011138)
+
 
         print("[STOCK] alerts", len(lst))
         # loop over guilds to send alerts
@@ -217,22 +225,35 @@ class Stocks(commands.Cog):
                 role = get(guild.roles, name="Trader")
 
                 # loop over channels and role
-                for channelName in self.bot.get_allowed_channels(config, "stocks"):
-                    channel = get(guild.channels, name=channelName)
-
-                    if channel is not None:
-                        if role is None:
-                            print(f"[STOCK] guild {guild}: no role @Trader")
-                        else:
-                            print(f"[STOCK] guild {guild}: alert")
-                            s = "" if len(lst) == 1 else "s"
-                            await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
-                        await fmt.send_tt(channel, lst)
+                channelName = self.bot.get_allowed_channels(config, "stocks")[0]
+                channel = get(guild.channels, name=channelName)
+                if channel is not None:
+                    s = "" if len(lst) == 1 else "s"
+                    if role is None:
+                        await channel.send(f"{len(lst)} stock alert{s}!")
                     else:
-                        print(f"[STOCK] guild {guild}: no channel {channelName}")
+                        await channel.send(f"{role.mention}, {len(lst)} stock alert{s}!")
+                    await fmt.send_tt(channel, lst)
+                else:
+                    print(f"[STOCK] guild {guild}: no channel {channelName}")
+                    lst = ["```YAML",
+                           f"Log:     Stock notification error",
+                           f"Server:  {guild} [{guild.id}]",
+                           f"",
+                           f"No channel named {channelName}",
+                           f"```"]
+                    await self.bot.sendLogChannel("\n".join(lst), channelId=652285635394011138)
+                    print(f"[STOCK] guild {guild}: no channel {channelName}.")
 
             except BaseException as e:
-                print(f"[STOCK] Error with  {guild} {e}")
+                lst = ["```YAML",
+                       f"Log:     Stock notification error",
+                       f"Server:  {guild} [{guild.id}]",
+                       f"",
+                       f"{e}",
+                       f"```"]
+                await self.bot.sendLogChannel("\n".join(lst), channelId=652285635394011138)
+                print(f"[STOCK] guild {guild}: mention failed {e}.")
 
     @commands.command()
     async def trader(self, ctx):
