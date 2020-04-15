@@ -331,7 +331,7 @@ class Crimes(commands.Cog):
 
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        # print("[OC] start task")
+        print("[OC] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -351,7 +351,7 @@ class Crimes(commands.Cog):
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
-                    print(f"[OC] oc {guild}: {tornId}: {oc}")
+                    print(f"[OC] oc {guild}: {tornId}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
@@ -369,7 +369,14 @@ class Crimes(commands.Cog):
                 # print(f"[OC] oc {guild}: end")
 
             except BaseException as e:
-                print(f"[OC] guild {guild}: oc failed {e}.")
+                lst = ["```YAML",
+                       f"Log:     OC notification error",
+                       f"Server:  {guild} [{guild.id}]",
+                       f"",
+                       f"{e}",
+                       f"```"]
+                await self.bot.sendLogChannel("\n".join(lst), channelId=685109941022883852)
+                print(f"[OC] guild {guild}: mention failed {e}.")
 
         # print("[OC] end task")
 
