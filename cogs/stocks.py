@@ -293,7 +293,7 @@ class Stocks(commands.Cog):
                            f"",
                            f"No channel named {channelName}",
                            f"```"]
-                    await self.bot.sendLogChannel("\n".join(lst), channelId=652285635394011138)
+                    await self.bot.sendLogChannel("\n".join(lst))
 
             except BaseException as e:
                 lst = ["```YAML",
@@ -302,7 +302,7 @@ class Stocks(commands.Cog):
                        f"",
                        f"{e}",
                        f"```"]
-                await self.bot.sendLogChannel("\n".join(lst), channelId=652285635394011138)
+                await self.bot.sendLogChannel("\n".join(lst))
                 print(f"[STOCK] guild {guild}: mention failed {e}.")
 
     @commands.command()
