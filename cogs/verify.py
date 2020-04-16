@@ -444,8 +444,10 @@ class Verify(commands.Cog):
 
                 # if no match in this loop it means that the member is not in this server
                 return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
+
         except BaseException as e:
-            return f":x: Error while doing the verification: `{e}`", False
+            errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
+            return f":x: Error while doing the verification: `{errorMessage}`", False
 
         return ":x: Weird... I didn't do anything...", False
 
