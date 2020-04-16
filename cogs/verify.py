@@ -184,7 +184,7 @@ class Verify(commands.Cog):
                 await member.edit(nick=nickname)
                 await ctx.author.send(f':white_check_mark: Your name as been changed to {member.display_name}')
             except BaseException:
-                await ctx.author.send(f':x: I don\'t have the permission to change your nickname.')
+                await ctx.author.send(f'*I don\'t have the permission to change your nickname.*')
                 # continue
 
             # assign verified role
@@ -275,174 +275,177 @@ class Verify(commands.Cog):
         """ Verifies one member
             Returns what the bot should say
         """
+        try:
 
-        # WARNING: ctx is most of the time a discord context
-        # But when using this function inside on_member_join ctx is a discord member
-        # Thus ctx.author will fail in this case
+            # WARNING: ctx is most of the time a discord context
+            # But when using this function inside on_member_join ctx is a discord member
+            # Thus ctx.author will fail in this case
 
-        # WARNING: if discordID corresponds to a userID it will be considered as a user ID
+            # WARNING: if discordID corresponds to a userID it will be considered as a user ID
 
-        # cast userID and discordID into int if not none
-        discordID = int(discordID) if str(discordID).isdigit() else None
-        userID = int(userID) if str(userID).isdigit() else None
+            # cast userID and discordID into int if not none
+            discordID = int(discordID) if str(discordID).isdigit() else None
+            userID = int(userID) if str(userID).isdigit() else None
 
-        # check userID and discordID > 0 otherwise api call will be on the key owner
-        if discordID is not None:
-            discordID = None if discordID < 1 else discordID
+            # check userID and discordID > 0 otherwise api call will be on the key owner
+            if discordID is not None:
+                discordID = None if discordID < 1 else discordID
 
-        if userID is not None:
-            userID = None if userID < 1 else userID
+            if userID is not None:
+                userID = None if userID < 1 else userID
 
-        # works for both ctx as a context and as a member
-        guild = ctx.guild
+            # works for both ctx as a context and as a member
+            guild = ctx.guild
 
-        # boolean that check if the member is verifying himself with no id given
-        author_verif = userID is None and discordID is None
+            # boolean that check if the member is verifying himself with no id given
+            author_verif = userID is None and discordID is None
 
-        # case no userID and no discordID is given (author verify itself)
-        if author_verif:
-            author = ctx.author
-            url = f"https://api.torn.com/user/{author.id}?selections=discord&key={API_KEY}"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    req = await r.json()
+            # case no userID and no discordID is given (author verify itself)
+            if author_verif:
+                author = ctx.author
+                url = f"https://api.torn.com/user/{author.id}?selections=discord&key={API_KEY}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as r:
+                        req = await r.json()
 
-            if 'error' in req:
-                return ":x: There is a API key problem ({}). It's not your fault... Try later.".format(req['error']['error']), False
-            userID = req['discord'].get("userID")
-            if userID == '':
-                return f":x: **{author}** you have not been verified because you didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                if 'error' in req:
+                    return ":x: There is a API key problem ({}). It's not your fault... Try later.".format(req['error']['error']), False
+                userID = req['discord'].get("userID")
+                if userID == '':
+                    return f":x: **{author}** you have not been verified because you didn't register to the official Torn discord server: https://www.torn.com/discord", False
 
-        # case discordID is given
-        # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
-        if discordID is not None:  # use this condition to force API call to check userID even if it is given
-            url = f"https://api.torn.com/user/{discordID}?selections=discord&key={API_KEY}"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    req = await r.json()
+            # case discordID is given
+            # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
+            if discordID is not None:  # use this condition to force API call to check userID even if it is given
+                url = f"https://api.torn.com/user/{discordID}?selections=discord&key={API_KEY}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as r:
+                        req = await r.json()
 
-            if 'error' in req:
-                return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
-            if req['discord'].get("userID") == '':
-                return f":x: **{guild.get_member(discordID)}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
-            else:
-                userID = int(req['discord'].get("userID"))
-
-        print(f"[VERIFY] verifying userID = {userID}")
-
-        # api call request
-        url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        # check api error
-        if 'error' in req:
-            if int(req['error']['code']) == 6:
-                return f":x: Torn ID `{userID}` is not known. Please check again.", False
-            else:
-                return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
-
-        # check != id shouldn't append or problem in torn API
-        dis = req.get("discord")
-        if int(dis.get("userID")) != userID:
-            return ":x: That's odd... {} != {}.".format(userID, dis.get("userID")), False
-
-        # check if registered in torn discord
-        discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
-        name = req.get("name", "???")
-        nickname = f"{name} [{userID}]"
-
-        if discordID is None:
-            # the guy did not log into torn discord
-            return f":x: **{nickname}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
-
-        # the guy already log in torn discord
-        if author_verif:
-            author = ctx.author
-            try:
-                await author.edit(nick=nickname)
-            except BaseException:
-                if context:
-                    # only send this message if ctx is a context (context=True)
-                    await ctx.send(f":x: **{author}**, I don't have the permission to change your nickname.")
-            await author.add_roles(verified_role)
-
-            # set YATA role
-            yata_role = get(ctx.guild.roles, name="YATA user")
-            if yata_role is not None:
-                r = await get_yata_user(userID)
-                if len(r):
-                    await author.add_roles(yata_role)
-
-            # Set Faction role
-            config = self.bot.get_config(ctx.guild)
-            fId = str(req['faction']['faction_id'])
-            if fId in config["factions"]:
-                faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
-                faction_role = get(ctx.guild.roles, name=faction_name)
-            else:
-                faction_name = ""
-                faction_role = None
-
-            if faction_role is not None:
-                # add faction role if role exists
-                await author.add_roles(faction_role)
-                # add a common faction role
-                common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
-                if common_role is not None and fId in config.get("factions"):
-                    await author.add_roles(common_role)
-                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                if 'error' in req:
+                    return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
+                if req['discord'].get("userID") == '':
+                    return f":x: **{guild.get_member(discordID)}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
                 else:
-                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}*. o7", True
+                    userID = int(req['discord'].get("userID"))
+
+            print(f"[VERIFY] verifying userID = {userID}")
+
+            # api call request
+            url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    req = await r.json()
+
+            # check api error
+            if 'error' in req:
+                if int(req['error']['code']) == 6:
+                    return f":x: Torn ID `{userID}` is not known. Please check again.", False
+                else:
+                    return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
+
+            # check != id shouldn't append or problem in torn API
+            dis = req.get("discord")
+            if int(dis.get("userID")) != userID:
+                return ":x: That's odd... {} != {}.".format(userID, dis.get("userID")), False
+
+            # check if registered in torn discord
+            discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
+            name = req.get("name", "???")
+            nickname = f"{name} [{userID}]"
+
+            if discordID is None:
+                # the guy did not log into torn discord
+                return f":x: **{nickname}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
+
+            # the guy already log in torn discord
+            if author_verif:
+                author = ctx.author
+                try:
+                    await author.edit(nick=nickname)
+                except BaseException:
+                    if context:
+                        # only send this message if ctx is a context (context=True)
+                        await ctx.send(f"*I don't have the permission to change your nickname.*")
+                await author.add_roles(verified_role)
+
+                # set YATA role
+                yata_role = get(ctx.guild.roles, name="YATA user")
+                if yata_role is not None:
+                    r = await get_yata_user(userID)
+                    if len(r):
+                        await author.add_roles(yata_role)
+
+                # Set Faction role
+                config = self.bot.get_config(ctx.guild)
+                fId = str(req['faction']['faction_id'])
+                if fId in config["factions"]:
+                    faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+                    faction_role = get(ctx.guild.roles, name=faction_name)
+                else:
+                    faction_name = ""
+                    faction_role = None
+
+                if faction_role is not None:
+                    # add faction role if role exists
+                    await author.add_roles(faction_role)
+                    # add a common faction role
+                    common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
+                    if common_role is not None and fId in config.get("factions"):
+                        await author.add_roles(common_role)
+                        return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                    else:
+                        return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}** from *{faction_name}*. o7", True
+
+                else:
+                    return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}**. o/", True
 
             else:
-                return f":white_check_mark: **{author}**, you've been verified and are now known as **{author.mention}**. o/", True
+                # loop over all members to check if the id exists
+                for member in ctx.guild.members:
+                    if int(member.id) == discordID:
+                        try:
+                            await member.edit(nick=nickname)
+                        except BaseException:
+                            if context:
+                                # only send this message if ctx is a context (context=True)
+                                await ctx.send(f"*I don't have the permission to change {member.nick}'s nickname.*")
+                        await member.add_roles(verified_role)
 
-        else:
-            # loop over all members to check if the id exists
-            for member in ctx.guild.members:
-                if int(member.id) == discordID:
-                    try:
-                        await member.edit(nick=nickname)
-                    except BaseException:
-                        if context:
-                            # only send this message if ctx is a context (context=True)
-                            await ctx.send(f":x: I don't have the permission to change **{member}**'s nickname.")
-                    await member.add_roles(verified_role)
+                        # set YATA role
+                        yata_role = get(ctx.guild.roles, name="YATA user")
+                        if yata_role is not None:
+                            r = await get_yata_user(userID)
+                            if len(r):
+                                await member.add_roles(yata_role)
 
-                    # set YATA role
-                    yata_role = get(ctx.guild.roles, name="YATA user")
-                    if yata_role is not None:
-                        r = await get_yata_user(userID)
-                        if len(r):
-                            await member.add_roles(yata_role)
-
-                    # Set Faction role
-                    config = self.bot.get_config(ctx.guild)
-                    fId = str(req['faction']['faction_id'])
-                    if fId in config["factions"]:
-                        faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
-                        faction_role = get(ctx.guild.roles, name=faction_name)
-                    else:
-                        faction_name = ""
-                        faction_role = None
-
-                    if faction_role is not None:
-                        # add faction role if role exists
-                        await member.add_roles(faction_role)
-                        # add a common faction role
-                        common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
-                        if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
-                            await member.add_roles(common_role)
-                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                        # Set Faction role
+                        config = self.bot.get_config(ctx.guild)
+                        fId = str(req['faction']['faction_id'])
+                        if fId in config["factions"]:
+                            faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
+                            faction_role = get(ctx.guild.roles, name=faction_name)
                         else:
-                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7", True
-                    else:
-                        return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/", True
+                            faction_name = ""
+                            faction_role = None
 
-            # if no match in this loop it means that the member is not in this server
-            return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
+                        if faction_role is not None:
+                            # add faction role if role exists
+                            await member.add_roles(faction_role)
+                            # add a common faction role
+                            common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
+                            if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
+                                await member.add_roles(common_role)
+                                return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                            else:
+                                return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7", True
+                        else:
+                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/", True
+
+                # if no match in this loop it means that the member is not in this server
+                return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
+        except BaseException as e:
+            return f":x: Error while doing the verification: `{e}`", False
 
         return ":x: Weird... I didn't do anything...", False
 
@@ -469,11 +472,11 @@ class Verify(commands.Cog):
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = message.split(":")[2].strip()
+                msg = ":".join(message.split(":")[2:]).strip()
                 emo = message.split(":")[1]
 
                 if not _:
-                    await channel.send(f"`{i+1:03d}/{len(members):03d}` {msg} :{emo}:")
+                    await channel.send(f"`{i+1:03d}/{len(members):03d} {member.nick}` {msg}")
                 continue
 
             elif role in member.roles:
@@ -487,10 +490,10 @@ class Verify(commands.Cog):
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = message.split(":")[2].strip()
+                msg = ":".join(message.split(":")[2:]).strip()
                 emo = message.split(":")[1]
 
-                await channel.send(f"`{i+1:03d}/{len(members):03d}` {msg} :{emo}:")
+                await channel.send(f"`{i+1:03d}/{len(members):03d} {member.nick}` {msg}")
 
     async def _loop_check(self, guild, channel, ctx=False, force=False):
 

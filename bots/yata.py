@@ -458,6 +458,17 @@ class YataBot(Bot):
             if verbose:
                 await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
                 await verbose.send(f'```{traceback.format_exc()}```')
+            lst = ["```YAML",
+                   f"Log:     Reload server error",
+                   f"Server:  {guild} [{guild.id}]",
+                   f"",
+                   f"{e}",
+                   # "```",
+                   "``````python",
+                   "# full error message",
+                   f"{traceback.format_exc()}",
+                   f"```"]
+            await self.sendLogChannel("\n".join(lst))
 
     async def rebuildGuilds(self, reboot=False, verbose=False):
         # loop over guilds
