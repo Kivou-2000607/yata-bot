@@ -21,6 +21,7 @@ import re
 import aiohttp
 import asyncio
 import html
+import traceback
 
 # import discord modules
 from discord.ext import commands
@@ -446,6 +447,8 @@ class Verify(commands.Cog):
                 return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
+            print(f'ERROR _member for {guild} [{guild.id}]: {e}')
+            print(f'{traceback.format_exc()}')
             errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
             return f":x: Error while doing the verification: `{errorMessage}`", False
 
