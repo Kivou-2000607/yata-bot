@@ -21,6 +21,7 @@ This file is part of yata-bot.
 import asyncio
 import aiohttp
 import time
+import datetime
 import json
 
 # import discord modules
@@ -165,6 +166,7 @@ class Loot(commands.Cog):
 
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
+            # if True:
                 notification = "{} {}".format(npc["name"], "in " + fmt.s_to_ms(due) if due > 0 else "**NOW**")
                 mentions.append(notification)
 
@@ -193,20 +195,21 @@ class Loot(commands.Cog):
 
         # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
-        s = nextDue[0] - 5 * 60 - 5  # next due - 5 minutes - 5 seconds of the task ticker
+        s = nextDue[0] - 7 * 60 - 5  # next due - 7 minutes - 5 seconds of the task ticker
         print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=150):
+        for guild in self.bot.get_guild_module("loot"):
             try:
-                # ignore non loot servers
-                if not self.bot.check_module(guild, "loot"):
-                    # print(f"[LOOT] guild {guild}: ignore.")
-                    continue
-                # print(f"[LOOT] guild {guild}: notify.")
+                print(f"[LOOT] guild {guild}: {datetime.datetime.now()}")
+                # # ignore non loot servers
+                # if not self.bot.check_module(guild, "loot"):
+                #     # print(f"[LOOT] guild {guild}: ignore.")
+                #     continue
+                # # print(f"[LOOT] guild {guild}: notify.")
 
                 # get full guild (async iterator doesn't return channels)
-                guild = self.bot.get_guild(guild.id)
+                # guild = self.bot.get_guild(guild.id)
 
                 # get channel
                 config = self.bot.get_config(guild)
@@ -220,7 +223,7 @@ class Loot(commands.Cog):
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
-                    print(f"[LOOT] guild {guild}: mention {m}.")
+                    # print(f"[LOOT] guild {guild}: mention {m}.")
                     # await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
                     if role is None:
                         await channel.send(f'Go for {m}', embed=e)

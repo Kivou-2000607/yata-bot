@@ -48,11 +48,13 @@ class Racket(commands.Cog):
     def cog_unload(self):
         self.racketsTask.cancel()
 
+    # @tasks.loop(seconds=5)
     @tasks.loop(minutes=5)
     async def racketsTask(self):
         print("[RACKETS] start task")
 
-        guild = self.bot.get_guild(581227228537421825)
+        # guild = self.bot.get_guild(650701692853288991)  # chappie
+        guild = self.bot.get_guild(581227228537421825)  # yata
         _, _, key = await self.bot.get_master_key(guild)
         url = f'https://api.torn.com/torn/?selections=rackets,territory,timestamp&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -160,14 +162,14 @@ class Racket(commands.Cog):
             return
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=150):
-            print(guild)
+        for guild in self.bot.get_guild_module("rackets"):
             try:
+                print(f"[RACKETS] guild {guild}: {datetime.datetime.now()}")
                 # ignore servers with no rackets
-                if not self.bot.check_module(guild, "rackets"):
-                    continue
-
-                guild = self.bot.get_guild(guild.id)
+                # if not self.bot.check_module(guild, "rackets"):
+                #     continue
+                #
+                # guild = self.bot.get_guild(guild.id)
                 config = self.bot.get_config(guild)
 
                 # get role

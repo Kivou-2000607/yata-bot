@@ -474,3 +474,8 @@ class YataBot(Bot):
         # loop over guilds
         for guild in self.guilds:
             await self.rebuildGuild(guild, reboot=reboot, verbose=verbose)
+
+
+    def get_guild_module(self, module):
+        guilds = [guild for guild in self.guilds if self.get_config(guild).get(module, dict({})).get("active", False)]
+        return guilds
