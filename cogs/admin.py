@@ -113,50 +113,38 @@ class Admin(commands.Cog):
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
-        if len(args) > 1 and args[0].isdigit():
-            member = get(ctx.guild.members, id=int(args[0]))
-            if member is None:
-                await ctx.send(f":x: Member id `{args[0]}` not known on {ctx.guild}.")
-            else:
-                await member.send(" ".join(args[1:]))
-        else:
-            await ctx.send(f":x: You need to enter a discord user id and a message `!talk <userid> Hello there!`")
+        if len(args) > 2 and args[1].isdigit():
+            if args[0] == "member":
+                msg = " ".join(args[2:])
+                member = get(ctx.guild.members, id=int(args[1]))
+                if member is None:
+                    await ctx.send(f":x: Member id `{args[1]}` not known on {ctx.guild}.")
+                else:
+                    await member.send(msg)
+                    await ctx.send(f"Message sent to {member.mention}  ```{msg}```")
 
-    @commands.command()
-    async def messageHosts(self, ctx, *args):
-        """Admin tool for the bot owner"""
-        if not len(args):
-            await ctx.send(":x: You need an argument")
-            return
-
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
-            return
-
-        async for guild in self.bot.fetch_guilds(limit=150):
-            try:
-                guild = self.bot.get_guild(guild.id)
-                if guild is None:
-                    continue
-
-                channel = get(guild.channels, name="yata-admin")
+            elif args[0] == "channel":
+                msg = " ".join(args[2:])
+                channel = get(ctx.guild.channels, id=int(args[1]))
                 if channel is None:
-                    print(f'[sendMessage] {guild}: no yata-admin channel')
-                    continue
+                    await ctx.send(f":x: Channel id `{args[1]}` not known on {ctx.guild}.")
+                else:
+                    await channel.send(msg)
+                    await ctx.send(f"Message sent on {channel.mention}  ```{msg}```")
+            elif args[0] == "both" and len(args)>3:
+                msg = " ".join(args[3:])
+                member = get(ctx.guild.members, id=int(args[1]))
+                channel = get(ctx.guild.channels, id=int(args[2]))
+                if channel is None or member is None:
+                    await ctx.send(f":x: Member id `{args[1]}` ({member}) or channel id `{args[2]}` ({channel}) not known on {ctx.guild}.")
+                else:
+                    await channel.send(member.mention + " " + msg)
+                    await ctx.send(f"Message sent to {member.mention} on {channel.mention} ```{msg}```")
+            else:
+                await ctx.send(":x: You need to enter a discord user id or channel id and a message ```\n!talk member <userid> Hello there!\n!talk channel <channelid>\n!talk bot <userid> <channelid>```")
 
-                lst = [f"**Message sent by {ctx.author.nick} ({ctx.author} [{ctx.author.id}]**",
-                       f'```',
-                       " ".join(args[0:]),
-                       f'```']
-
-                await channel.send("\n".join(lst))
-
-            except BaseException as e:
-                await self.bot.sendLogChannel(f":x: Could not send message to {guild}: {e}")
-
+        else:
+            await ctx.send(":x: You need to enter a discord user id or channel id and a message ```\n!talk member <userid> Hello there!\n!talk channel <channelid> Hello there!```")
 
     @commands.command()
     async def yata(self, ctx):
