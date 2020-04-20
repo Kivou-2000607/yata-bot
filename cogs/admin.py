@@ -32,6 +32,7 @@ from discord.utils import oauth_url
 
 # import bot functions and classes
 import includes.formating as fmt
+from includes.checks import is_mention
 
 
 class Admin(commands.Cog):
@@ -110,41 +111,31 @@ class Admin(commands.Cog):
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
             return
+
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
-        if len(args) > 2 and args[1].isdigit():
-            if args[0] == "member":
-                msg = " ".join(args[2:])
-                member = get(ctx.guild.members, id=int(args[1]))
-                if member is None:
-                    await ctx.send(f":x: Member id `{args[1]}` not known on {ctx.guild}.")
-                else:
-                    await member.send(msg)
-                    await ctx.send(f"Message sent to {member.mention}  ```{msg}```")
 
-            elif args[0] == "channel":
-                msg = " ".join(args[2:])
-                channel = get(ctx.guild.channels, id=int(args[1]))
-                if channel is None:
-                    await ctx.send(f":x: Channel id `{args[1]}` not known on {ctx.guild}.")
-                else:
-                    await channel.send(msg)
-                    await ctx.send(f"Message sent on {channel.mention}  ```{msg}```")
-            elif args[0] == "both" and len(args)>3:
-                msg = " ".join(args[3:])
-                member = get(ctx.guild.members, id=int(args[1]))
-                channel = get(ctx.guild.channels, id=int(args[2]))
-                if channel is None or member is None:
-                    await ctx.send(f":x: Member id `{args[1]}` ({member}) or channel id `{args[2]}` ({channel}) not known on {ctx.guild}.")
-                else:
-                    await channel.send(member.mention + " " + msg)
-                    await ctx.send(f"Message sent to {member.mention} on {channel.mention} ```{msg}```")
-            else:
-                await ctx.send(":x: You need to enter a discord user id or channel id and a message ```\n!talk member <userid> Hello there!\n!talk channel <channelid>\n!talk bot <userid> <channelid>```")
+        for k in args:
+            print("args:", k, is_mention(k, type="channel"))
 
-        else:
-            await ctx.send(":x: You need to enter a discord user id or channel id and a message ```\n!talk member <userid> Hello there!\n!talk channel <channelid> Hello there!```")
+        if len(args) < 2:
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: number of arguments = {}".format(len(args)))
+            return
+
+        channel_id = is_mention(args[0], type="channel")
+        if not channel_id or not channel_id.isdigit():
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel id = {}".format(channel_id))
+            return
+
+        channel = get(ctx.guild.channels, id=int(channel_id))
+        if channel is None:
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel = {}".format(channel))
+            return
+
+        msg = " ".join(args[1:])
+        await channel.send(msg)
+        await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
     async def yata(self, ctx):

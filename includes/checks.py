@@ -19,6 +19,7 @@ This file is part of yata-bot.
 
 # import standard modules
 import asyncio
+import re
 
 
 async def channels(ctx, allowed):
@@ -65,3 +66,10 @@ async def roles(ctx, allowed):
         await msg.delete()
         await ctx.message.delete()
         return False
+
+
+def is_mention(mention, type="role"):
+    if type == "role":
+        return False if re.match(r'<@&([0-9])+>', mention) is None else mention[3:-1]
+    elif type == "channel":
+        return False if re.match(r'<#([0-9])+>', mention) is None else mention[2:-1]
