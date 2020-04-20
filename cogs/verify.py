@@ -326,7 +326,7 @@ class Verify(commands.Cog):
                 if 'error' in req:
                     return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
                 if req['discord'].get("userID") == '':
-                    return f":x: **{guild.get_member(discordID)}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                    return f":x: **{guild.get_member(discordID)}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
                 else:
                     userID = int(req['discord'].get("userID"))
 
@@ -357,7 +357,7 @@ class Verify(commands.Cog):
 
             if discordID is None:
                 # the guy did not log into torn discord
-                return f":x: **{nickname}** has not been verified because he didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                return f":x: **{nickname}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
 
             # the guy already log in torn discord
             if author_verif:
@@ -444,7 +444,7 @@ class Verify(commands.Cog):
                             return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/", True
 
                 # if no match in this loop it means that the member is not in this server
-                return f":x: You're trying to verify **{nickname}** but he didn't join this server... Maybe he is using a different discord account on the official Torn discord server.", False
+                return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
             print(f'ERROR _member for {guild} [{guild.id}]: {e}')
