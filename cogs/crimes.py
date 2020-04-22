@@ -23,6 +23,7 @@ import aiohttp
 import datetime
 import json
 import re
+import traceback
 
 # import discord modules
 from discord.ext import commands
@@ -374,8 +375,10 @@ class Crimes(commands.Cog):
                        f"Server:  {guild} [{guild.id}]",
                        f"",
                        f"{e}",
+                       f"",
+                       f"{traceback.format_exc()}",
                        f"```"]
-                await self.bot.sendLogChannel("\n".join(lst), channelId=685109941022883852)
+                await self.bot.sendLogChannel("\n".join(lst))
                 print(f"[OC] guild {guild}: mention failed {e}.")
 
         # print("[OC] end task")
