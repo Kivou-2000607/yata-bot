@@ -330,16 +330,17 @@ class Crimes(commands.Cog):
 
         return True
 
+    # @tasks.loop(seconds=3)
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        print("[OC] start task")
+        print(f"[OC] start task {datetime.datetime.now()}")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=150):
+        for guild in self.bot.get_guild_module("crimes"):
             try:
                 # ignore servers with no verify
-                if not self.bot.check_module(guild, "crimes"):
-                    continue
+                # if not self.bot.check_module(guild, "crimes"):
+                #     continue
 
                 # ignore servers with no option daily check
                 config = self.bot.get_config(guild)
@@ -349,7 +350,7 @@ class Crimes(commands.Cog):
                 # print(f"[OC] oc {guild}: start")
 
                 # iteration over all members asking for oc watch
-                guild = self.bot.get_guild(guild.id)
+                # guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
                     print(f"[OC] oc {guild}: {tornId}")

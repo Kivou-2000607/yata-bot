@@ -21,6 +21,7 @@ This file is part of yata-bot.
 import asyncio
 import aiohttp
 import json
+import datetime
 # import termplotlib as tpl
 
 # import discord modules
@@ -33,8 +34,8 @@ from discord import Embed
 import includes.checks as checks
 import includes.formating as fmt
 
-
-# def plot_stocks(lst, graph):
+#
+# def plot_stocks(graph):
 #     x = []
 #     y = []
 #     for _, price in graph:
@@ -42,11 +43,15 @@ import includes.formating as fmt
 #         y.append(price)
 #
 #     fig = tpl.figure()
-#     fig.plot(x, y, width=80, height=15)
+#     # fig.plot(x, y, width=80, height=15)
+#     fig.plot(x, y, width=40, height=40)
+#     lst = ["```"]
+#     fig.save("tmp.png")
 #     for l in fig.get_string().split("\n"):
 #         lst.append(l)
-#     lst[-1] = " " * 33 + "14 days prices" + " " * 33
-
+#     lst.append("```")
+#     # lst[-1] = " " * 33 + "14 days prices" + " " * 33
+#     return lst
 
 class Stocks(commands.Cog):
     def __init__(self, bot):
@@ -162,6 +167,7 @@ class Stocks(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
+        print(f"[STOCK] start task {datetime.datetime.now()}")
         try:
 
             stockInfo = {
@@ -212,9 +218,9 @@ class Stocks(commands.Cog):
             for k, v in req.items():
                 del v["graph"]
                 alerts = v.get("alerts", dict({}))
-                print(k, v)
 
                 title = False
+                # if alerts.get("below", False):
                 if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                     title = f'{stockInfo[k]["name"]}'
                     description = f'Below average and forecast moved from bad to good'
@@ -243,6 +249,10 @@ class Stocks(commands.Cog):
                     embed.add_field(name='Block requirement', value=f'{n:,.0f} shares')
                     embed.add_field(name='Block Price', value=f'${price:,.0f}')
 
+                    # # graph
+                    # lst = plot_stocks(v["graph"])
+                    # embed.add_field(name="Prices", value="\n".join(lst))
+
                     # thumbnail
                     embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/stocks/{stockInfo[k]["id"]}.png')
                     mentions.append(embed)
@@ -263,7 +273,7 @@ class Stocks(commands.Cog):
 
         print("[STOCK] alerts", len(mentions))
         # loop over guilds to send alerts
-        async for guild in self.bot.fetch_guilds(limit=150):
+        for guild in self.bot.get_guild_module("stocks"):
             try:
                 # check if module activated
                 config = self.bot.get_config(guild)
