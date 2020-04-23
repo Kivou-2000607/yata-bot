@@ -213,14 +213,14 @@ class Verify(commands.Cog):
                 if common_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
                     await member.add_roles(common_role)
                     if verify_channel is not None:
-                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
                     await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {common_role}')
                 else:
                     if verify_channel is not None:
-                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7")
+                        await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}*. o7")
             else:
                 if verify_channel is not None:
-                    await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/")
+                    await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}**. o/")
                 await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
 
             # final message to member
@@ -437,11 +437,11 @@ class Verify(commands.Cog):
                             common_role = get(ctx.guild.roles, name=config["verify"].get("common"))
                             if common_role is not None and str(req['faction']['faction_id']) in config.get("factions"):
                                 await member.add_roles(common_role)
-                                return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
+                                return f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7", True
                             else:
-                                return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}** from *{faction_name}*. o7", True
+                                return f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}*. o7", True
                         else:
-                            return f":white_check_mark: **{member}**, has been verified and is now know as **{member.display_name}**. o/", True
+                            return f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}**. o/", True
 
                 # if no match in this loop it means that the member is not in this server
                 return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
