@@ -29,10 +29,12 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
+from discord import Embed
 
 # import bot functions and classes
 import includes.formating as fmt
 from includes.checks import is_mention
+from includes.yata_db import get_yata_user_by_discord
 
 
 class Admin(commands.Cog):
@@ -138,7 +140,7 @@ class Admin(commands.Cog):
         await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
-    async def yata(self, ctx):
+    async def assign(self, ctx, *args):
         """Admin tool for the bot owner"""
         if str(ctx.author.id) not in self.bot.administrators:
             await ctx.send(":x: This command is not for you")
@@ -147,49 +149,58 @@ class Admin(commands.Cog):
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
 
-        # loop over member
-        for member in ctx.guild.members:
-            print(f"[YATA ROLE] {member} [{member.id}]")
-            status, id, key = await self.bot.get_master_key(ctx.guild)
-            if status == -1:
-                return
-            status, _, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
-            if status == 0:
-                await member.add_roles(get(ctx.guild.roles, name="YATA user"))
-
-    @commands.command()
-    async def hosts(self, ctx):
-        """Admin tool for the bot owner"""
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
+        if not len(args) or args[0].lower() not in ["host", "yata"]:
+            print(":x: `!assign host` or `!assign yata`")
             return
 
-        # get all contacts
-        contacts = []
-        for k, v in self.bot.configs.items():
-            contacts.append(v["admin"].get("contact_id", 0))
+        # Host
+        if args[0].lower() == "host":
+            r = get(ctx.guild.roles, name="Host")
+            if r is None:
+                await ctx.send(f":x: no role {args[0]}")
+            else:
+                await ctx.send(f"assigning {r}")
 
-        r = get(ctx.guild.roles, name=f"Host")
-        if r is None:
-            print("No @Host")
+                # get all contacts
+                contacts = []
+                for k, v in self.bot.configs.items():
+                    contacts.append(v["admin"].get("contact_id", 0))
+
+                # loop over member
+                for member in ctx.guild.members:
+                    print(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
+                    match = re.search('\[\d{1,7}\]', member.display_name)
+                    if match is None:
+                        continue
+                    tornId = int(match.group().replace("[", "").replace("]", ""))
+                    if tornId in contacts:
+                        await member.add_roles(r)
+                    else:
+                        await member.remove_roles(r)
+                await ctx.send(f"done")
+
             return
 
-        # loop over member
-        for member in ctx.guild.members:
-            print(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
-            match = re.search('\[\d{1,7}\]', member.display_name)
-            if match is None:
-                continue
-            tornId = int(match.group().replace("[", "").replace("]", ""))
-            if tornId in contacts:
-                await ctx.send(f'`@{r}` given to **{member.display_name}**')
-                await member.add_roles(r)
+        if args[0].lower() == "yata":
+            r = get(ctx.guild.roles, name="Yata")
+            # loop over member
+            if r is None:
+                await ctx.send(f":x: no role {args[0]}")
+            else:
+                await ctx.send(f"assigning {r}")
+
+                for member in ctx.guild.members:
+                    print(f"[YATA ROLE] {member} [{member.id}]")
+                    if len(await get_yata_user_by_discord(member.id)):
+                        await member.add_roles(r)
+                    else:
+                        await member.remove_roles(r)
+
+                await ctx.send(f"done")
+            return
+
 
     # helper functions
-
     async def role_exists(self, ctx, guild, name):
         r = get(guild.roles, name=f"{name}")
         s = f":white_check_mark: {name} role present" if r is not None else f":x: no {name} role"
@@ -212,7 +223,19 @@ class Admin(commands.Cog):
     @commands.command()
     async def help(self, ctx):
         """help command"""
-        await ctx.send("https://yata.alwaysdata.net/bot/documentation/")
+
+        embed = Embed(title="YATA bot help", description="If you need more information, ping an @helper in the YATA server", color=550000)
+
+        lst = ["[General information](https://yata.alwaysdata.net/bot/)",
+               "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
+               "[Host to bot](https://yata.alwaysdata.net/bot/host/)"]
+        embed.add_field(name='About the bot', value='\n'.join(lst))
+
+        lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
+               "[YATA discord](https://yata.alwaysdata.net/discord/)",
+               "[YATA website](https://yata.alwaysdata.net/)"]
+        embed.add_field(name='Links', value='\n'.join(lst))
+        await ctx.send("", embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

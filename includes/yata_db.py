@@ -50,6 +50,17 @@ async def get_yata_user(tornId):
 
     return user
 
+async def get_yata_user_by_discord(discordID):
+    # get YATA user
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    user = await con.fetch(f'SELECT "tId" FROM player_player WHERE "dId" = {discordID};')
+    await con.close()
+
+    return user
+
 
 async def push_guild_info(guild, member, bot_pk):
     """Writes the actual guild name in YATA database"""
