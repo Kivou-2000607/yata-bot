@@ -22,6 +22,7 @@ import asyncio
 import aiohttp
 import json
 import datetime
+import re
 # import termplotlib as tpl
 
 # import discord modules
@@ -263,13 +264,14 @@ class Stocks(commands.Cog):
                 return
 
         except BaseException as e:
-            print(f"[STOCK] ERROR IN STOCKS {e}")
+            errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
             lst = ["```YAML",
                    f"Log: Stock notification error (YATA call)",
                    f"",
-                   f"{e}",
+                   f"{errorMessage}",
                    f"```"]
             await self.bot.sendLogChannel("\n".join(lst))
+            print(f"[STOCK] ERROR IN STOCKS {e}")
 
         print("[STOCK] alerts", len(mentions))
         # loop over guilds to send alerts

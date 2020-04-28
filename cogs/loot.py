@@ -23,6 +23,7 @@ import aiohttp
 import time
 import datetime
 import json
+import re
 
 # import discord modules
 from discord.ext import commands
@@ -231,12 +232,13 @@ class Loot(commands.Cog):
                         await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
+                errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
                 lst = ["```YAML",
                        f"Log:     Loot notification error",
                        f"Server:  {guild} [{guild.id}]",
                        f"Channel: {channel.name}",
                        f"",
-                       f"{e}",
+                       f"{errorMessage}",
                        f"```"]
                 await self.bot.sendLogChannel("\n".join(lst))
                 print(f"[LOOT] guild {guild}: mention failed {e}.")

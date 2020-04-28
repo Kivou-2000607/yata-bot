@@ -371,11 +371,12 @@ class Crimes(commands.Cog):
                 # print(f"[OC] oc {guild}: end")
 
             except BaseException as e:
+                errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
                 lst = ["```YAML",
                        f"Log:     OC notification error",
                        f"Server:  {guild} [{guild.id}]",
                        f"",
-                       f"{e}",
+                       f"{errorMessage}",
                        f"",
                        f"{traceback.format_exc()}",
                        f"```"]
