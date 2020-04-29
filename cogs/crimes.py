@@ -373,14 +373,14 @@ class Crimes(commands.Cog):
             except BaseException as e:
                 if re.search('api.torn.com', f'{e}') is None:
                     lst = ["```YAML",
-                    f"Log:     OC notification error",
-                    f"Server:  {guild} [{guild.id}]",
-                    f"", f"API's broken.. #blamched", f"```"]
+                           f"Log:     OC notification error",
+                           f"Server:  {guild} [{guild.id}]",
+                           f"", f"{e}", f"", f"{traceback.format_exc()}", f"```"]
                 else:
                     lst = ["```YAML",
-                    f"Log:     OC notification error",
-                    f"Server:  {guild} [{guild.id}]",
-                    f"", f"{e}", f"", f"{traceback.format_exc()}", f"```"]
+                           f"Log:     OC notification error",
+                           f"Server:  {guild} [{guild.id}]",
+                           f"", f"API's broken.. #blamched", f"```"]
 
                 await self.bot.sendLogChannel("\n".join(lst))
                 print(f"[OC] guild {guild}: mention failed {e}.")
