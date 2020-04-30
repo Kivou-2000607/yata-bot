@@ -232,7 +232,7 @@ class Admin(commands.Cog):
         embed.add_field(name='About the bot', value='\n'.join(lst))
 
         lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
-               "[YATA discord](https://yata.alwaysdata.net/discord/)",
+               "[YATA discord](https://yata.alwaysdata.net/discord)",
                "[YATA website](https://yata.alwaysdata.net/)"]
         embed.add_field(name='Links', value='\n'.join(lst))
 
