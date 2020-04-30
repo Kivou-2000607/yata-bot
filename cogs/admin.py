@@ -228,13 +228,18 @@ class Admin(commands.Cog):
 
         lst = ["[General information](https://yata.alwaysdata.net/bot/)",
                "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
-               "[Host to bot](https://yata.alwaysdata.net/bot/host/)"]
+               "[Host the bot](https://yata.alwaysdata.net/bot/host/)"]
         embed.add_field(name='About the bot', value='\n'.join(lst))
 
         lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
                "[YATA discord](https://yata.alwaysdata.net/discord/)",
                "[YATA website](https://yata.alwaysdata.net/)"]
         embed.add_field(name='Links', value='\n'.join(lst))
+
+        lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
+               "[Loot level timers](https://yata.alwaysdata.net/loot/)",
+               "[Loot bot](https://discordapp.com/channels/581227228537421825/623906124428476427/629065571207479308)"]
+        embed.add_field(name='How to loot', value='\n'.join(lst))
         await ctx.send("", embed=embed)
 
     @commands.Cog.listener()
