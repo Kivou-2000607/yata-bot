@@ -234,11 +234,10 @@ class API(commands.Cog):
             tornId = int(args[0])
 
         # check if arg is a mention of a discord user ID
-        elif args[0][:3] == '<@!':
-            discordId = args[0][3:].split(">")[0]
-            if discordId.isdigit():
-                # discordId = int(args[0][2:-1].replace("!", "").replace("&", ""))
-                member = ctx.guild.get_member(int(discordId))
+        elif re.match(r'<@!?\d+>', args[0]):
+            discordId = re.findall(r'\d+', args[0])
+            if len(discordId) and discordId[0].isdigit():
+                member = ctx.guild.get_member(int(discordId[0]))
             else:
                 await ctx.send(helpMsg)
                 return

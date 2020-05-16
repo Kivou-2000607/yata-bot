@@ -28,6 +28,7 @@ import re
 from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
+from discord import Embed
 
 # import bot functions and classes
 import includes.checks as checks
@@ -564,20 +565,28 @@ class Chain(commands.Cog):
             if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
                 timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
-                if v["attacker_faction"]:
-                    lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** from **{v["attacker_factionname"]} [{v["attacker_faction"]}]** *{v["result"]}* {v["defender_name"]}',
-                           f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
-                    await channel.send('\n'.join(lst))
 
+                embed = Embed(title=f'{fName} have {tleft:.1f} minutes to retal',
+                              description=f'Target: [{v["attacker_name"]} [{v["attacker_id"]}]](https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
+                              color=550000)
+
+                embed.add_field(name='Timeout', value=f'{timeout} TCT')
+                if v["attacker_faction"]:
+                    embed.add_field(name='Faction', value=f'[{v["attacker_factionname"]} [{v["attacker_faction"]}]](https://www.torn.com/factions.php?step=profile&ID={v["attacker_faction"]})')
                 else:
-                    lst = [f':rage:{notified}{fName} have **{tleft:.1f} minutes** left to retal ({timeout} TCT): **{v["attacker_name"]} [{v["attacker_id"]}]** *{v["result"]}* {v["defender_name"]}',
-                           f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}']
-                    await channel.send('\n'.join(lst))
+                    embed.add_field(name='Faction', value=f'None')
+
+                embed.add_field(name='Defender', value=f'[{v["defender_name"]} [{v["defender_id"]}]](https://www.torn.com/profiles.php?XID={v["defender_id"]})')
+                embed.add_field(name='Chain Bonus', value=f'{v["chain"]} (x {v["modifiers"]["chainBonus"]})')
+                embed.add_field(name='Respect', value=f'{v["respect_gain"]:.2f}')
+                embed.add_field(name=f'Log', value=f'[{v["result"]}](https://www.torn.com/loader.php?sid=attackLog&ID={v["code"]})')
+
+                await channel.send(notified, embed=embed)
                 retal["mentions"].append(str(k))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                 attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
-                await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
+                await channel.send(f'{v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
         # clean mentions

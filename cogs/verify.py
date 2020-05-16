@@ -120,8 +120,23 @@ class Verify(commands.Cog):
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
         if len(args) == 1:
-            userID = args[0]
-            message, _ = await self._member(ctx, role, userID=userID, API_KEY=key)
+
+
+            if args[0].isdigit():
+                userID = int(args[0])
+                message, _ = await self._member(ctx, role, userID=userID, API_KEY=key)
+
+            # check if arg is a mention of a discord user ID
+            elif re.match(r'<@!?\d+>', args[0]):
+                discordID = re.findall(r'\d+', args[0])
+                if len(discordID) and discordID[0].isdigit():
+                    message, _ = await self._member(ctx, role, discordID=discordID, API_KEY=key)
+                else:
+                    message = f":x: could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
+
+            else:
+                message = ":x: use `!verify tornId` or `!verify @Kivou [2000607]`"
+
         elif len(args) == 2:
             userID = args[0]
             discordID = args[1]
