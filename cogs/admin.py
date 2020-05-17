@@ -221,6 +221,14 @@ class Admin(commands.Cog):
                 await m.delete()
 
     @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def suppress(self, ctx):
+        """Clear not pinned messages"""
+        async for m in ctx.channel.history():
+            if not m.pinned:
+                await m.edit(suppress=True)
+
+    @commands.command()
     async def help(self, ctx):
         """help command"""
 
