@@ -323,6 +323,7 @@ class Stocks(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.guild_only()
     async def trader(self, ctx):
         """Add/remove @Trader role"""
         # return if stocks not active

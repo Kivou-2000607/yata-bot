@@ -46,6 +46,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def chain(self, ctx, *args):
         """ Watch the chain status of a factions and gives notifications
             Use: !chain <factionId> <@Role>
@@ -197,6 +198,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def stopchain(self, ctx):
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -217,6 +219,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def fly(self, ctx, *args):
         """Gives faction members flying"""
 
@@ -279,6 +282,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def hosp(self, ctx, *args):
         """Gives faction members hospitalized"""
 
@@ -338,6 +342,7 @@ class Chain(commands.Cog):
 
     @commands.command(aliases=['ok'])
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def okay(self, ctx, *args):
         """Gives faction members that are okay"""
 
@@ -397,6 +402,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def retals(self, ctx):
         """ list all current retal watching
         """
@@ -426,6 +432,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def stopretal(self, ctx, *args):
         """ force stop a retal watching (for admin)
         """
@@ -470,6 +477,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def retal(self, ctx, *args):
         """ start / stop watching for retals
         """
@@ -667,6 +675,7 @@ class Chain(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def vault(self, ctx, *args):
         """ For AA users: gives the vault balance of a user
         """

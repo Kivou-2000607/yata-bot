@@ -217,6 +217,7 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
+    @commands.guild_only()
     async def suppress(self, ctx, *args):
         """Clear not pinned messages"""
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
@@ -265,7 +266,16 @@ class Admin(commands.Cog):
         if isinstance(error, ignored):
             return
 
-        # classical errors
+        # dm/guild errors
+        if isinstance(error, commands.NoPrivateMessage):
+            logging.warning(f'[on_command_error] {error}')
+            await self.bot.send_log_dm(error, ctx.author)
+            return
+
+        if isinstance(error, commands.PrivateMessageOnly):
+            logging.warning(f'[on_command_error] {error}')
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
 
         # classical errors
         classical = (commands.MissingPermissions,

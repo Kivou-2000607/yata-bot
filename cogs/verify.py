@@ -22,6 +22,7 @@ import aiohttp
 import asyncio
 import html
 import traceback
+import logging
 
 # import discord modules
 from discord.ext import commands
@@ -92,6 +93,7 @@ class Verify(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
         # check if dm
@@ -244,6 +246,7 @@ class Verify(commands.Cog):
 
     @commands.command(aliases=["verifyall"])
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
 
@@ -267,6 +270,7 @@ class Verify(commands.Cog):
 
     @commands.command(aliases=["checkfactions"])
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members
 
@@ -599,7 +603,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=24)
     async def dailyVerify(self):
-        print("[dailyVerify] start task")
+        logging.info("[dailyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -624,11 +628,14 @@ class Verify(commands.Cog):
                 print(f"[dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[dailyVerify] guild {guild}: verifyAll failed {e}.")
+                logging.error(f'[dailyVerify] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily verify"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @tasks.loop(hours=168)
     async def weeklyVerify(self):
-        print("[weeklyVerify] start task")
+        logging.info("[weeklyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -653,11 +660,14 @@ class Verify(commands.Cog):
                 print(f"[weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[weeklyVerify] guild {guild}: verifyAll failed {e}.")
+                logging.error(f'[weeklyVerify] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @tasks.loop(hours=24)
     async def dailyCheck(self):
-        print("[dailyCheck] start task")
+        logging.info("[dailyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -682,11 +692,14 @@ class Verify(commands.Cog):
                 print(f"[dailyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[dailyCheck] guild {guild}: checkFactions failed {e}.")
+                logging.error(f'[dailyCheck] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily check"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @tasks.loop(hours=168)
     async def weeklyCheck(self):
-        print("[weeklyCheck] start task")
+        logging.info("[weeklyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -711,7 +724,10 @@ class Verify(commands.Cog):
                 print(f"[weeklyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                print(f"[weeklyCheck] guild {guild}: checkFactions failed {e}.")
+                logging.error(f'[weeklyCheck] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly check"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @dailyVerify.before_loop
     async def before_dailyVerify(self):

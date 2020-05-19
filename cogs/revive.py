@@ -40,6 +40,7 @@ class Revive(commands.Cog):
 
     @commands.command(aliases=["r", "R"])
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.guild_only()
     async def revive(self, ctx, *args):
         """ send revive message to @Reviver
         """
@@ -165,6 +166,7 @@ class Revive(commands.Cog):
 
     @commands.command(aliases=["rs"])
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def reviveServers(self, ctx, *args):
 
         # return if revive not active
@@ -241,6 +243,7 @@ class Revive(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.guild_only()
     async def reviver(self, ctx):
         """Add/remove @Reviver role"""
         # return if revive not active

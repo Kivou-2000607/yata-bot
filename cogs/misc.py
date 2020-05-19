@@ -38,6 +38,7 @@ class Misc(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def xkcd(self, ctx):
         """gives random xkcd comic"""
         comic = xkcd.getRandomComic()
@@ -47,12 +48,14 @@ class Misc(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def crimes2(self, ctx):
         """gives latest update on crimes 2.0"""
         await ctx.send("https://yata.alwaysdata.net/static/images/crimes2.gif")
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def banners(self, ctx, *args):
         """Gives missing honor banners or displays banner if id given"""
 
@@ -147,6 +150,7 @@ class Misc(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def egg(self, ctx):
         p = random.choice(pages)
         lst = [f'You want to find an egg? Try here:',

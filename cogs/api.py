@@ -46,6 +46,7 @@ class API(commands.Cog):
         self.notify.cancel()
 
     @commands.command(aliases=['we'])
+    @commands.guild_only()
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
 
@@ -107,6 +108,7 @@ class API(commands.Cog):
         return
 
     @commands.command(aliases=['fh'])
+    @commands.guild_only()
     async def finishing(self, ctx, *args):
         """DM number of finishing hits to author"""
 
@@ -164,6 +166,7 @@ class API(commands.Cog):
         return
 
     @commands.command(aliases=['net'])
+    @commands.guild_only()
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
 
@@ -210,6 +213,7 @@ class API(commands.Cog):
 
     @commands.command(aliases=['profile', 'p'])
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def who(self, ctx, *args):
         """Gives information on a user"""
 

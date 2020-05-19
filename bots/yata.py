@@ -478,6 +478,9 @@ class YataBot(Bot):
         channel = get(guild.channels, id=685470217002156098)
         await channel.send(log_fmt(log, headers=headers, full=full))
 
+    async def send_log_dm(self, log, author):
+        await author.send(f'```{log}```')
+
     async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
         # fallback if guild_id or channel_id has not been given
         if not guild_id:
@@ -529,8 +532,12 @@ class YataBot(Bot):
         except discord.errors.Forbidden:
             headers["note"].append(f"Forbidden to write in channel {channel}")
             channel_fb = self.get_guild_admin_channel(guild)
-            headers["fallback_channel"] = channel_fb
 
+            if channel_fb == channel:
+                await self.send_log_main(log, headers=headers)
+                return
+
+            headers["fallback_channel"] = channel_fb
             if channel_fb is None:
                 headers["note"].append(f"server admin channel as fallback not found")
                 await self.send_log_main(log, headers=headers)

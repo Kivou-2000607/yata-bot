@@ -47,6 +47,7 @@ class Crimes(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def ocs(self, ctx):
         """ list all current ocs watching
         """
@@ -76,6 +77,7 @@ class Crimes(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def stopoc(self, ctx, *args):
         """ force stop a oc watching (for admin)
         """
@@ -120,6 +122,7 @@ class Crimes(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def ocready(self, ctx, *args):
         """ list oc ready
         """
@@ -170,6 +173,7 @@ class Crimes(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
     async def oc(self, ctx, *args):
         """ start / stop watching for organized crimes
         """
@@ -380,8 +384,6 @@ class Crimes(commands.Cog):
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
-
-        # print("[OC] end task")
 
     @ocTask.before_loop
     async def before_ocTask(self):
