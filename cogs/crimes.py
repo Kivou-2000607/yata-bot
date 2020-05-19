@@ -161,7 +161,7 @@ class Crimes(commands.Cog):
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
                 lst = ['```YAML', f'OC: {v["crime_name"]} #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
-                # print(k, v)
+                # logging.info(k, v)
                 for p in v["participants"]:
                     tId = list(p)[0]
                     name = members.get(tId, dict({"name": "Player"}))["name"]
@@ -342,7 +342,7 @@ class Crimes(commands.Cog):
     # @tasks.loop(seconds=3)
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        print(f"[OC] start task {datetime.datetime.now()}")
+        logging.info(f"[OC] start task {datetime.datetime.now()}")
 
         # iteration over all guilds
         for guild in self.bot.get_guild_module("crimes"):
@@ -356,13 +356,13 @@ class Crimes(commands.Cog):
                 if not config["crimes"].get("oc", False):
                     continue
 
-                # print(f"[OC] oc {guild}: start")
+                # logging.info(f"[OC] oc {guild}: start")
 
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
-                    print(f"[OC] oc {guild}: {tornId}")
+                    logging.info(f"[OC] oc {guild}: {tornId}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
@@ -377,15 +377,15 @@ class Crimes(commands.Cog):
                     del self.bot.configs[str(guild.id)]["crimes"]["oc"][d]
                     await push_configurations(self.bot.bot_id, self.bot.configs)
 
-                # print(f"[OC] oc {guild}: end")
+                # logging.info(f"[OC] oc {guild}: end")
 
             except BaseException as e:
                 logging.error(f'[ocTask] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
-                await self.bot.send_log_main(e, headers=headers, full=True)
+                await self.bot.send_log_main(e, headers=headers)
 
     @ocTask.before_loop
     async def before_ocTask(self):
-        print('[OC] waiting...')
+        logging.info('[OC] waiting...')
         await self.bot.wait_until_ready()

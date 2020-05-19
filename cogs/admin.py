@@ -111,7 +111,7 @@ class Admin(commands.Cog):
             return
 
         for k in args:
-            print("args:", k, is_mention(k, type="channel"))
+            logging.info("args:", k, is_mention(k, type="channel"))
 
         if len(args) < 2:
             await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: number of arguments = {}".format(len(args)))
@@ -140,7 +140,7 @@ class Admin(commands.Cog):
             return
 
         if not len(args) or args[0].lower() not in ["host", "yata"]:
-            print(":x: `!assign host` or `!assign yata`")
+            logging.info(":x: `!assign host` or `!assign yata`")
             return
 
         # Host
@@ -158,7 +158,7 @@ class Admin(commands.Cog):
 
                 # loop over member
                 for member in ctx.guild.members:
-                    print(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
+                    logging.info(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
                     match = re.search('\[\d{1,7}\]', member.display_name)
                     if match is None:
                         continue
@@ -180,7 +180,7 @@ class Admin(commands.Cog):
                 await ctx.send(f"assigning {r}")
 
                 for member in ctx.guild.members:
-                    print(f"[YATA ROLE] {member} [{member.id}]")
+                    logging.info(f"[YATA ROLE] {member} [{member.id}]")
                     if len(await get_yata_user_by_discord(member.id)):
                         await member.add_roles(r)
                     else:
@@ -188,7 +188,6 @@ class Admin(commands.Cog):
 
                 await ctx.send(f"done")
             return
-
 
     # helper functions
     async def role_exists(self, ctx, guild, name):
@@ -202,8 +201,9 @@ class Admin(commands.Cog):
         await ctx.send(s)
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def clear(self, ctx, *args):
         """Clear not pinned messages"""
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
@@ -211,12 +211,12 @@ class Admin(commands.Cog):
             if not m.pinned:
                 try:
                     await m.delete()
-                except BaseException:
+                except BaseException as e:
                     return
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
+    @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def suppress(self, ctx, *args):
         """Clear not pinned messages"""
@@ -225,7 +225,7 @@ class Admin(commands.Cog):
             if not m.pinned:
                 try:
                     await m.edit(suppress=True)
-                except BaseException:
+                except BaseException as e:
                     return
 
     @commands.command()
@@ -291,13 +291,12 @@ class Admin(commands.Cog):
 
         # headers
         headers = {
-                    "guild": ctx.guild,
-                    "channel": ctx.channel,
-                    "author": ctx.author,
-                    "command": ctx.command,
-                    "message": ctx.message.content,
-                    "error": f'{type(error)}'
-                   }
+            "guild": ctx.guild,
+            "channel": ctx.channel,
+            "author": ctx.author,
+            "command": ctx.command,
+            "message": ctx.message.content,
+            "error": f'{type(error)}'}
 
         # the user is missing role
         if isinstance(error, commands.MissingRole):
@@ -320,44 +319,3 @@ class Admin(commands.Cog):
 
         await self.bot.send_log_main(error, headers=headers, full=True)
         logging.error(error)
-
-
-
-
-    # @commands.Cog.listener()
-    # async def on_command_error(self, ctx, error):
-    #     """The event triggered when an error is raised while invoking a command.
-    #     ctx   : Context
-    #     error : Exception"""
-    #
-    #     # This prevents any commands with local handlers being handled here in on_command_error.
-    #     if hasattr(ctx.command, 'on_error'):
-    #         return
-    #
-    #     print(type(error))
-    #     ignored = (commands.CommandNotFound, commands.UserInputError)
-    #
-    #     # Allows us to check for original exceptions raised and sent to CommandInvokeError.
-    #     # If nothing is found. We keep the exception passed to on_command_error.
-    #     error = getattr(error, 'original', error)
-    #
-    #     # Anything in ignored will return and prevent anything happening.
-    #     if isinstance(error, ignored):
-    #         return
-    #
-    #     # All other Errors not returned come here... And we can just print the default TraceBack.
-    #     print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-    #     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-    #
-    #     errorMessage = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken.. #blamched"
-    #
-    #     lst = ["```YAML",
-    #            f"Log:     Command error",
-    #            f"Server:  {ctx.guild} [{ctx.guild.id}]",
-    #            f"Channel: {ctx.message.channel.name}",
-    #            f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
-    #            f"Message: {ctx.message.content}",
-    #            f"",
-    #            f"{errorMessage}",
-    #            f"```"]
-    #     await self.bot.sendLogChannel("\n".join(lst))

@@ -24,6 +24,7 @@ import time
 import datetime
 import json
 import re
+import logging
 
 # import discord modules
 from discord.ext import commands
@@ -138,7 +139,7 @@ class Loot(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def notify(self):
-        print("[LOOT] start task")
+        logging.info("[LOOT] start task")
 
         # images and items
         thumbs = {
@@ -171,7 +172,6 @@ class Loot(commands.Cog):
 
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
-            # if True:
                 notification = "{} {}".format(npc["name"], "in " + fmt.s_to_ms(due) if due > 0 else "**NOW**")
                 mentions.append(notification)
 
@@ -190,28 +190,28 @@ class Loot(commands.Cog):
                 embed.set_thumbnail(url=url)
                 embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
                 embeds.append(embed)
-                print(f'[LOOT] {npc["name"]}: notify (due {due})')
+                logging.info(f'[LOOT] {npc["name"]}: notify (due {due})')
             elif due > 0:
                 # used for computing sleeping time
                 nextDue.append(due)
-                print(f'[LOOT] {npc["name"]}: ignore (due {due})')
+                logging.info(f'[LOOT] {npc["name"]}: ignore (due {due})')
             else:
-                print(f'[LOOT] {npc["name"]}: ignore (due {due})')
+                logging.info(f'[LOOT] {npc["name"]}: ignore (due {due})')
 
         # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
         s = nextDue[0] - 7 * 60 - 5  # next due - 7 minutes - 5 seconds of the task ticker
-        print(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
+        logging.info(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
         for guild in self.bot.get_guild_module("loot"):
             try:
-                print(f"[LOOT] guild {guild}: {datetime.datetime.now()}")
+                logging.info(f"[LOOT] guild {guild}: {datetime.datetime.now()}")
                 # # ignore non loot servers
                 # if not self.bot.check_module(guild, "loot"):
-                #     # print(f"[LOOT] guild {guild}: ignore.")
+                #     # logging.info(f"[LOOT] guild {guild}: ignore.")
                 #     continue
-                # # print(f"[LOOT] guild {guild}: notify.")
+                # # logging.info(f"[LOOT] guild {guild}: notify.")
 
                 # get full guild (async iterator doesn't return channels)
                 # guild = self.bot.get_guild(guild.id)
@@ -228,7 +228,7 @@ class Loot(commands.Cog):
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
-                    # print(f"[LOOT] guild {guild}: mention {m}.")
+                    # logging.info(f"[LOOT] guild {guild}: mention {m}.")
                     # await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
                     if role is None:
                         await channel.send(f'Go for {m}', embed=e)
@@ -236,23 +236,15 @@ class Loot(commands.Cog):
                         await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
-                errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
-                lst = ["```YAML",
-                       f"Log:     Loot notification error",
-                       f"Server:  {guild} [{guild.id}]",
-                       f"Channel: {channel.name}",
-                       f"",
-                       f"{errorMessage}",
-                       f"```"]
-                await self.bot.sendLogChannel("\n".join(lst))
-                print(f"[LOOT] guild {guild}: mention failed {e}.")
-
-            # await get(guild.channels, name="admin").send(f"<debug>sleeping for {fmt.s_to_hms(s)} minutes</debug>")
+                logging.error(f'[lootTask] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
+                await self.bot.send_log_main(e, headers=headers)
 
         # sleeps
         await asyncio.sleep(s)
 
     @notify.before_loop
     async def before_notify(self):
-        print('[LOOT] waiting...')
+        logging.info('[LOOT] waiting...')
         await self.bot.wait_until_ready()

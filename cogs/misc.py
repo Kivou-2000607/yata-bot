@@ -22,6 +22,7 @@ import xkcd
 import asyncio
 import aiohttp
 import random
+import logging
 
 # import discord modules
 from discord.ext import commands
@@ -29,7 +30,7 @@ from discord.utils import get
 
 # import bot functions and classes
 import includes.formating as fmt
-from includes.torn_pages import  pages
+from includes.torn_pages import pages
 
 
 class Misc(commands.Cog):

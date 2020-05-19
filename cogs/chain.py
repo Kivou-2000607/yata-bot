@@ -23,6 +23,7 @@ import aiohttp
 import datetime
 import json
 import re
+import logging
 
 # import discord modules
 from discord.ext import commands
@@ -76,10 +77,10 @@ class Chain(commands.Cog):
             match = re.match(r'<@&([0-9])+>', arg)
             if match is not None:
                 role = match.string
-                print(f"role = {role}")
+                logging.info(f"role = {role}")
             elif arg.isdigit():
                 faction = int(arg)
-                print(f"factionId = {faction}")
+                logging.info(f"factionId = {faction}")
                 continue
             else:
                 await ctx.send(f":x: ignore argument {arg}. syntax is ```!chain <factionId> <@Role>```")
@@ -191,9 +192,9 @@ class Chain(commands.Cog):
                 await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
 
             # sleeps
-            # print(timeout, deltaW, delay, 30 - delay)
+            # logging.info(timeout, deltaW, delay, 30 - delay)
             sleep = max(30, timeout - deltaW)
-            print(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            logging.info(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
 
     @commands.command()
@@ -399,6 +400,59 @@ class Chain(commands.Cog):
             lst.append(line)
 
         await fmt.send_tt(ctx, lst, tt=False)
+
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
+    async def vault(self, ctx, *args):
+        """ For AA users: gives the vault balance of a user
+        """
+        # return if chain not active
+        if not self.bot.check_module(ctx.guild, "chain"):
+            await ctx.send(":x: Chain module not activated")
+            return
+
+        if len(args) and args[0].isdigit():
+            checkVaultId = str(args[0])
+        else:
+            await ctx.send(":x: Enter a torn id `!vault <tornId>`")
+            return
+
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+
+        if status != 0:
+            return
+
+        url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        if 'error' in req:
+            await ctx.send(f':x: Error code {req["error"]["code"]}: {req["error"]["error"]}')
+            return
+
+        factionName = f'{req["name"]} [{req["ID"]}]'
+        members = req["members"]
+        donations = req["donations"]
+        lst = [f'Faction: {factionName}']
+        if checkVaultId in members:
+            member = members[checkVaultId]
+            lst.append(f'User: {member["name"]} [{checkVaultId}]')
+            lst.append(f'Action: {member["last_action"]["relative"]}')
+        else:
+            lst.append(f'User: Member [{checkVaultId}]')
+            lst.append(f'Action: Not in faction')
+
+        if checkVaultId in donations:
+            member = donations[checkVaultId]
+            lst.append(f'Money: ${member["money_balance"]:,d}')
+            lst.append(f'Points: {member["points_balance"]:,d}')
+        else:
+            lst.append(f'Money: No vault records')
+            lst.append(f'Points: No vault records')
+
+        await fmt.send_tt(ctx, lst)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -626,7 +680,7 @@ class Chain(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def retalTask(self):
-        # print("[RETAL] start task")
+        # logging.info("[retalTask] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -640,13 +694,13 @@ class Chain(commands.Cog):
                 if not config["chain"].get("retal", False):
                     continue
 
-                # print(f"[RETAL] retal {guild}: start")
+                # logging.info(f"[retalTask] retal {guild}: start")
 
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, retal in config["chain"]["retal"].items():
-                    # print(f"[RETAL] retal {guild}: {tornId}: {retal}")
+                    # logging.info(f"[retalTask] retal {guild}: {tornId}: {retal}")
 
                     # call retal faction
                     status = await self._retal(guild, retal)
@@ -661,67 +715,15 @@ class Chain(commands.Cog):
                     del self.bot.configs[str(guild.id)]["chain"]["retal"][d]
                     await push_configurations(self.bot.bot_id, self.bot.configs)
 
-                # print(f"[RETAL] retal {guild}: end")
+                # logging.info(f"[retalTask] retal {guild}: end")
 
             except BaseException as e:
-                print(f"[RETAL] guild {guild}: retal failed {e}.")
-
-        # print("[RETAL] end task")
+                logging.error(f'[retalTask] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on retal task"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @retalTask.before_loop
     async def before_retalTask(self):
-        print('[RETAL] waiting...')
+        logging.info('[retalTask] waiting...')
         await self.bot.wait_until_ready()
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def vault(self, ctx, *args):
-        """ For AA users: gives the vault balance of a user
-        """
-        # return if chain not active
-        if not self.bot.check_module(ctx.guild, "chain"):
-            await ctx.send(":x: Chain module not activated")
-            return
-
-        if len(args) and args[0].isdigit():
-            checkVaultId = str(args[0])
-        else:
-            await ctx.send(":x: Enter a torn id `!vault <tornId>`")
-            return
-
-        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-
-        if status != 0:
-            return
-
-        url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        if 'error' in req:
-            await ctx.send(f':x: Error code {req["error"]["code"]}: {req["error"]["error"]}')
-            return
-
-        factionName = f'{req["name"]} [{req["ID"]}]'
-        members = req["members"]
-        donations = req["donations"]
-        lst = [f'Faction: {factionName}']
-        if checkVaultId in members:
-            member = members[checkVaultId]
-            lst.append(f'User: {member["name"]} [{checkVaultId}]')
-            lst.append(f'Action: {member["last_action"]["relative"]}')
-        else:
-            lst.append(f'User: Member [{checkVaultId}]')
-            lst.append(f'Action: Not in faction')
-
-        if checkVaultId in donations:
-            member = donations[checkVaultId]
-            lst.append(f'Money: ${member["money_balance"]:,d}')
-            lst.append(f'Points: {member["points_balance"]:,d}')
-        else:
-            lst.append(f'Money: No vault records')
-            lst.append(f'Points: No vault records')
-
-        await fmt.send_tt(ctx, lst)

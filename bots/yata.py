@@ -82,11 +82,11 @@ class YataBot(Bot):
                 req = await r.json()
 
         if 'error' in req:
-            # print(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
+            # logging.info(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
             return -1, req['error']
 
         elif req['discord'].get("userID") == '':
-            # print(f'[DISCORD TO TORN] discord id {member.id} not verified')
+            # logging.info(f'[DISCORD TO TORN] discord id {member.id} not verified')
             return -2, None
 
         else:
@@ -122,33 +122,33 @@ class YataBot(Bot):
 
         # get master key to check identity
 
-        # print(f"[GET USER KEY] <{ctx.guild}> get master key")
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> get master key")
         master_status, master_id, master_key = await self.get_master_key(ctx.guild)
         if master_status == -1:
-            # print(f"[GET USER KEY] <{ctx.guild}> no master key given")
+            # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
             m = await ctx.send(":x: no master key given")
             if delError:
                 await asyncio.sleep(5)
                 await m.delete()
             return -1, None, None, None
-        # print(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
 
         # get torn id from discord id
 
-        # print(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
         tornId, msg = await self.discord_to_torn(member, master_key)
 
         # handle master api error or not verified member
 
         if tornId == -1:
-            # print(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
+            # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
             m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
             if delError:
                 await asyncio.sleep(5)
                 await m.delete()
             return -2, None, None, None
         elif tornId == -2:
-            # print(f'[GET MEMBER KEY] status -2: user not verified')
+            # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
             m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
             if delError:
                 await asyncio.sleep(5)
@@ -161,7 +161,7 @@ class YataBot(Bot):
 
         # handle user not on YATA
         if not len(user):
-            # print(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
+            # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
             if delError:
                 await asyncio.sleep(5)
@@ -172,7 +172,7 @@ class YataBot(Bot):
 
         user = tuple(user[0])
         if not user[3] and needPerm:
-            # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
+            # logging.info(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
             m = await ctx.send(f':x: {member.mention} didn\'t give their permission to use their API key. They need to check out the API keys management section here: https://yata.alwaysdata.net/bot/documentation/')
             if delError:
                 await asyncio.sleep(5)
@@ -181,7 +181,7 @@ class YataBot(Bot):
 
         # return id, name, key
         else:
-            # print(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
+            # logging.info(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
             return 0, user[0], user[1], user[2]
 
     def check_module(self, guild, module):
@@ -194,29 +194,6 @@ class YataBot(Bot):
         else:
             return bool(config[module].get("active", False))
 
-    async def sendAdminChannel(self, msg, channelId=651386992898342912):
-        """ sends message to yata admin channel by default
-        """
-        channel = self.get_channel(channelId)
-        if channel is not None:
-            await channel.send(msg)
-
-    async def sendLogChannel(self, msg, channelId=685470217002156098):
-        """ sends message to yata admin channel by default
-        """
-        channel = self.get_channel(channelId)
-        if channel is not None:
-            await channel.send(msg)
-
-    # async def on_disconnect(self):
-    #     await self.sendAdminChannel(":red_circle: disconnect")
-
-    # async def on_connect(self):
-    #     await self.sendAdminChannel(":green_circle: connect")
-
-    # async def on_resume(self):
-    #     await self.sendAdminChannel(":green_circle: resume")
-
     async def on_ready(self):
         """ on_ready
             loop over the bot guilds and do the setup
@@ -227,8 +204,7 @@ class YataBot(Bot):
         activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
         await self.change_presence(activity=activity)
 
-        await self.sendAdminChannel(":green_circle: ready")
-        print("[SETUP] Ready...")
+        logging.info("[SETUP] Ready...")
 
     async def on_guild_join(self, guild):
         """notifies me when joining a guild"""
@@ -291,9 +267,7 @@ class YataBot(Bot):
             channel_name = "yata-admin"
             if get(guild.channels, name=channel_name) is None:
                 lst.append(f"\tCreate channel {channel_name}")
-                overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                }
+                overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False), }
                 if bot_role is not None:
                     overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
                 channel_admin = await guild.create_text_channel(channel_name, topic="Administration channel for the YATA bot", overwrites=overwrites, category=yata_category)
@@ -370,14 +344,12 @@ class YataBot(Bot):
                 for channel_name in [c for c in config["loot"].get("channels", ["loot"]) if c != "*"]:
                     if get(guild.channels, name=channel_name) is None:
                         lst.append(f"\tCreate channel {channel_name}")
-                        overwrites = {
-                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        }
+                        overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False), }
                         if role_loot is not None:
                             overwrites[role_loot] = discord.PermissionOverwrite(read_messages=True)
                         if bot_role is not None:
                             overwrites[bot_role] = discord.PermissionOverwrite(read_messages=True)
-                        print(overwrites)
+                        logging.info(overwrites)
                         channel_loot = await guild.create_text_channel(channel_name, topic="Loot channel for the YATA bot", overwrites=overwrites, category=yata_category)
                         await channel_loot.send(f"{role_loot.mention} will reveive notification here")
                         await channel_loot.send("Type `!loot` here to get the npc timings")
@@ -421,9 +393,7 @@ class YataBot(Bot):
                     # create stock channel
                     if get(guild.channels, name=stock) is None:
                         lst.append(f"\tCreate channel {stock}")
-                        overwrites = {
-                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        }
+                        overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False), }
                         if stock_role is not None:
                             overwrites[stock_role] = discord.PermissionOverwrite(read_messages=True)
                         if bot_role is not None:
@@ -441,9 +411,7 @@ class YataBot(Bot):
                     for channel_name in [c for c in config["stocks"].get("channels", ["stocks"]) if c != "*"]:
                         if get(guild.channels, name=channel_name) is None:
                             lst.append(f"\tCreate channel {channel_name}")
-                            overwrites = {
-                                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                            }
+                            overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False), }
                             if stock_role is not None:
                                 overwrites[stock_role] = discord.PermissionOverwrite(read_messages=True)
                             if bot_role is not None:

@@ -22,6 +22,7 @@ import asyncio
 import aiohttp
 # import datetime
 # import json
+import logging
 
 # import discord modules
 from discord.ext import commands

@@ -23,6 +23,7 @@ import aiohttp
 import json
 import datetime
 import re
+import logging
 # import termplotlib as tpl
 
 # import discord modules
@@ -86,7 +87,7 @@ class Stocks(commands.Cog):
         timeLeft = dict()
         role = get(ctx.guild.roles, name=stock)
         for member in role.members:
-            print(f"[{stock.upper()}]: {member.display_name}")
+            logging.info(f"[{stock.upper()}]: {member.display_name}")
 
             # get user key from YATA database
             status, id, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
@@ -125,7 +126,7 @@ class Stocks(commands.Cog):
                 for k, v in user_stocks.items():
                     if v['stock_id'] == so.get(stock)[1] and v['shares'] >= so.get(stock)[2]:
                         stockOwners.append(name)
-                        # print("        stock {}: {}".format(k, v))
+                        # logging.info("        stock {}: {}".format(k, v))
 
             # get time left
             if stock == "tcb":
@@ -140,7 +141,7 @@ class Stocks(commands.Cog):
     @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        print("[WSSB]")
+        logging.info("[WSSB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         if len(timeLeft):
@@ -157,7 +158,7 @@ class Stocks(commands.Cog):
     @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        print("[TCB]")
+        logging.info("[TCB]")
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
         if len(timeLeft):
@@ -172,7 +173,7 @@ class Stocks(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
-        print(f"[STOCK] start task {datetime.datetime.now()}")
+        logging.info(f"[STOCK] start task {datetime.datetime.now()}")
         try:
 
             stockInfo = {
@@ -209,7 +210,7 @@ class Stocks(commands.Cog):
                 "TCC": {"id": 31, "name": "Torn City Clothing", "acronym": "TCC", "director": "Mrs. Stella Patrick", "benefit": {"requirement": 350000, "description": "Entitled to receive occasional dividends"}}
                 }
 
-            print("[STOCK] start task")
+            logging.info("[STOCK] start task")
 
             # YATA api
             url = "https://yata.alwaysdata.net/stock/alerts/"
@@ -264,27 +265,21 @@ class Stocks(commands.Cog):
 
             # create message to send
             if not len(mentions):
-                print("[STOCK] no alerts")
+                logging.info("[STOCK] no alerts")
                 return
 
         except BaseException as e:
-            errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
-            lst = ["```YAML",
-                   f"Log: Stock notification error (YATA call)",
-                   f"",
-                   f"{errorMessage}",
-                   f"```"]
-            await self.bot.sendLogChannel("\n".join(lst))
-            print(f"[STOCK] ERROR IN STOCKS {e}")
+            headers = {"error": "error on stock notification (YATA CALL)"}
+            await self.bot.send_log_main(e, headers=headers)
 
-        print("[STOCK] alerts", len(mentions))
+        logging.info("[STOCK] alerts", len(mentions))
         # loop over guilds to send alerts
         for guild in self.bot.get_guild_module("stocks"):
             try:
                 # check if module activated
                 config = self.bot.get_config(guild)
                 if not config.get("stocks", dict({})).get("alerts", False):
-                    # print(f"[STOCK] guild {guild}: ignore notifications")
+                    # logging.info(f"[STOCK] guild {guild}: ignore notifications")
                     continue
 
                 # get full guild (async iterator doesn't return channels)
@@ -302,24 +297,16 @@ class Stocks(commands.Cog):
                         await channel.send(embed=embed)
 
                 else:
-                    print(f"[STOCK] guild {guild}: no channel {channelName}")
-                    lst = ["```YAML",
-                           f"Log:     Stock notification error",
-                           f"Server:  {guild} [{guild.id}]",
-                           f"",
-                           f"No channel named {channelName}",
-                           f"```"]
-                    await self.bot.sendLogChannel("\n".join(lst))
+                    logging.error(f'[stock] {guild} [{guild.id}]: {e}')
+                    await self.bot.send_log(e, guild_id=guild.id)
+                    headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification", "note": f"No channel {channelName}"}
+                    await self.bot.send_log_main(e, headers=headers)
 
             except BaseException as e:
-                lst = ["```YAML",
-                       f"Log:     Stock notification error",
-                       f"Server:  {guild} [{guild.id}]",
-                       f"",
-                       f"{e}",
-                       f"```"]
-                await self.bot.sendLogChannel("\n".join(lst))
-                print(f"[STOCK] guild {guild}: mention failed {e}.")
+                logging.error(f'[stock] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
@@ -349,5 +336,5 @@ class Stocks(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        print('[STOCK] waiting...')
+        logging.info('[STOCK] waiting...')
         await self.bot.wait_until_ready()

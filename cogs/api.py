@@ -25,6 +25,7 @@ import json
 import re
 import os
 import html
+import logging
 
 # import discord modules
 import discord
@@ -64,7 +65,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            print(f"[WEAPON EXP] error {status}")
+            logging.info(f"[WEAPON EXP] error {status}")
             return
 
         # make api call
@@ -126,7 +127,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            print(f"[FINISHING HITS] error {status}")
+            logging.info(f"[FINISHING HITS] error {status}")
             return
 
         # make api call
@@ -184,7 +185,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            print(f"[NETWORTH] error {status}")
+            logging.info(f"[NETWORTH] error {status}")
             return
 
         # make api call
@@ -351,10 +352,9 @@ class API(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def notify(self):
-        print("[NOTIFICATIONS] start task")
+        logging.info("[NOTIFICATIONS] start task")
 
         # YATA guild
-        # guild = get(self.bot.guilds, id=432226682506575893)  # nub navy guild
         guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
 
         # connect to YATA database of notifiers
@@ -366,11 +366,13 @@ class API(commands.Cog):
 
         # async loop over notifiers
         async with con.transaction():
-            async for record in con.cursor(sql, prefetch=50, timeout=2):
+            async for record in con.cursor(sql, prefetch=100, timeout=2):
                 # get corresponding discord member
                 member = get(guild.members, id=record["dId"])
                 if member is None:
-                    print(f'[NOTIFICATIONS] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
+                    logging.warning(f'[NOTIFICATIONS] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
+                    # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
+                    # await self.bot.send_log_main("member not found", headers=headers)
                     continue
 
                 try:
@@ -551,15 +553,12 @@ class API(commands.Cog):
                     await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
 
                 except BaseException as e:
-                    print(f"[NOTIFICATIONS] Error {member}: {e}")
+                    headers = {"guild": guild, "guild_id": guild.id, "member": f'{member.nick} / {member}', "error": "personal notification error"}
+                    await self.bot.send_log_main(e, headers=headers, full=True)
 
         await con.close()
 
     @notify.before_loop
     async def before_notify(self):
-        print('[NOTIFICATIONS] waiting...')
+        logging.info('[NOTIFICATIONS] waiting...')
         await self.bot.wait_until_ready()
-
-    @notify.after_loop
-    async def on_bulker_cancel(self):
-        await self.bot.sendAdminChannel(":red_circle: Going offline")

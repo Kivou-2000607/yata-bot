@@ -1,17 +1,3 @@
-# import standard modules
-import asyncio
-import aiohttp
-import datetime
-import json
-import re
-
-# import discord modules
-from discord.ext import commands
-from discord.utils import get
-from discord.ext import tasks
-from discord import Embed
-
-# import bot functions and classes
 """
 Copyright 2020 kivou.2000607@gmail.com
 
@@ -31,6 +17,21 @@ This file is part of yata-bot.
     along with yata-bot. If not, see <https://www.gnu.org/licenses/>.
 """
 
+# import standard modules
+import asyncio
+import aiohttp
+import datetime
+import json
+import re
+import logging
+
+# import discord modules
+from discord.ext import commands
+from discord.utils import get
+from discord.ext import tasks
+from discord import Embed
+
+# import bot functions and classes
 import html
 
 import includes.checks as checks
@@ -51,7 +52,7 @@ class Racket(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(minutes=5)
     async def racketsTask(self):
-        print("[RACKETS] start task")
+        logging.info("[RACKETS] start task")
 
         # guild = self.bot.get_guild(650701692853288991)  # chappie
         guild = self.bot.get_guild(581227228537421825)  # yata
@@ -62,13 +63,13 @@ class Racket(commands.Cog):
                 try:
                     req = await r.json()
                 except BaseException as e:
-                    print(f"[RACKETS] error json: {e}")
+                    logging.info(f"[RACKETS] error json: {e}")
                     req = {"error": e}
 
         if "error" in req:
             return
 
-        print(f'[RACKETS] {req["timestamp"]}')
+        logging.info(f'[RACKETS] {req["timestamp"]}')
 
         timestamp_p, randt_p = get_rackets()
         rackets_p = randt_p["rackets"]
@@ -153,9 +154,9 @@ class Racket(commands.Cog):
                 embed.set_footer(text=f'{fmt.ts_to_datetime(racket["changed"], fmt="short")}')
                 mentions.append(embed)
 
-        print(f'[RACKETS] mentions: {len(mentions)}')
+        logging.info(f'[RACKETS] mentions: {len(mentions)}')
 
-        print(f"[RACKETS] push rackets")
+        logging.info(f"[RACKETS] push rackets")
         await push_rackets(int(req["timestamp"]), req)
 
         if not len(mentions):
@@ -164,7 +165,7 @@ class Racket(commands.Cog):
         # iteration over all guilds
         for guild in self.bot.get_guild_module("rackets"):
             try:
-                print(f"[RACKETS] guild {guild}: {datetime.datetime.now()}")
+                logging.info(f"[RACKETS] guild {guild}: {datetime.datetime.now()}")
                 # ignore servers with no rackets
                 # if not self.bot.check_module(guild, "rackets"):
                 #     continue
@@ -185,9 +186,12 @@ class Racket(commands.Cog):
                         msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
 
             except BaseException as e:
-                print(f"[RACKETS] guild {guild}: racket failed {e}.")
+                logging.error(f'[racketTask] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
-        print('[racket] waiting...')
+        logging.info('[racket] waiting...')
         await self.bot.wait_until_ready()
