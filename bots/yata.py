@@ -447,7 +447,7 @@ class YataBot(Bot):
         await channel.send(log_fmt(log, headers=headers, full=full))
 
     async def send_log_dm(self, log, author):
-        await author.send(f'```{log}```')
+        await author.send(log_fmt(log))
 
     async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
         # fallback if guild_id or channel_id has not been given
@@ -468,8 +468,6 @@ class YataBot(Bot):
             loggin.warning('[send_log] empty log message')
             await self.send_log_main("empty log", headers=headers)
             return
-        else:
-            log = f"{log}" if re.search('api.torn.com', f'{log}') is None else "API's broken... #blamched"
 
         logging.info(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
         guild = get(self.guilds, id=guild_id)
@@ -496,7 +494,8 @@ class YataBot(Bot):
 
         logging.info(f'[send_log] send error message: {log}')
         try:
-            await channel.send(f'```{log}```')
+            await channel.send(log_fmt(log))
+
         except discord.errors.Forbidden:
             headers["note"].append(f"Forbidden to write in channel {channel}")
             channel_fb = self.get_guild_admin_channel(guild)
@@ -512,7 +511,7 @@ class YataBot(Bot):
                 return
 
             try:
-                await channel_fb.send(log_fmt(log, headers=headers))
+                await channel_fb.send(log_fmt(log))
                 return
             except discord.errors.Forbidden:
                 headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
