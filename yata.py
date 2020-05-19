@@ -21,6 +21,9 @@ This file is part of yata-bot.
 import os
 import json
 import psycopg2
+import logging
+import logging.config
+import time
 
 # import bot
 from bots.yata import YataBot
@@ -39,6 +42,10 @@ from cogs.crimes import Crimes
 
 # import includes
 from includes.yata_db import load_configurations
+
+# logging
+logging.config.fileConfig('logging.conf')
+logging.Formatter.converter = time.gmtime
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)

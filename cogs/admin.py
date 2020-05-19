@@ -23,6 +23,7 @@ import json
 import aiohttp
 import traceback
 import sys
+import logging
 
 # import discord modules
 import discord
@@ -213,20 +214,29 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True)
     async def clear(self, ctx, *args):
         """Clear not pinned messages"""
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
         async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
-                await m.delete()
+                try:
+                    await m.delete()
+                except BaseException:
+                    return
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def suppress(self, ctx):
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True)
+    async def suppress(self, ctx, *args):
         """Clear not pinned messages"""
-        async for m in ctx.channel.history():
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
             if not m.pinned:
-                await m.edit(suppress=True)
+                try:
+                    await m.edit(suppress=True)
+                except BaseException:
+                    return
 
     @commands.command()
     async def help(self, ctx):
@@ -250,6 +260,44 @@ class Admin(commands.Cog):
         embed.add_field(name='How to loot', value='\n'.join(lst))
         await ctx.send("", embed=embed)
 
+    # @commands.Cog.listener()
+    # async def on_command_error(self, ctx, error):
+    #     """The event triggered when an error is raised while invoking a command.
+    #     ctx   : Context
+    #     error : Exception"""
+    #
+    #     # This prevents any commands with local handlers being handled here in on_command_error.
+    #     if hasattr(ctx.command, 'on_error'):
+    #         return
+    #
+    #     print(type(error))
+    #     ignored = (commands.CommandNotFound, commands.UserInputError)
+    #
+    #     # Allows us to check for original exceptions raised and sent to CommandInvokeError.
+    #     # If nothing is found. We keep the exception passed to on_command_error.
+    #     error = getattr(error, 'original', error)
+    #
+    #     # Anything in ignored will return and prevent anything happening.
+    #     if isinstance(error, ignored):
+    #         return
+    #
+    #     # All other Errors not returned come here... And we can just print the default TraceBack.
+    #     print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+    #     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+    #
+    #     errorMessage = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken.. #blamched"
+    #
+    #     lst = ["```YAML",
+    #            f"Log:     Command error",
+    #            f"Server:  {ctx.guild} [{ctx.guild.id}]",
+    #            f"Channel: {ctx.message.channel.name}",
+    #            f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
+    #            f"Message: {ctx.message.content}",
+    #            f"",
+    #            f"{errorMessage}",
+    #            f"```"]
+    #     await self.bot.sendLogChannel("\n".join(lst))
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
@@ -260,30 +308,51 @@ class Admin(commands.Cog):
         if hasattr(ctx.command, 'on_error'):
             return
 
-        print(type(error))
+        # ignored errors
         ignored = (commands.CommandNotFound, commands.UserInputError)
-
-        # Allows us to check for original exceptions raised and sent to CommandInvokeError.
-        # If nothing is found. We keep the exception passed to on_command_error.
-        error = getattr(error, 'original', error)
-
-        # Anything in ignored will return and prevent anything happening.
         if isinstance(error, ignored):
             return
 
-        # All other Errors not returned come here... And we can just print the default TraceBack.
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        # classical errors
 
-        errorMessage = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken.. #blamched"
+        # the user is missing permissions
+        if isinstance(error, commands.MissingPermissions):
+            logging.warning(f'[on_command_error] {error}')
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
 
-        lst = ["```YAML",
-               f"Log:     Command error",
-               f"Server:  {ctx.guild} [{ctx.guild.id}]",
-               f"Channel: {ctx.message.channel.name}",
-               f"Author:  {ctx.message.author.display_name} ({ctx.message.author})",
-               f"Message: {ctx.message.content}",
-               f"",
-               f"{errorMessage}",
-               f"```"]
-        await self.bot.sendLogChannel("\n".join(lst))
+        # the bot is missing permissions
+        if isinstance(error, commands.BotMissingPermissions):
+            logging.warning(f'[on_command_error] {error}')
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
+
+        # bugs or fatal errors
+
+        # headers
+        headers = {
+                    "guild": ctx.guild,
+                    "channel": ctx.channel,
+                    "author": ctx.author,
+                    "command": ctx.command,
+                    "message": ctx.message.content,
+                    "error": f'{type(error)}'
+                   }
+        # traceback
+        tb = "\n".join([line[:-2] for line in traceback.format_exception(type(error), error, error.__traceback__)])
+
+        # the user is missing role
+        if isinstance(error, commands.MissingRole):
+            headers["error"] = 'MissingRole'
+            await self.bot.send_log_main(error, headers=headers, traceback=tb)
+            logging.error(error)
+            return
+
+        if isinstance(error, commands.CommandInvokeError):
+            headers["error"] = 'CommandInvokeError'
+            logging.error(error)
+            await self.bot.send_log_main(error, headers=headers, traceback=tb)
+            return
+
+        await self.bot.send_log_main(error, headers=headers, traceback=tb)
+        logging.error(error)

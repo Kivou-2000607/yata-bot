@@ -524,7 +524,7 @@ class Chain(commands.Cog):
         channelId = retal.get("channelId")
 
         channel = get(guild.channels, id=channelId)
-        notified = "" if roleId is None else f"<@&{roleId}> "
+        notified = " " if roleId is None else f" <@&{roleId}> "
         if channel is None:
             return False
 
@@ -572,7 +572,7 @@ class Chain(commands.Cog):
                               color=550000)
 
                 embed.add_field(name='Timeout', value=f'{timeout} TCT')
-                message = f'{notified}{fName} can retal on **{v["attacker_name"]} [{v["attacker_id"]}]**'
+                message = f':rage:{notified}{fName} can retal on **{v["attacker_name"]} [{v["attacker_id"]}]**'
                 if v["attacker_faction"]:
                     message += f' from **{v["attacker_factionname"]} [{v["attacker_faction"]}]**'
                     embed.add_field(name='Faction', value=f'[{v["attacker_factionname"]} [{v["attacker_faction"]}]](https://www.torn.com/factions.php?step=profile&ID={v["attacker_faction"]})')
@@ -589,7 +589,7 @@ class Chain(commands.Cog):
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                 attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
-                await channel.send(f'{v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
+                await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
         # clean mentions

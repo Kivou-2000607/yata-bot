@@ -23,6 +23,7 @@ import os
 import aiohttp
 import traceback
 import html
+import logging
 
 # import discord modules
 import discord
@@ -34,6 +35,7 @@ from discord.utils import get
 # from includes.yata_db import get_member_key
 from includes.yata_db import *
 import includes.formating as fmt
+from inc.handy import *
 
 
 # Child class of Bot with extra configuration variables
@@ -206,26 +208,26 @@ class YataBot(Bot):
         if channel is not None:
             await channel.send(msg)
 
-    async def on_disconnect(self):
-        await self.sendAdminChannel(":red_circle: disconnect")
+    # async def on_disconnect(self):
+    #     await self.sendAdminChannel(":red_circle: disconnect")
 
-    async def on_connect(self):
-        await self.sendAdminChannel(":green_circle: connect")
+    # async def on_connect(self):
+    #     await self.sendAdminChannel(":green_circle: connect")
 
-    async def on_resume(self):
-        await self.sendAdminChannel(":green_circle: resume")
+    # async def on_resume(self):
+    #     await self.sendAdminChannel(":green_circle: resume")
 
     async def on_ready(self):
         """ on_ready
             loop over the bot guilds and do the setup
         """
-        await self.sendAdminChannel(":green_circle: ready")
         await self.rebuildGuilds(reboot=True)
 
         # change activity
         activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
         await self.change_presence(activity=activity)
 
+        await self.sendAdminChannel(":green_circle: ready")
         print("[SETUP] Ready...")
 
     async def on_guild_join(self, guild):
@@ -478,3 +480,73 @@ class YataBot(Bot):
     def get_guild_module(self, module):
         guilds = [guild for guild in self.guilds if self.get_config(guild).get(module, dict({})).get("active", False)]
         return guilds
+
+    # NEW VERSION
+    def get_guild_admin_channel(self, guild):
+        return get(guild.channels, name="yata-admin")
+
+    async def send_log_main(self, log, headers=dict({}), traceback=None):
+        guild = get(self.guilds, id=581227228537421825)
+        channel = get(guild.channels, id=685470217002156098)
+        if traceback is not None:
+            traceback = f"{traceback}" if re.search('api.torn.com', f'{traceback}') is None else "API's broken... #blamched"
+        await channel.send(log_fmt(log, headers=headers, traceback=traceback))
+
+    async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
+        # fallback if guild_id or channel_id has not been given
+        if not (guild_id and channel_id):
+            logging.warning(f'[send_log] guild_id or channel_id not given -> sending to main server')
+            await self.send_log_main(log, headers={"message": "no guild_id and no channel_id given"})
+            return
+
+        headers = {"guild_id": guild_id, "channel_id": channel_id}
+        if ctx is not None:
+            headers["author_name"] = f'{ctx.author.nick} / {ctx.author}'
+            headers["author_guild"] = ctx.guild
+            headers["author_channel"] = ctx.channel
+            headers["author_message"] = ctx.message.content
+            headers["author_command"] = ctx.command
+
+        if not log or log == "":
+            loggin.warning('[send_log] empty log message')
+            await self.send_log_main("empty log", headers=headers)
+            return
+        else:
+            log = f"{log}" if re.search('api.torn.com', f'{log}') is None else "API's broken... #blamched"
+
+        logging.info(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
+        guild = get(self.guilds, id=guild_id)
+        headers["guild"] = guild
+
+        # fallback is guild not found
+        if guild is None:
+            logging.warning(f'[send_log] guild id {guild_id} not found -> sending to main server')
+            await self.send_log_main(log, headers=headers)
+            return
+
+        channel = get(guild.channels, id=channel_id)
+        headers["channel"] = channel
+
+        # fallback if channel is not found
+        if channel is None:
+            logging.warning(f'[send_log] channel id {channel_id} not found')
+            await self.send_log_main(log, headers=headers)
+            return
+
+        logging.info(f'[send_log] send error message: {log}')
+        try:
+            await channel.send(f'```{log}```')
+        except discord.errors.Forbidden:
+            channel_fb = self.get_guild_admin_channel(guild)
+            headers["fallback_channel"] = channel_fb
+
+            if channel_fb is None:
+                await self.send_log_main(log, headers=headers)
+                return
+
+            try:
+                await channel_fb.send(log_fmt(log, headers=headers))
+                return
+            except discord.errors.Forbidden:
+                await self.send_log_main(log, headers=headers)
+                return
