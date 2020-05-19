@@ -1,4 +1,6 @@
 from datetime import datetime
+import traceback
+import re
 
 def permissions_rsm(permissions):
     perm = []
@@ -26,18 +28,22 @@ def ts_format(timestamp, fmt=None):
     else:
         return d
 
-
-def log_fmt(log, headers=dict({}), traceback=None):
+def log_fmt(error, headers=dict({}), full=False):
     lst = ['```md']
     if len(headers):
         lst.append('# headers')
         for k, v in headers.items():
-            lst.append(f'> {k:<16} {v}')
+            if isinstance(v, list):
+                lst.append(f'> {k:<16} {", ".join(v)}')
+            else:
+                lst.append(f'> {k:<16} {v}')
         lst.append('')
     lst.append('# error message')
-    lst.append(f'{log}')
-    if traceback is not None:
+    lst.append(f'{error}')
+    if full:
+        tb = "\n".join([line[:-2] for line in traceback.format_exception(type(error), error, error.__traceback__)])
+        tb = f"{tb}" if re.search('api.torn.com', f'{tb}') is None else "API's broken... #blamched"
         lst.append('\n# full message')
-        lst.append(f'{traceback}')
+        lst.append(f'{tb}')
     lst.append('```')
     return "\n".join(lst)

@@ -91,6 +91,7 @@ class Verify(commands.Cog):
             await member.send('\n'.join(msg))
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
         # check if dm
@@ -242,6 +243,7 @@ class Verify(commands.Cog):
             await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
     @commands.command(aliases=["verifyall"])
+    @commands.bot_has_permissions(send_messages=True)
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
 
@@ -264,6 +266,7 @@ class Verify(commands.Cog):
         await self._loop_verify(guild, channel, ctx=ctx, force=force)
 
     @commands.command(aliases=["checkfactions"])
+    @commands.bot_has_permissions(send_messages=True)
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members
 

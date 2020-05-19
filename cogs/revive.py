@@ -39,6 +39,7 @@ class Revive(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["r", "R"])
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def revive(self, ctx, *args):
         """ send revive message to @Reviver
         """
@@ -163,6 +164,7 @@ class Revive(commands.Cog):
                 await cha.send(":x: There is no need to delete the calls. They are automatically deleted after 5 minutes. *You can delete this message thought* ^^")
 
     @commands.command(aliases=["rs"])
+    @commands.bot_has_permissions(send_messages=True)
     async def reviveServers(self, ctx, *args):
 
         # return if revive not active
@@ -238,6 +240,7 @@ class Revive(commands.Cog):
         await fmt.send_tt(ctx, lst, tt=False)
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def reviver(self, ctx):
         """Add/remove @Reviver role"""
         # return if revive not active

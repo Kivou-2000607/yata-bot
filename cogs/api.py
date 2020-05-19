@@ -209,6 +209,7 @@ class API(commands.Cog):
         return
 
     @commands.command(aliases=['profile', 'p'])
+    @commands.bot_has_permissions(send_messages=True)
     async def who(self, ctx, *args):
         """Gives information on a user"""
 

@@ -45,6 +45,7 @@ class Loot(commands.Cog):
         self.notify.cancel()
 
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def loot(self, ctx):
         """Gives loot timing for each NPC"""
         # return if verify not active
@@ -109,6 +110,7 @@ class Loot(commands.Cog):
             await m.delete()
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def looter(self, ctx):
         """Add/remove @Looter role"""
         # return if loot not active

@@ -24,6 +24,7 @@ import datetime
 import json
 import re
 import traceback
+import logging
 
 # import discord modules
 from discord.ext import commands
@@ -45,6 +46,7 @@ class Crimes(commands.Cog):
         self.ocTask.cancel()
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
     async def ocs(self, ctx):
         """ list all current ocs watching
         """
@@ -73,6 +75,7 @@ class Crimes(commands.Cog):
             await ctx.send("\n".join(lst))
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
     async def stopoc(self, ctx, *args):
         """ force stop a oc watching (for admin)
         """
@@ -116,6 +119,7 @@ class Crimes(commands.Cog):
             await push_configurations(self.bot.bot_id, self.bot.configs)
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
     async def ocready(self, ctx, *args):
         """ list oc ready
         """
@@ -165,6 +169,7 @@ class Crimes(commands.Cog):
                 await ctx.send(f"\n".join(lst))
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
     async def oc(self, ctx, *args):
         """ start / stop watching for organized crimes
         """
@@ -371,19 +376,10 @@ class Crimes(commands.Cog):
                 # print(f"[OC] oc {guild}: end")
 
             except BaseException as e:
-                if re.search('api.torn.com', f'{e}') is None:
-                    lst = ["```YAML",
-                           f"Log:     OC notification error",
-                           f"Server:  {guild} [{guild.id}]",
-                           f"", f"{e}", f"", f"{traceback.format_exc()}", f"```"]
-                else:
-                    lst = ["```YAML",
-                           f"Log:     OC notification error",
-                           f"Server:  {guild} [{guild.id}]",
-                           f"", f"API's broken.. #blamched", f"```"]
-
-                await self.bot.sendLogChannel("\n".join(lst))
-                print(f"[OC] guild {guild}: mention failed {e}.")
+                logging.error(f'[ocTask] {guild} [{guild.id}]: {e}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         # print("[OC] end task")
 

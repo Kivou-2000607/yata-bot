@@ -43,13 +43,11 @@ class Admin(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    @commands.has_any_role(679669933680230430)
     async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         from includes.yata_db import load_configurations
 
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
@@ -74,11 +72,9 @@ class Admin(commands.Cog):
         await ctx.send("```html\n</reload>```")
 
     @commands.command()
+    @commands.has_any_role(679669933680230430)
     async def check(self, ctx):
         """Admin tool for the bot owner"""
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
@@ -97,11 +93,9 @@ class Admin(commands.Cog):
                 await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
 
     @commands.command()
+    @commands.has_any_role(679669933680230430)
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
@@ -109,12 +103,9 @@ class Admin(commands.Cog):
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
 
     @commands.command()
+    @commands.has_any_role(679669933680230430)
     async def talk(self, ctx, *args):
         """Admin tool for the bot owner"""
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
-
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
@@ -141,11 +132,9 @@ class Admin(commands.Cog):
         await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
+    @commands.has_any_role(679669933680230430)
     async def assign(self, ctx, *args):
         """Admin tool for the bot owner"""
-        if str(ctx.author.id) not in self.bot.administrators:
-            await ctx.send(":x: This command is not for you")
-            return
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
             return
@@ -214,7 +203,7 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True, send_messages=True)
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
     async def clear(self, ctx, *args):
         """Clear not pinned messages"""
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
@@ -227,7 +216,7 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True, send_messages=True)
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
     async def suppress(self, ctx, *args):
         """Clear not pinned messages"""
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
@@ -239,6 +228,7 @@ class Admin(commands.Cog):
                     return
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def help(self, ctx):
         """help command"""
 
@@ -259,6 +249,70 @@ class Admin(commands.Cog):
                "[Loot bot](https://discordapp.com/channels/581227228537421825/623906124428476427/629065571207479308)"]
         embed.add_field(name='How to loot', value='\n'.join(lst))
         await ctx.send("", embed=embed)
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """The event triggered when an error is raised while invoking a command.
+        ctx   : Context
+        error : Exception"""
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        # ignored errors
+        ignored = (commands.CommandNotFound, commands.UserInputError)
+        if isinstance(error, ignored):
+            return
+
+        # classical errors
+
+        # classical errors
+        classical = (commands.MissingPermissions,
+                     commands.BotMissingPermissions,
+                     commands.MissingAnyRole,
+                     commands.MissingRole)
+        if isinstance(error, classical):
+            logging.warning(f'[on_command_error] {error}')
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
+
+        # bugs or fatal errors
+
+        # headers
+        headers = {
+                    "guild": ctx.guild,
+                    "channel": ctx.channel,
+                    "author": ctx.author,
+                    "command": ctx.command,
+                    "message": ctx.message.content,
+                    "error": f'{type(error)}'
+                   }
+
+        # the user is missing role
+        if isinstance(error, commands.MissingRole):
+            headers["error"] = 'MissingRole'
+            await self.bot.send_log_main(error, headers=headers, full=True)
+            logging.error(error)
+            return
+
+        # if isinstance(error, discord.Forbidden):
+        #     headers["error"] = 'Forbidden'
+        #     logging.error(error)
+        #     await self.bot.send_log_main(error, headers=headers, full=True)
+        #     return
+
+        if isinstance(error, commands.CommandInvokeError):
+            headers["error"] = 'CommandInvokeError'
+            logging.error(error)
+            await self.bot.send_log_main(error, headers=headers, full=True)
+            return
+
+        await self.bot.send_log_main(error, headers=headers, full=True)
+        logging.error(error)
+
+
+
 
     # @commands.Cog.listener()
     # async def on_command_error(self, ctx, error):
@@ -297,62 +351,3 @@ class Admin(commands.Cog):
     #            f"{errorMessage}",
     #            f"```"]
     #     await self.bot.sendLogChannel("\n".join(lst))
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        """The event triggered when an error is raised while invoking a command.
-        ctx   : Context
-        error : Exception"""
-
-        # This prevents any commands with local handlers being handled here in on_command_error.
-        if hasattr(ctx.command, 'on_error'):
-            return
-
-        # ignored errors
-        ignored = (commands.CommandNotFound, commands.UserInputError)
-        if isinstance(error, ignored):
-            return
-
-        # classical errors
-
-        # the user is missing permissions
-        if isinstance(error, commands.MissingPermissions):
-            logging.warning(f'[on_command_error] {error}')
-            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
-            return
-
-        # the bot is missing permissions
-        if isinstance(error, commands.BotMissingPermissions):
-            logging.warning(f'[on_command_error] {error}')
-            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
-            return
-
-        # bugs or fatal errors
-
-        # headers
-        headers = {
-                    "guild": ctx.guild,
-                    "channel": ctx.channel,
-                    "author": ctx.author,
-                    "command": ctx.command,
-                    "message": ctx.message.content,
-                    "error": f'{type(error)}'
-                   }
-        # traceback
-        tb = "\n".join([line[:-2] for line in traceback.format_exception(type(error), error, error.__traceback__)])
-
-        # the user is missing role
-        if isinstance(error, commands.MissingRole):
-            headers["error"] = 'MissingRole'
-            await self.bot.send_log_main(error, headers=headers, traceback=tb)
-            logging.error(error)
-            return
-
-        if isinstance(error, commands.CommandInvokeError):
-            headers["error"] = 'CommandInvokeError'
-            logging.error(error)
-            await self.bot.send_log_main(error, headers=headers, traceback=tb)
-            return
-
-        await self.bot.send_log_main(error, headers=headers, traceback=tb)
-        logging.error(error)

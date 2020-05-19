@@ -455,22 +455,10 @@ class YataBot(Bot):
                 await fmt.send_tt(verbose, lst)
 
         except BaseException as e:
-            print(f'ERROR in {guild} [{guild.id}]: {e}')
-            print(f'{traceback.format_exc()}')
-            if verbose:
-                await verbose.send(f'```ERROR in {guild} [{guild.id}]: {e}```')
-                await verbose.send(f'```{traceback.format_exc()}```')
-            lst = ["```YAML",
-                   f"Log:     Reload server error",
-                   f"Server:  {guild} [{guild.id}]",
-                   f"",
-                   f"{e}",
-                   # "```",
-                   "``````python",
-                   "# full error message",
-                   f"{traceback.format_exc()}",
-                   f"```"]
-            await self.sendLogChannel("\n".join(lst))
+            logging.error(f'[rebuildGuild] {guild} [{guild.id}]: {e}')
+            await self.send_log(e, guild_id=guild.id)
+            headers = {"guild": guild, "guild_id": guild.id, "error": "error on rebuild"}
+            await self.send_log_main(e, headers=headers, full=True)
 
     async def rebuildGuilds(self, reboot=False, verbose=False):
         # loop over guilds
@@ -485,21 +473,19 @@ class YataBot(Bot):
     def get_guild_admin_channel(self, guild):
         return get(guild.channels, name="yata-admin")
 
-    async def send_log_main(self, log, headers=dict({}), traceback=None):
+    async def send_log_main(self, log, headers=dict({}), full=False):
         guild = get(self.guilds, id=581227228537421825)
         channel = get(guild.channels, id=685470217002156098)
-        if traceback is not None:
-            traceback = f"{traceback}" if re.search('api.torn.com', f'{traceback}') is None else "API's broken... #blamched"
-        await channel.send(log_fmt(log, headers=headers, traceback=traceback))
+        await channel.send(log_fmt(log, headers=headers, full=full))
 
     async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
         # fallback if guild_id or channel_id has not been given
-        if not (guild_id and channel_id):
-            logging.warning(f'[send_log] guild_id or channel_id not given -> sending to main server')
-            await self.send_log_main(log, headers={"message": "no guild_id and no channel_id given"})
+        if not guild_id:
+            logging.warning(f'[send_log] guild_id not given -> sending to main server')
+            await self.send_log_main(log, headers={"message": "guild_id not given"})
             return
 
-        headers = {"guild_id": guild_id, "channel_id": channel_id}
+        headers = {"guild_id": guild_id, "channel_id": channel_id, "note": []}
         if ctx is not None:
             headers["author_name"] = f'{ctx.author.nick} / {ctx.author}'
             headers["author_guild"] = ctx.guild
@@ -525,11 +511,15 @@ class YataBot(Bot):
             return
 
         channel = get(guild.channels, id=channel_id)
+        if channel is None:
+            headers["note"].append("channel id not provided")
+            channel = self.get_guild_admin_channel(guild)
         headers["channel"] = channel
 
         # fallback if channel is not found
         if channel is None:
             logging.warning(f'[send_log] channel id {channel_id} not found')
+            headers["note"].append("server admin channel not found")
             await self.send_log_main(log, headers=headers)
             return
 
@@ -537,10 +527,12 @@ class YataBot(Bot):
         try:
             await channel.send(f'```{log}```')
         except discord.errors.Forbidden:
+            headers["note"].append(f"Forbidden to write in channel {channel}")
             channel_fb = self.get_guild_admin_channel(guild)
             headers["fallback_channel"] = channel_fb
 
             if channel_fb is None:
+                headers["note"].append(f"server admin channel as fallback not found")
                 await self.send_log_main(log, headers=headers)
                 return
 
@@ -548,5 +540,6 @@ class YataBot(Bot):
                 await channel_fb.send(log_fmt(log, headers=headers))
                 return
             except discord.errors.Forbidden:
+                headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
                 await self.send_log_main(log, headers=headers)
                 return

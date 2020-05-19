@@ -136,6 +136,8 @@ class Stocks(commands.Cog):
         return timeLeft, stockOwners
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
         print("[WSSB]")
@@ -151,6 +153,8 @@ class Stocks(commands.Cog):
             await ctx.send(f"Here you go {ctx.author.display_name}, the list of education time left and WSSB owners:\n```\n{lst}```")
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
         print("[TCB]")
@@ -318,6 +322,7 @@ class Stocks(commands.Cog):
                 print(f"[STOCK] guild {guild}: mention failed {e}.")
 
     @commands.command()
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     async def trader(self, ctx):
         """Add/remove @Trader role"""
         # return if stocks not active
