@@ -475,7 +475,7 @@ class Verify(commands.Cog):
 
         except BaseException as e:
             logging.info(f'ERROR _member for {guild} [{guild.id}]: {e}')
-            logging.info(f'{traceback.format_exc()}')
+            logging.error(f'{traceback.format_exc()}')
             errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
             return f":x: Error while doing the verification: `{errorMessage}`", False
 

@@ -44,8 +44,8 @@ def log_fmt(error, headers=dict({}), full=False):
     # error message
     if len(headers) or full:
         lst.append('# error message')
-    error = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken... #blamched"
-    lst.append(f'{error}')
+    errorMSG = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken... #blamched"
+    lst.append(f'{errorMSG}')
 
     # traceback
     if full:
