@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import traceback
 import re
 
@@ -14,13 +14,13 @@ def permissions_rsm(permissions):
 
 
 def now():
-    return datetime.utcnow()
+    return datetime.datetime.utcnow()
 
 def ts_now():
-    return datetime.timestamp(datetime.utcnow())
+    return datetime.datetime.timestamp(datetime.datetime.utcnow())
 
 def ts_format(timestamp, fmt=None):
-    d = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+    d = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
     if fmt == "time":
         return d.strftime("%H:%M:%S")
     elif fmt == "short":
