@@ -367,7 +367,7 @@ class Verify(commands.Cog):
                 else:
                     userID = int(req['discord'].get("userID"))
 
-            logging.info(f"[VERIFY] verifying userID = {userID}")
+            logging.debug(f"[verify/_member] verifying userID = {userID}")
 
             # api call request
             url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
