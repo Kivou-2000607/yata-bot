@@ -45,7 +45,7 @@ class Revive(commands.Cog):
     async def revive(self, ctx, *args):
         """ send revive message to @Reviver
         """
-        logging.info(f'[revive/revive] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[revive/revive] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if revive not active
         if not self.bot.check_module(ctx.guild, "revive"):
@@ -170,7 +170,7 @@ class Revive(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def reviveServers(self, ctx, *args):
-        logging.info(f'[revive/reviveServers] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[revive/reviveServers] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if revive not active
         if not self.bot.check_module(ctx.guild, "revive"):
@@ -249,7 +249,7 @@ class Revive(commands.Cog):
     @commands.guild_only()
     async def reviver(self, ctx):
         """Add/remove @Reviver role"""
-        logging.info(f'[revive/reviver] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[revive/reviver] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if revive not active
         if not self.bot.check_module(ctx.guild, "revive"):

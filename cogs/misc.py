@@ -155,7 +155,7 @@ class Misc(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def egg(self, ctx):
-        logging.info(f'[misc/egg] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[misc/egg] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         p = random.choice(pages)
         lst = [f'You want to find an egg? Try here:',

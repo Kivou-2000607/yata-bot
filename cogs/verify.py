@@ -98,7 +98,7 @@ class Verify(commands.Cog):
     @commands.guild_only()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
-        logging.info(f'[verify/verify] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[verify/verify] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check if dm
         if isinstance(ctx.channel, PrivateChannel):
@@ -161,7 +161,7 @@ class Verify(commands.Cog):
     @commands.command(aliases=['addkey'])
     async def verifyKey(self, ctx, key):
         """Verify member with API key"""
-        logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if not isinstance(ctx.channel, PrivateChannel):
             await ctx.message.delete()
@@ -260,7 +260,7 @@ class Verify(commands.Cog):
     @commands.guild_only()
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
-        logging.info(f'[verify/verifyAll] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[verify/verifyAll] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
@@ -287,7 +287,7 @@ class Verify(commands.Cog):
         """ Check faction role of members
 
         """
-        logging.info(f'[verify/checkFactions] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[verify/checkFactions] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):

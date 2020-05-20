@@ -179,7 +179,7 @@ class Crimes(commands.Cog):
     async def oc(self, ctx, *args):
         """ start / stop watching for organized crimes
         """
-        logging.info(f'[oc/oc] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[oc/oc] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "crimes"):

@@ -50,7 +50,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
-        logging.info(f'[api/weaponexp] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[api/weaponexp] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -113,7 +113,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def finishing(self, ctx, *args):
         """DM number of finishing hits to author"""
-        logging.info(f'[api/finishing] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[api/finishing] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -172,7 +172,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
-        logging.info(f'[api/networth] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[api/networth] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -220,7 +220,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def who(self, ctx, *args):
         """Gives information on a user"""
-        logging.info(f'[api/who] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[api/who] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)

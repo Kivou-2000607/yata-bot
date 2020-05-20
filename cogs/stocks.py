@@ -141,7 +141,7 @@ class Stocks(commands.Cog):
     @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        logging.info(f'[stck/wssb] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[stck/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         if len(timeLeft):
@@ -158,7 +158,7 @@ class Stocks(commands.Cog):
     @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        logging.info(f'[stck/tcb] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[stck/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
         if len(timeLeft):
@@ -312,7 +312,7 @@ class Stocks(commands.Cog):
     @commands.guild_only()
     async def trader(self, ctx):
         """Add/remove @Trader role"""
-        logging.info(f'[stock/trader] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[stock/trader] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):

@@ -46,7 +46,7 @@ class Admin(commands.Cog):
     @commands.has_any_role(679669933680230430)
     async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
-        logging.info(f'[admin/reload] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/reload] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         from includes.yata_db import load_configurations
 
@@ -77,7 +77,7 @@ class Admin(commands.Cog):
     @commands.has_any_role(679669933680230430)
     async def check(self, ctx):
         """Admin tool for the bot owner"""
-        logging.info(f'[admin/check] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/check] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
@@ -100,7 +100,7 @@ class Admin(commands.Cog):
     @commands.has_any_role(679669933680230430)
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
-        logging.info(f'[admin/invite] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/invite] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
@@ -112,7 +112,7 @@ class Admin(commands.Cog):
     @commands.has_any_role(679669933680230430)
     async def talk(self, ctx, *args):
         """Admin tool for the bot owner"""
-        logging.info(f'[admin/talk] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/talk] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
@@ -143,7 +143,7 @@ class Admin(commands.Cog):
     @commands.has_any_role(679669933680230430)
     async def assign(self, ctx, *args):
         """Admin tool for the bot owner"""
-        logging.info(f'[admin/assign] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if ctx.channel.name != "yata-admin":
             await ctx.send(":x: Use this command in `#yata-admin`")
@@ -216,7 +216,7 @@ class Admin(commands.Cog):
     @commands.guild_only()
     async def clear(self, ctx, *args):
         """Clear not pinned messages"""
-        logging.info(f'[admin/clear] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/clear] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
         async for m in ctx.channel.history(limit=limit):
@@ -232,7 +232,7 @@ class Admin(commands.Cog):
     @commands.guild_only()
     async def suppress(self, ctx, *args):
         """Clear not pinned messages"""
-        logging.info(f'[admin/suppress] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/suppress] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         await ctx.message.delete()
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
@@ -247,7 +247,7 @@ class Admin(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def help(self, ctx):
         """help command"""
-        logging.info(f'[admin/help] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         embed = Embed(title="YATA bot help", description="If you need more information, ping an @helper in the YATA server", color=550000)
 
@@ -272,7 +272,7 @@ class Admin(commands.Cog):
         """The event triggered when an error is raised while invoking a command.
         ctx   : Context
         error : Exception"""
-        logging.info(f'[admin/on_command_error] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[admin/on_command_error] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # This prevents any commands with local handlers being handled here in on_command_error.
         if hasattr(ctx.command, 'on_error'):

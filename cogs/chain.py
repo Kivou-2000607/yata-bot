@@ -53,7 +53,7 @@ class Chain(commands.Cog):
             Use: !chain <factionId> <@Role>
                  factionId: torn id of the faction (by default the author's faction)
         """
-        logging.info(f'[chain/chain] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/chain] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -202,7 +202,7 @@ class Chain(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def stopchain(self, ctx):
-        logging.info(f'[chain/stopchain] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/stopchain] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -226,7 +226,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def fly(self, ctx, *args):
         """Gives faction members flying"""
-        logging.info(f'[chain/fly] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/fly] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -290,7 +290,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def hosp(self, ctx, *args):
         """Gives faction members hospitalized"""
-        logging.info(f'[chain/hosp] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/hosp] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -351,7 +351,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def okay(self, ctx, *args):
         """Gives faction members that are okay"""
-        logging.info(f'[chain/okay] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/okay] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -413,7 +413,7 @@ class Chain(commands.Cog):
     async def vault(self, ctx, *args):
         """ For AA users: gives the vault balance of a user
         """
-        logging.info(f'[chain/vault] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/vault] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -468,7 +468,7 @@ class Chain(commands.Cog):
     async def retals(self, ctx):
         """ list all current retal watching
         """
-        logging.info(f'[chain/retals] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/retals] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -500,7 +500,7 @@ class Chain(commands.Cog):
     async def stopretal(self, ctx, *args):
         """ force stop a retal watching (for admin)
         """
-        logging.info(f'[chain/stopretal] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/stopretal] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -547,7 +547,7 @@ class Chain(commands.Cog):
     async def retal(self, ctx, *args):
         """ start / stop watching for retals
         """
-        logging.info(f'[chain/retal] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[chain/retal] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):

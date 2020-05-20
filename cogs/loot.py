@@ -50,7 +50,7 @@ class Loot(commands.Cog):
     @commands.guild_only()
     async def loot(self, ctx):
         """Gives loot timing for each NPC"""
-        logging.info(f'[loot/loot] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[loot/loot] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "loot"):
@@ -118,7 +118,7 @@ class Loot(commands.Cog):
     @commands.guild_only()
     async def looter(self, ctx):
         """Add/remove @Looter role"""
-        logging.info(f'[loot/looter] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+        logging.info(f'[loot/looter] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if loot not active
         if not self.bot.check_module(ctx.guild, "loot"):
