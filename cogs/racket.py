@@ -52,7 +52,7 @@ class Racket(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(minutes=5)
     async def racketsTask(self):
-        logging.info("[RACKETS] start task")
+        logging.info("[racket/notifications] start task")
 
         # guild = self.bot.get_guild(650701692853288991)  # chappie
         guild = self.bot.get_guild(581227228537421825)  # yata
@@ -63,13 +63,11 @@ class Racket(commands.Cog):
                 try:
                     req = await r.json()
                 except BaseException as e:
-                    logging.info(f"[RACKETS] error json: {e}")
+                    logging.error(f"[racket/notifications] error json: {e}")
                     req = {"error": e}
 
         if "error" in req:
             return
-
-        logging.info(f'[RACKETS] {req["timestamp"]}')
 
         timestamp_p, randt_p = get_rackets()
         rackets_p = randt_p["rackets"]
@@ -154,9 +152,9 @@ class Racket(commands.Cog):
                 embed.set_footer(text=f'{fmt.ts_to_datetime(racket["changed"], fmt="short")}')
                 mentions.append(embed)
 
-        logging.info(f'[RACKETS] mentions: {len(mentions)}')
+        logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
 
-        logging.info(f"[RACKETS] push rackets")
+        logging.debug(f"[racket/notifications] push rackets")
         await push_rackets(int(req["timestamp"]), req)
 
         if not len(mentions):
@@ -165,7 +163,7 @@ class Racket(commands.Cog):
         # iteration over all guilds
         for guild in self.bot.get_guild_module("rackets"):
             try:
-                logging.info(f"[RACKETS] guild {guild}: {datetime.datetime.now()}")
+                logging.debug(f"[racket/notifications] {guild}")
                 # ignore servers with no rackets
                 # if not self.bot.check_module(guild, "rackets"):
                 #     continue
@@ -186,12 +184,13 @@ class Racket(commands.Cog):
                         msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
 
             except BaseException as e:
-                logging.error(f'[racketTask] {guild} [{guild.id}]: {e}')
+                logging.error(f'[racket/notifications] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
-        logging.info('[racket] waiting...')
+        logging.info('[racket/notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[racket/notifications] start loop')

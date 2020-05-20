@@ -54,6 +54,8 @@ class Verify(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         """Automatically verify member on join"""
+        logging.info(f'[verify/on_member_join] {member.guild}: {member}')
+
         # return if verify not active
         if not self.bot.check_module(member.guild, "verify"):
             return
@@ -96,6 +98,8 @@ class Verify(commands.Cog):
     @commands.guild_only()
     async def verify(self, ctx, *args):
         """Verify member based on discord ID"""
+        logging.info(f'[verify/verify] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # check if dm
         if isinstance(ctx.channel, PrivateChannel):
             await ctx.send(f'You have to do this on your server')
@@ -123,11 +127,11 @@ class Verify(commands.Cog):
         # Get Verified role
         role = get(ctx.guild.roles, name="Verified")
         if len(args) == 1:
-            logging.debug(f'[verify] {ctx.guild}: 1 argument {args}')
+            logging.debug(f'[verify/verify] {ctx.guild}: 1 argument {args}')
 
             if args[0].isdigit():
                 userID = int(args[0])
-                logging.debug(f'[verify] {ctx.guild}: user ID {userID}')
+                logging.debug(f'[verify/verify] {ctx.guild}: user ID {userID}')
 
                 message, _ = await self._member(ctx, role, userID=userID, API_KEY=key)
 
@@ -136,10 +140,10 @@ class Verify(commands.Cog):
                 discordID = re.findall(r'\d+', args[0])
 
                 if len(discordID) and discordID[0].isdigit():
-                    logging.debug(f'[verify] {ctx.guild}: discord ID {discordID[0]}')
+                    logging.debug(f'[verify/verify] {ctx.guild}: discord ID {discordID[0]}')
                     message, _ = await self._member(ctx, role, discordID=discordID[0], API_KEY=key)
                 else:
-                    logging.debug(f'[verify] {ctx.guild}: discord ID unreadable {discordID}')
+                    logging.debug(f'[verify/verify] {ctx.guild}: discord ID unreadable {discordID}')
                     message = f":x: could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
 
             else:
@@ -157,6 +161,8 @@ class Verify(commands.Cog):
     @commands.command(aliases=['addkey'])
     async def verifyKey(self, ctx, key):
         """Verify member with API key"""
+        logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         if not isinstance(ctx.channel, PrivateChannel):
             await ctx.message.delete()
             await ctx.send(f'{ctx.author.mention}, you have to type your API key in a private chat with me...')
@@ -254,6 +260,7 @@ class Verify(commands.Cog):
     @commands.guild_only()
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
+        logging.info(f'[verify/verifyAll] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
@@ -280,6 +287,8 @@ class Verify(commands.Cog):
         """ Check faction role of members
 
         """
+        logging.info(f'[verify/checkFactions] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "verify"):
             await ctx.send(":x: Verify module not activated")
@@ -327,7 +336,7 @@ class Verify(commands.Cog):
 
             # boolean that check if the member is verifying himself with no id given
             author_verif = userID is None and discordID is None
-            logging.debug(f"[_member] author_verif {author_verif}")
+            logging.debug(f"[verify/_member] author_verif {author_verif}")
             # case no userID and no discordID is given (author verify itself)
             if author_verif:
                 author = ctx.author
@@ -474,9 +483,8 @@ class Verify(commands.Cog):
                 return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
-            logging.info(f'ERROR _member for {guild} [{guild.id}]: {e}')
-            logging.error(f'{traceback.format_exc()}')
             errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
+            logging.error(f'[verify/_member] {guild} [{guild.id}]: {errorMessage}')
             return f":x: Error while doing the verification: `{errorMessage}`", False
 
         return ":x: Weird... I didn't do anything...", False
@@ -608,7 +616,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=24)
     async def dailyVerify(self):
-        logging.info("[dailyVerify] start task")
+        logging.info("[verify/dailyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -624,23 +632,23 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.info(f"[dailyVerify] verifying all {guild}: start")
+                logging.debug(f"[verify/dailyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Daily verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("Daily verification of your members: **DONE**")
-                logging.info(f"[dailyVerify] verifying all {guild}: end")
+                logging.debug(f"[verify/dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[dailyVerify] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily verify"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @tasks.loop(hours=168)
     async def weeklyVerify(self):
-        logging.info("[weeklyVerify] start task")
+        logging.info("[verify/weeklyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -656,23 +664,23 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.info(f"[weeklyVerify] verifying all {guild}: start")
+                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Weekly verification of your members: **START**")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("Weekly verification of your members: **DONE**")
-                logging.info(f"[weeklyVerify] verifying all {guild}: end")
+                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[weeklyVerify] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @tasks.loop(hours=24)
     async def dailyCheck(self):
-        logging.info("[dailyCheck] start task")
+        logging.info("[verify/dailyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -688,23 +696,23 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.info(f"[dailyCheck] verifying all {guild}: start")
+                logging.debug(f"[verify/dailyCheck] verifying all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Daily check of your faction members: **START**")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("Daily check of your faction members: **DONE**")
-                logging.info(f"[dailyCheck] verifying all {guild}: end")
+                logging.debug(f"[verify/dailyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[dailyCheck] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/dailyCheck] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily check"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @tasks.loop(hours=168)
     async def weeklyCheck(self):
-        logging.info("[weeklyCheck] start task")
+        logging.info("[verify/weeklyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -720,36 +728,40 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.info(f"[weeklyCheck] weeklyCheck all {guild}: start")
+                logging.debug(f"[verify/weeklyCheck] weeklyCheck all {guild}: start")
                 # get channel
                 channel = get(guild.channels, name="yata-admin")
                 await channel.send("Weekly check of your faction members: **START**")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("Weekly check of your faction members: **DONE**")
-                logging.info(f"[weeklyCheck] verifying all {guild}: end")
+                logging.debug(f"[verify/weeklyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[weeklyCheck] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/weeklyCheck] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly check"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
-        logging.info('[dailyVerify] waiting...')
+        logging.info('[verify/dailyVerify] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[verify/dailyVerify] start loop')
 
     @weeklyVerify.before_loop
     async def before_weeklyVerify(self):
-        logging.info('[weeklyVerify] waiting...')
+        logging.info('[verify/weeklyVerify] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[verify/weeklyVerify] start loop')
 
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
-        logging.info('[dailyCheck] waiting...')
+        logging.info('[verify/dailyCheck] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[verify/dailyCheck] start loop')
 
     @weeklyCheck.before_loop
     async def before_weeklyCheck(self):
-        logging.info('[weeklyCheck] waiting...')
+        logging.info('[verify/weeklyCheck] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[verify/weeklyCheck] start loop')

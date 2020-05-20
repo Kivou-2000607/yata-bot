@@ -41,7 +41,7 @@ import includes.formating as fmt
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.notify.start()
+        # self.notify.start()
 
     def cog_unload(self):
         self.notify.cancel()
@@ -50,7 +50,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
-        logging.info(f'[api/weaponexp] {guild}: {member.nick} / {member}')
+        logging.info(f'[api/weaponexp] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -113,7 +113,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def finishing(self, ctx, *args):
         """DM number of finishing hits to author"""
-        logging.info(f'[api/finishing] {guild}: {member.nick} / {member}')
+        logging.info(f'[api/finishing] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -172,7 +172,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
-        logging.info(f'[api/networth] {guild}: {member.nick} / {member}')
+        logging.info(f'[api/networth] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -220,7 +220,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def who(self, ctx, *args):
         """Gives information on a user"""
-        logging.info(f'[api/who] {guild}: {member.nick} / {member}')
+        logging.info(f'[api/who] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -380,7 +380,7 @@ class API(commands.Cog):
                 # get corresponding discord member
                 member = get(guild.members, id=record["dId"])
                 if member is None:
-                    logging.warning(f'[api/notificationss] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
+                    logging.warning(f'[api/notificationss] ignore member Discord: {record["dId"]} Torn: {record["tId"]}')
                     # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                     # await self.bot.send_log_main("member not found", headers=headers)
                     continue

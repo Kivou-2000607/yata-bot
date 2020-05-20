@@ -126,6 +126,8 @@ class Crimes(commands.Cog):
     async def ocready(self, ctx, *args):
         """ list oc ready
         """
+        logging.info(f'[oc/ocready] {ctx.guild}: {member.nick} / {member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "crimes"):
             await ctx.send(":x: Crimes module not activated")
@@ -177,6 +179,8 @@ class Crimes(commands.Cog):
     async def oc(self, ctx, *args):
         """ start / stop watching for organized crimes
         """
+        logging.info(f'[oc/oc] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "crimes"):
             await ctx.send(":x: Crimes module not activated")
@@ -342,7 +346,7 @@ class Crimes(commands.Cog):
     # @tasks.loop(seconds=3)
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        logging.info(f"[OC] start task {datetime.datetime.now()}")
+        logging.info(f"[oc/notifications] start task")
 
         # iteration over all guilds
         for guild in self.bot.get_guild_module("crimes"):
@@ -362,7 +366,7 @@ class Crimes(commands.Cog):
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, oc in config["crimes"]["oc"].items():
-                    logging.info(f"[OC] oc {guild}: {tornId}")
+                    logging.debug(f"[oc/notifications] {guild}: {tornId}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
@@ -380,12 +384,13 @@ class Crimes(commands.Cog):
                 # logging.info(f"[OC] oc {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[ocTask] {guild} [{guild.id}]: {e}')
+                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
                 await self.bot.send_log_main(e, headers=headers)
 
     @ocTask.before_loop
     async def before_ocTask(self):
-        logging.info('[OC] waiting...')
+        logging.info('[oc/notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[oc/notifications] start loop')

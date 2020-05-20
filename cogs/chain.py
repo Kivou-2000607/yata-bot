@@ -53,6 +53,7 @@ class Chain(commands.Cog):
             Use: !chain <factionId> <@Role>
                  factionId: torn id of the faction (by default the author's faction)
         """
+        logging.info(f'[chain/chain] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
@@ -77,10 +78,10 @@ class Chain(commands.Cog):
             match = re.match(r'<@&([0-9])+>', arg)
             if match is not None:
                 role = match.string
-                logging.info(f"role = {role}")
+                logging.debug(f"[chain/chain] role = {role}")
             elif arg.isdigit():
                 faction = int(arg)
-                logging.info(f"factionId = {faction}")
+                logging.debug(f"[chain/chain] factionId = {faction}")
                 continue
             else:
                 await ctx.send(f":x: ignore argument {arg}. syntax is ```!chain <factionId> <@Role>```")
@@ -194,13 +195,15 @@ class Chain(commands.Cog):
             # sleeps
             # logging.info(timeout, deltaW, delay, 30 - delay)
             sleep = max(30, timeout - deltaW)
-            logging.info(f"[CHAIN] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
+            logging.debug(f"[chain/chain] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
             await asyncio.sleep(sleep)
 
     @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def stopchain(self, ctx):
+        logging.info(f'[chain/stopchain] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -223,6 +226,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def fly(self, ctx, *args):
         """Gives faction members flying"""
+        logging.info(f'[chain/fly] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -286,6 +290,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def hosp(self, ctx, *args):
         """Gives faction members hospitalized"""
+        logging.info(f'[chain/hosp] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -346,6 +351,7 @@ class Chain(commands.Cog):
     @commands.guild_only()
     async def okay(self, ctx, *args):
         """Gives faction members that are okay"""
+        logging.info(f'[chain/okay] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # check channels
         config = self.bot.get_config(ctx.guild)
@@ -407,6 +413,8 @@ class Chain(commands.Cog):
     async def vault(self, ctx, *args):
         """ For AA users: gives the vault balance of a user
         """
+        logging.info(f'[chain/vault] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -460,6 +468,8 @@ class Chain(commands.Cog):
     async def retals(self, ctx):
         """ list all current retal watching
         """
+        logging.info(f'[chain/retals] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -490,6 +500,8 @@ class Chain(commands.Cog):
     async def stopretal(self, ctx, *args):
         """ force stop a retal watching (for admin)
         """
+        logging.info(f'[chain/stopretal] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -535,6 +547,8 @@ class Chain(commands.Cog):
     async def retal(self, ctx, *args):
         """ start / stop watching for retals
         """
+        logging.info(f'[chain/retal] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "chain"):
             await ctx.send(":x: Chain module not activated")
@@ -680,7 +694,7 @@ class Chain(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def retalTask(self):
-        # logging.info("[retalTask] start task")
+        logging.info("[chain/retal-notifications] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -700,7 +714,7 @@ class Chain(commands.Cog):
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, retal in config["chain"]["retal"].items():
-                    # logging.info(f"[retalTask] retal {guild}: {tornId}: {retal}")
+                    logging.debug(f"[chain/retal-notifications] {guild}: {tornId}: {retal}")
 
                     # call retal faction
                     status = await self._retal(guild, retal)
@@ -725,5 +739,6 @@ class Chain(commands.Cog):
 
     @retalTask.before_loop
     async def before_retalTask(self):
-        logging.info('[retalTask] waiting...')
+        logging.info('[chain/retal-notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[chain/retal-notifications] start loop')

@@ -114,6 +114,7 @@ class Misc(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         """Welcome message"""
+        logging.info(f'[misc/on_member_join] {member.guild}: {member}')
 
         # check if bot
         if member.bot:
@@ -121,6 +122,7 @@ class Misc(commands.Cog):
 
         # get system channel and send message
         welcome_channel = member.guild.system_channel
+        logging.debug(f'[misc/on_member_join] welcome channel {welcome_channel}')
 
         # get config
         c = self.bot.get_config(member.guild)
@@ -153,6 +155,8 @@ class Misc(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def egg(self, ctx):
+        logging.info(f'[misc/egg] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         p = random.choice(pages)
         lst = [f'You want to find an egg? Try here:',
                f'**{p.get("title", "here")}** https://www.torn.com{p.get("url", "")}']

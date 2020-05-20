@@ -141,7 +141,7 @@ class Stocks(commands.Cog):
     @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        logging.info(f'[stck/wssb] {guild}: {member.nick} / {member}')
+        logging.info(f'[stck/wssb] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         if len(timeLeft):
@@ -158,7 +158,7 @@ class Stocks(commands.Cog):
     @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        logging.info(f'[stck/tcb] {guild}: {member.nick} / {member}')
+        logging.info(f'[stck/tcb] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
         if len(timeLeft):
@@ -264,10 +264,11 @@ class Stocks(commands.Cog):
 
             # create message to send
             if not len(mentions):
-                logging.info("[stock/notify] no alerts")
+                logging.debug("[stock/notify] no alerts")
                 return
 
         except BaseException as e:
+            logging.error("[stock/notify] error on stock notification (YATA CALL)")
             headers = {"error": "error on stock notification (YATA CALL)"}
             await self.bot.send_log_main(e, headers=headers)
 
@@ -311,7 +312,7 @@ class Stocks(commands.Cog):
     @commands.guild_only()
     async def trader(self, ctx):
         """Add/remove @Trader role"""
-        logging.info(f'[stock/trader] {guild}: {member.nick} / {member}')
+        logging.info(f'[stock/trader] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
 
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):

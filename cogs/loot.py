@@ -50,6 +50,8 @@ class Loot(commands.Cog):
     @commands.guild_only()
     async def loot(self, ctx):
         """Gives loot timing for each NPC"""
+        logging.info(f'[loot/loot] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if verify not active
         if not self.bot.check_module(ctx.guild, "loot"):
             await ctx.send(":x: Loot module not activated")
@@ -116,6 +118,8 @@ class Loot(commands.Cog):
     @commands.guild_only()
     async def looter(self, ctx):
         """Add/remove @Looter role"""
+        logging.info(f'[loot/looter] {ctx.guild}: {ctx.member.nick} / {ctx.member}')
+
         # return if loot not active
         if not self.bot.check_module(ctx.guild, "loot"):
             await ctx.send(":x: Loot module not activated")
@@ -139,7 +143,7 @@ class Loot(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def notify(self):
-        logging.info("[LOOT] start task")
+        logging.info("[loot/notifications] start task")
 
         # images and items
         thumbs = {
@@ -190,28 +194,28 @@ class Loot(commands.Cog):
                 embed.set_thumbnail(url=url)
                 embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
                 embeds.append(embed)
-                logging.info(f'[LOOT] {npc["name"]}: notify (due {due})')
+                logging.debug(f'[loot/notifications] {npc["name"]}: notify (due {due})')
             elif due > 0:
                 # used for computing sleeping time
                 nextDue.append(due)
-                logging.info(f'[LOOT] {npc["name"]}: ignore (due {due})')
+                logging.debug(f'[loot/notifications] {npc["name"]}: ignore (due {due})')
             else:
-                logging.info(f'[LOOT] {npc["name"]}: ignore (due {due})')
+                logging.debug(f'[loot/notifications] {npc["name"]}: ignore (due {due})')
 
         # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
         s = nextDue[0] - 7 * 60 - 5  # next due - 7 minutes - 5 seconds of the task ticker
-        logging.info(f"[LOOT] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
+        logging.debug(f"[loot/notifications] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
         for guild in self.bot.get_guild_module("loot"):
             try:
-                logging.info(f"[LOOT] guild {guild}: {datetime.datetime.now()}")
+                logging.debug(f"[loot/notifications] {guild}")
                 # # ignore non loot servers
                 # if not self.bot.check_module(guild, "loot"):
-                #     # logging.info(f"[LOOT] guild {guild}: ignore.")
+                #     # logging.debug(f"[loot/notifications] guild {guild}: ignore.")
                 #     continue
-                # # logging.info(f"[LOOT] guild {guild}: notify.")
+                # # logging.debug(f"[loot/notifications] guild {guild}: notify.")
 
                 # get full guild (async iterator doesn't return channels)
                 # guild = self.bot.get_guild(guild.id)
@@ -236,7 +240,7 @@ class Loot(commands.Cog):
                         await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
-                logging.error(f'[lootTask] {guild} [{guild.id}]: {e}')
+                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {e}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
                 await self.bot.send_log_main(e, headers=headers)
@@ -246,5 +250,6 @@ class Loot(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[LOOT] waiting...')
+        logging.info('[loot/notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[loot/notifications] start loop')
