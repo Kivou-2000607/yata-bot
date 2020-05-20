@@ -714,7 +714,7 @@ class Chain(commands.Cog):
                 guild = self.bot.get_guild(guild.id)
                 todel = []
                 for tornId, retal in config["chain"]["retal"].items():
-                    logging.debug(f"[chain/retal-notifications] {guild}: {tornId}: {retal}")
+                    logging.debug(f"[chain/retal-notifications] {guild}: {tornId}")
 
                     # call retal faction
                     status = await self._retal(guild, retal)

@@ -336,7 +336,7 @@ class Verify(commands.Cog):
 
             # boolean that check if the member is verifying himself with no id given
             author_verif = userID is None and discordID is None
-            logging.debug(f"[verify/_member] author_verif {author_verif}")
+            # logging.debug(f"[verify/_member] author_verif {author_verif}")
             # case no userID and no discordID is given (author verify itself)
             if author_verif:
                 author = ctx.author
