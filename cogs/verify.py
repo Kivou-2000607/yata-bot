@@ -223,7 +223,7 @@ class Verify(commands.Cog):
                 await member.add_roles(role)
                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {role.name}')
             except BaseException as e:
-                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role ({e}).')
+                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role ({hide_key(e)}).')
                 continue
 
             # Set Faction role
@@ -485,7 +485,7 @@ class Verify(commands.Cog):
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
-            return f":x: Error while doing the verification: {e}", False
+            return f":x: Error while doing the verification: {hide_key(e)}", False
 
         return ":x: Weird... I didn't do anything...", False
 
@@ -641,7 +641,7 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily verify"}
                 await self.bot.send_log_main(e, headers=headers)
@@ -673,7 +673,7 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
                 await self.bot.send_log_main(e, headers=headers)
@@ -705,7 +705,7 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/dailyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[verify/dailyCheck] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily check"}
                 await self.bot.send_log_main(e, headers=headers)
@@ -737,7 +737,7 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/weeklyCheck] verifying all {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[verify/weeklyCheck] {guild} [{guild.id}]: {e}')
+                logging.error(f'[verify/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly check"}
                 await self.bot.send_log_main(e, headers=headers)

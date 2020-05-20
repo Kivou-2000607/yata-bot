@@ -423,7 +423,7 @@ class YataBot(Bot):
                 await fmt.send_tt(verbose, lst)
 
         except BaseException as e:
-            logging.error(f'[rebuildGuild] {guild} [{guild.id}]: {e}')
+            logging.error(f'[rebuildGuild] {guild} [{guild.id}]: {hide_key(e)}')
             await self.send_log(e, guild_id=guild.id)
             headers = {"guild": guild, "guild_id": guild.id, "error": "error on rebuild"}
             await self.send_log_main(e, headers=headers, full=True)

@@ -65,7 +65,7 @@ class Racket(commands.Cog):
                     req = await r.json()
                 except BaseException as e:
                     logging.error(f"[racket/notifications] error json: {hide_key(e)}")
-                    req = {"error": e}
+                    req = {"error": hide_key(e)}
 
         if "error" in req:
             return

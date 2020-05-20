@@ -155,7 +155,7 @@ class Revive(commands.Cog):
                         msgList.append([m, channel])
                     # await ctx.send(f'Sent to {id}')
             except BaseException as e:
-                await ctx.send(f":x: Error with guild {id}: {e}")
+                await ctx.send(f":x: Error with guild {id}: {hide_key(e)}")
 
         # wait for 1 minute
         await asyncio.sleep(50)
