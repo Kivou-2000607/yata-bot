@@ -283,16 +283,14 @@ class Admin(commands.Cog):
         if isinstance(error, ignored):
             return
 
-        logging.info(f'[admin/on_command_error] {ctx.guild}: {ctx.author.nick} / {ctx.author} ({ctx.command})')
+        logging.info(f'[admin/on_command_error] {ctx.guild} / {ctx.author.nick} / {ctx.author} / {ctx.command} / {hide_key(error)}')
 
         # dm/guild errors
         if isinstance(error, commands.NoPrivateMessage):
-            logging.warning(f'[on_command_error] {error}')
             await self.bot.send_log_dm(error, ctx.author)
             return
 
         if isinstance(error, commands.PrivateMessageOnly):
-            logging.warning(f'[on_command_error] {error}')
             await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
             return
 
@@ -302,7 +300,6 @@ class Admin(commands.Cog):
                      commands.MissingAnyRole,
                      commands.MissingRole)
         if isinstance(error, classical):
-            logging.warning(f'[on_command_error] {error}')
             await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
             return
 
@@ -332,10 +329,10 @@ class Admin(commands.Cog):
 
         if isinstance(error, commands.CommandInvokeError):
             headers["error"] = 'CommandInvokeError'
-            logging.error(hide_key(error))
+            logging.error(f'[admin/on_command_error] {hide_key(error)}')
             await self.bot.send_log_main(error, headers=headers, full=True)
             return
 
         headers["error"] = 'New error'
-        logging.error(hide_key(error))
+        logging.error(f'[admin/on_command_error] {hide_key(error)}')
         await self.bot.send_log_main(error, headers=headers, full=True)

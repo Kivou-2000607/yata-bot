@@ -114,7 +114,6 @@ class Misc(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         """Welcome message"""
-        logging.info(f'[misc/on_member_join] {member.guild}: {member}')
 
         # check if bot
         if member.bot:

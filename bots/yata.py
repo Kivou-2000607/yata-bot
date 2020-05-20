@@ -469,7 +469,7 @@ class YataBot(Bot):
             await self.send_log_main("empty log", headers=headers)
             return
 
-        logging.info(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
+        logging.debug(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
         guild = get(self.guilds, id=guild_id)
         headers["guild"] = guild
 
@@ -492,9 +492,9 @@ class YataBot(Bot):
             await self.send_log_main(log, headers=headers)
             return
 
-        logging.info(f'[send_log] send error message: {log}')
         try:
             await channel.send(log_fmt(log))
+            logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel}')
 
         except discord.errors.Forbidden:
             headers["note"].append(f"Forbidden to write in channel {channel}")
@@ -512,6 +512,7 @@ class YataBot(Bot):
 
             try:
                 await channel_fb.send(log_fmt(log))
+                logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel} (fallback channel)')
                 return
             except discord.errors.Forbidden:
                 headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
