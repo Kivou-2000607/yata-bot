@@ -29,7 +29,7 @@ def ts_format(timestamp, fmt=None):
         return d
 
 def hide_key(error):
-    for find in re.findall('key=[a-zA-Z]{1,16}', f'{error}'):
+    for find in re.findall('key=[a-zA-Z0-9]{1,16}', f'{error}'):
         error = str(error).replace(find, "key=***")
     return error
 
