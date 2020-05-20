@@ -29,7 +29,9 @@ def ts_format(timestamp, fmt=None):
         return d
 
 def hide_key(error):
-    return f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken... #blamched"
+    for find in re.findall('key=[a-zA-Z]{1,16}', f'{error}'):
+        error = str(error).replace(find, "key=***")
+    return error
 
 def log_fmt(error, headers=dict({}), full=False):
     lst = ['```md']

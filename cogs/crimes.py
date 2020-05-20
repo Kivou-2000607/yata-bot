@@ -126,7 +126,7 @@ class Crimes(commands.Cog):
     async def ocready(self, ctx, *args):
         """ list oc ready
         """
-        logging.info(f'[oc/ocready] {ctx.guild}: {member.nick} / {member}')
+        logging.info(f'[oc/ocready] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # return if chain not active
         if not self.bot.check_module(ctx.guild, "crimes"):
