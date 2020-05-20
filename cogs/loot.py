@@ -143,7 +143,7 @@ class Loot(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def notify(self):
-        logging.info("[loot/notifications] start task")
+        logging.debug("[loot/notifications] start task")
 
         # images and items
         thumbs = {

@@ -174,7 +174,7 @@ class Stocks(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
-        logging.info(f"[stock/notify] start task")
+        logging.debug(f"[stock/notify] start task")
 
         try:
 

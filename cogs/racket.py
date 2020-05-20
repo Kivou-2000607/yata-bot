@@ -53,7 +53,7 @@ class Racket(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(minutes=5)
     async def racketsTask(self):
-        logging.info("[racket/notifications] start task")
+        logging.debug("[racket/notifications] start task")
 
         # guild = self.bot.get_guild(650701692853288991)  # chappie
         guild = self.bot.get_guild(581227228537421825)  # yata
