@@ -30,6 +30,7 @@ from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
 from discord import Embed
+from inc.handy import *
 
 # import bot functions and classes
 import html
@@ -63,7 +64,7 @@ class Racket(commands.Cog):
                 try:
                     req = await r.json()
                 except BaseException as e:
-                    logging.error(f"[racket/notifications] error json: {e}")
+                    logging.error(f"[racket/notifications] error json: {hide_key(e)}")
                     req = {"error": e}
 
         if "error" in req:
@@ -184,7 +185,7 @@ class Racket(commands.Cog):
                         msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
 
             except BaseException as e:
-                logging.error(f'[racket/notifications] {guild} [{guild.id}]: {e}')
+                logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
                 await self.bot.send_log_main(e, headers=headers)

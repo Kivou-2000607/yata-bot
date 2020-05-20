@@ -31,7 +31,7 @@ from discord.utils import get
 # import bot functions and classes
 import includes.formating as fmt
 from includes.torn_pages import pages
-
+from inc.handy import *
 
 class Misc(commands.Cog):
     def __init__(self, bot):

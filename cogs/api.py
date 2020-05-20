@@ -36,12 +36,13 @@ from discord.utils import get
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
+from inc.handy import *
 
 
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.notify.start()
+        self.notify.start()
 
     def cog_unload(self):
         self.notify.cancel()

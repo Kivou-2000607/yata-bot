@@ -35,7 +35,7 @@ from discord.ext import tasks
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import push_configurations
-
+from inc.handy import *
 
 class Crimes(commands.Cog):
     def __init__(self, bot):
@@ -346,7 +346,7 @@ class Crimes(commands.Cog):
     # @tasks.loop(seconds=3)
     @tasks.loop(seconds=300)
     async def ocTask(self):
-        logging.info(f"[oc/notifications] start task")
+        logging.debug(f"[oc/notifications] start task")
 
         # iteration over all guilds
         for guild in self.bot.get_guild_module("crimes"):
@@ -384,7 +384,7 @@ class Crimes(commands.Cog):
                 # logging.info(f"[OC] oc {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {e}')
+                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
                 await self.bot.send_log_main(e, headers=headers)

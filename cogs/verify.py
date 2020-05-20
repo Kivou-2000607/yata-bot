@@ -484,9 +484,8 @@ class Verify(commands.Cog):
                 return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
-            errorMessage = hide_key(e)
-            logging.error(f'[verify/_member] {guild} [{guild.id}]: {errorMessage}')
-            return f":x: Error while doing the verification: `{errorMessage}`", False
+            logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
+            return f":x: Error while doing the verification: {e}", False
 
         return ":x: Weird... I didn't do anything...", False
 

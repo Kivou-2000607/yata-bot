@@ -35,6 +35,7 @@ from discord import Embed
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import push_configurations
+from inc.handy import *
 
 
 class Chain(commands.Cog):
@@ -694,7 +695,7 @@ class Chain(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def retalTask(self):
-        logging.info("[chain/retal-notifications] start task")
+        logging.debug("[chain/retal-notifications] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -708,7 +709,7 @@ class Chain(commands.Cog):
                 if not config["chain"].get("retal", False):
                     continue
 
-                # logging.info(f"[retalTask] retal {guild}: start")
+                # logging.info(f"[chain/retal-notifications] retal {guild}: start")
 
                 # iteration over all members asking for retal watch
                 guild = self.bot.get_guild(guild.id)
@@ -729,10 +730,10 @@ class Chain(commands.Cog):
                     del self.bot.configs[str(guild.id)]["chain"]["retal"][d]
                     await push_configurations(self.bot.bot_id, self.bot.configs)
 
-                # logging.info(f"[retalTask] retal {guild}: end")
+                # logging.info(f"[chain/retal-notifications] retal {guild}: end")
 
             except BaseException as e:
-                logging.error(f'[retalTask] {guild} [{guild.id}]: {e}')
+                logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on retal task"}
                 await self.bot.send_log_main(e, headers=headers)

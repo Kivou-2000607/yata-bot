@@ -36,6 +36,7 @@ from discord import Embed
 import includes.formating as fmt
 from includes.checks import is_mention
 from includes.yata_db import get_yata_user_by_discord
+from inc.handy import *
 
 
 class Admin(commands.Cog):
@@ -272,7 +273,6 @@ class Admin(commands.Cog):
         """The event triggered when an error is raised while invoking a command.
         ctx   : Context
         error : Exception"""
-        logging.info(f'[admin/on_command_error] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # This prevents any commands with local handlers being handled here in on_command_error.
         if hasattr(ctx.command, 'on_error'):
@@ -282,6 +282,8 @@ class Admin(commands.Cog):
         ignored = (commands.CommandNotFound, commands.UserInputError)
         if isinstance(error, ignored):
             return
+
+        logging.info(f'[admin/on_command_error] {ctx.guild}: {ctx.author.nick} / {ctx.author} ({ctx.command})')
 
         # dm/guild errors
         if isinstance(error, commands.NoPrivateMessage):
@@ -330,9 +332,10 @@ class Admin(commands.Cog):
 
         if isinstance(error, commands.CommandInvokeError):
             headers["error"] = 'CommandInvokeError'
-            logging.error(error)
+            logging.error(hide_key(error))
             await self.bot.send_log_main(error, headers=headers, full=True)
             return
 
+        headers["error"] = 'New error'
         await self.bot.send_log_main(error, headers=headers, full=True)
-        logging.error(error)
+        logging.error(hide_key(error))

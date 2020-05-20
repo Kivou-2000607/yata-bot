@@ -35,6 +35,7 @@ from discord import Embed
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
+from inc.handy import *
 
 #
 # def plot_stocks(graph):
@@ -302,7 +303,7 @@ class Stocks(commands.Cog):
                     await self.bot.send_log_main("channel not found", headers=headers)
 
             except BaseException as e:
-                logging.error(f'[stock] {guild} [{guild.id}]: {e}')
+                logging.error(f'[stock] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
                 await self.bot.send_log_main(e, headers=headers)

@@ -35,7 +35,7 @@ from discord import Embed
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
-
+from inc.handy import *
 
 class Loot(commands.Cog):
     def __init__(self, bot):
@@ -240,7 +240,7 @@ class Loot(commands.Cog):
                         await channel.send(f'{role.mention}, go for {m}', embed=e)
 
             except BaseException as e:
-                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {e}')
+                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
                 await self.bot.send_log_main(e, headers=headers)

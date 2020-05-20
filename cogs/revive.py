@@ -33,7 +33,7 @@ import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import load_configurations
 from includes.yata_db import push_configurations
-
+from inc.handy import *
 
 class Revive(commands.Cog):
     def __init__(self, bot):
