@@ -740,6 +740,6 @@ class Chain(commands.Cog):
 
     @retalTask.before_loop
     async def before_retalTask(self):
-        logging.info('[chain/retal-notifications] waiting...')
+        logging.debug('[chain/retal-notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[chain/retal-notifications] start loop')
+        logging.debug('[chain/retal-notifications] start loop')

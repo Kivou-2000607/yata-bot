@@ -250,6 +250,6 @@ class Loot(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[loot/notifications] waiting...')
+        logging.debug('[loot/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[loot/notifications] start loop')
+        logging.debug('[loot/notifications] start loop')

@@ -616,7 +616,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=24)
     async def dailyVerify(self):
-        logging.info("[verify/dailyVerify] start task")
+        logging.debug("[verify/dailyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -648,7 +648,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=168)
     async def weeklyVerify(self):
-        logging.info("[verify/weeklyVerify] start task")
+        logging.debug("[verify/weeklyVerify] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -680,7 +680,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=24)
     async def dailyCheck(self):
-        logging.info("[verify/dailyCheck] start task")
+        logging.debug("[verify/dailyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -712,7 +712,7 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=168)
     async def weeklyCheck(self):
-        logging.info("[verify/weeklyCheck] start task")
+        logging.debug("[verify/weeklyCheck] start task")
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=150):
@@ -744,24 +744,24 @@ class Verify(commands.Cog):
 
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
-        logging.info('[verify/dailyVerify] waiting...')
+        logging.debug('[verify/dailyVerify] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[verify/dailyVerify] start loop')
+        logging.debug('[verify/dailyVerify] start loop')
 
     @weeklyVerify.before_loop
     async def before_weeklyVerify(self):
-        logging.info('[verify/weeklyVerify] waiting...')
+        logging.debug('[verify/weeklyVerify] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[verify/weeklyVerify] start loop')
+        logging.debug('[verify/weeklyVerify] start loop')
 
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
-        logging.info('[verify/dailyCheck] waiting...')
+        logging.debug('[verify/dailyCheck] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[verify/dailyCheck] start loop')
+        logging.debug('[verify/dailyCheck] start loop')
 
     @weeklyCheck.before_loop
     async def before_weeklyCheck(self):
-        logging.info('[verify/weeklyCheck] waiting...')
+        logging.debug('[verify/weeklyCheck] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[verify/weeklyCheck] start loop')
+        logging.debug('[verify/weeklyCheck] start loop')

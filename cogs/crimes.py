@@ -391,6 +391,6 @@ class Crimes(commands.Cog):
 
     @ocTask.before_loop
     async def before_ocTask(self):
-        logging.info('[oc/notifications] waiting...')
+        logging.debug('[oc/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[oc/notifications] start loop')
+        logging.debug('[oc/notifications] start loop')

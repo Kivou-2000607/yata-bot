@@ -36,6 +36,7 @@ from discord.utils import get
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
+from includes.yata_db import reset_notifications
 from inc.handy import *
 
 
@@ -363,7 +364,7 @@ class API(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def notify(self):
-        logging.info("[api/notifications] start task")
+        logging.debug("[api/notifications] start task")
 
         # YATA guild
         guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
@@ -381,9 +382,10 @@ class API(commands.Cog):
                 # get corresponding discord member
                 member = get(guild.members, id=record["dId"])
                 if member is None:
-                    logging.warning(f'[api/notificationss] ignore member Discord: {record["dId"]} Torn: {record["tId"]}')
+                    logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
                     # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                     # await self.bot.send_log_main("member not found", headers=headers)
+                    await reset_notifications(record["tId"])
                     continue
 
                 try:
@@ -426,6 +428,10 @@ class API(commands.Cog):
                     async with aiohttp.ClientSession() as session:
                         async with session.get(url) as r:
                             req = await r.json()
+
+                    if 'error' in req:
+                        logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {req["error"]}')
+                        continue
 
                     # notify event
                     if "event" in notifications:
@@ -565,15 +571,14 @@ class API(commands.Cog):
                     await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
 
                 except BaseException as e:
-                    console.error(f'[api/notifications] {e}')
+                    logging.error(f'[api/notifications] {member.nick} / {member}: {hide_key(e)}')
                     # headers = {"guild": guild, "guild_id": guild.id, "member": f'{member.nick} / {member}', "error": "personal notification error"}
                     # await self.bot.send_log_main(e, headers=headers, full=True)
 
         await con.close()
-        logging.info("[api/notifications] end task")
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[api/notifications] waiting...')
+        logging.debug('[api/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[api/notifications] start loop')
+        logging.debug('[api/notifications] start loop')

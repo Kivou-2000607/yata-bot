@@ -337,5 +337,5 @@ class Admin(commands.Cog):
             return
 
         headers["error"] = 'New error'
-        await self.bot.send_log_main(error, headers=headers, full=True)
         logging.error(hide_key(error))
+        await self.bot.send_log_main(error, headers=headers, full=True)

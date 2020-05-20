@@ -338,6 +338,6 @@ class Stocks(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[stock/notifications] waiting...')
+        logging.debug('[stock/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[stock/notifications] start loop')
+        logging.debug('[stock/notifications] start loop')

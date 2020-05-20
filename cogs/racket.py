@@ -192,6 +192,6 @@ class Racket(commands.Cog):
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
-        logging.info('[racket/notifications] waiting...')
+        logging.debug('[racket/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.info('[racket/notifications] start loop')
+        logging.debug('[racket/notifications] start loop')
