@@ -35,6 +35,7 @@ import includes.checks as checks
 # import includes.verify as verify
 from includes.yata_db import get_yata_user
 import includes.formating as fmt
+from inc.handy import *
 
 
 class Verify(commands.Cog):
@@ -483,7 +484,7 @@ class Verify(commands.Cog):
                 return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
-            errorMessage = f"{e}" if re.search('api.torn.com', f'{e}') is None else "API's broken.. #blamched"
+            errorMessage = hide_key(e)
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {errorMessage}')
             return f":x: Error while doing the verification: `{errorMessage}`", False
 

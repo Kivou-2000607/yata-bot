@@ -28,6 +28,9 @@ def ts_format(timestamp, fmt=None):
     else:
         return d
 
+def hide_key(error):
+    return f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken... #blamched"
+
 def log_fmt(error, headers=dict({}), full=False):
     lst = ['```md']
 
@@ -44,13 +47,13 @@ def log_fmt(error, headers=dict({}), full=False):
     # error message
     if len(headers) or full:
         lst.append('# error message')
-    errorMSG = f"{error}" if re.search('api.torn.com', f'{error}') is None else "API's broken... #blamched"
+    errorMSG = hide_key(error)
     lst.append(f'{errorMSG}')
 
     # traceback
     if full:
         tb = "\n".join([line[:-2] for line in traceback.format_exception(type(error), error, error.__traceback__)])
-        tb = f"{tb}" if re.search('api.torn.com', f'{tb}') is None else "API's broken... #blamched"
+        tb = hide_key(tb)
         lst.append('\n# full message')
         lst.append(f'{tb}')
 
