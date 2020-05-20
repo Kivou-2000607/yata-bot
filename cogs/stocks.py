@@ -87,7 +87,7 @@ class Stocks(commands.Cog):
         timeLeft = dict()
         role = get(ctx.guild.roles, name=stock)
         for member in role.members:
-            logging.info(f"[{stock.upper()}]: {member.display_name}")
+            # logging.debug(f"[stock/{stock.lower()}]: {member.display_name}")
 
             # get user key from YATA database
             status, id, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
@@ -141,7 +141,7 @@ class Stocks(commands.Cog):
     @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        logging.info("[WSSB]")
+        logging.info(f'[stck/wssb] {guild}: {member.nick} / {member}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         if len(timeLeft):
@@ -158,7 +158,7 @@ class Stocks(commands.Cog):
     @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        logging.info("[TCB]")
+        logging.info(f'[stck/tcb] {guild}: {member.nick} / {member}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
         if len(timeLeft):
@@ -173,7 +173,8 @@ class Stocks(commands.Cog):
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
-        logging.info(f"[STOCK] start task {datetime.datetime.now()}")
+        logging.info(f"[stock/notify] start task")
+
         try:
 
             stockInfo = {
@@ -209,8 +210,6 @@ class Stocks(commands.Cog):
                 "WLT": {"id": 30, "name": "Wind Lines Travel", "acronym": "WLT", "director": "Sir. Fred Dunce", "benefit": {"requirement": 9000000, "description": "Entitled to receive access to our free private jet"}},
                 "TCC": {"id": 31, "name": "Torn City Clothing", "acronym": "TCC", "director": "Mrs. Stella Patrick", "benefit": {"requirement": 350000, "description": "Entitled to receive occasional dividends"}}
                 }
-
-            logging.info("[STOCK] start task")
 
             # YATA api
             url = "https://yata.alwaysdata.net/stock/alerts/"
@@ -265,21 +264,20 @@ class Stocks(commands.Cog):
 
             # create message to send
             if not len(mentions):
-                logging.info("[STOCK] no alerts")
+                logging.info("[stock/notify] no alerts")
                 return
 
         except BaseException as e:
             headers = {"error": "error on stock notification (YATA CALL)"}
             await self.bot.send_log_main(e, headers=headers)
 
-        logging.info("[STOCK] alerts", len(mentions))
         # loop over guilds to send alerts
         for guild in self.bot.get_guild_module("stocks"):
             try:
                 # check if module activated
                 config = self.bot.get_config(guild)
                 if not config.get("stocks", dict({})).get("alerts", False):
-                    # logging.info(f"[STOCK] guild {guild}: ignore notifications")
+                    # logging.info(f"[stock/notify] guild {guild}: ignore notifications")
                     continue
 
                 # get full guild (async iterator doesn't return channels)
@@ -297,10 +295,10 @@ class Stocks(commands.Cog):
                         await channel.send(embed=embed)
 
                 else:
-                    logging.error(f'[stock] {guild} [{guild.id}]: {e}')
-                    await self.bot.send_log(e, guild_id=guild.id)
+                    logging.error(f'[stock] {guild} [{guild.id}]: channel not found')
+                    await self.bot.send_log("channel not found", guild_id=guild.id)
                     headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification", "note": f"No channel {channelName}"}
-                    await self.bot.send_log_main(e, headers=headers)
+                    await self.bot.send_log_main("channel not found", headers=headers)
 
             except BaseException as e:
                 logging.error(f'[stock] {guild} [{guild.id}]: {e}')
@@ -309,10 +307,12 @@ class Stocks(commands.Cog):
                 await self.bot.send_log_main(e, headers=headers)
 
     @commands.command()
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True, manage_roles=True)
     @commands.guild_only()
     async def trader(self, ctx):
         """Add/remove @Trader role"""
+        logging.info(f'[stock/trader] {guild}: {member.nick} / {member}')
+
         # return if stocks not active
         if not self.bot.check_module(ctx.guild, "stocks"):
             await ctx.send(":x: Loot module not activated")
@@ -336,5 +336,6 @@ class Stocks(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[STOCK] waiting...')
+        logging.info('[stock/notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[stock/notifications] start loop')

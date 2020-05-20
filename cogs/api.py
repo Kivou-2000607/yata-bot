@@ -50,6 +50,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def weaponexp(self, ctx, *args):
         """DM weaponexp to author"""
+        logging.info(f'[api/weaponexp] {guild}: {member.nick} / {member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -65,7 +66,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.info(f"[WEAPON EXP] error {status}")
+            logging.debug(f"[api/weaponexp] error {status}")
             return
 
         # make api call
@@ -112,6 +113,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def finishing(self, ctx, *args):
         """DM number of finishing hits to author"""
+        logging.info(f'[api/finishing] {guild}: {member.nick} / {member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -127,7 +129,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.info(f"[FINISHING HITS] error {status}")
+            logging.debug(f"[api/finishing] error {status}")
             return
 
         # make api call
@@ -170,6 +172,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def networth(self, ctx, *args):
         """DM your networth breakdown (in case you're flying)"""
+        logging.info(f'[api/networth] {guild}: {member.nick} / {member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -185,7 +188,7 @@ class API(commands.Cog):
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.info(f"[NETWORTH] error {status}")
+            logging.debug(f"[api/networth] error {status}")
             return
 
         # make api call
@@ -217,6 +220,7 @@ class API(commands.Cog):
     @commands.guild_only()
     async def who(self, ctx, *args):
         """Gives information on a user"""
+        logging.info(f'[api/who] {guild}: {member.nick} / {member}')
 
         # check role and channel
         config = self.bot.get_config(ctx.guild)
@@ -230,18 +234,24 @@ class API(commands.Cog):
         # init variables
         helpMsg = f":x: You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
 
+        logging.debug(f'[api/who] args: {args}')
+
         # send error message if no arg (return)
         if not len(args):
+            logging.debug(f'[api/who] no args given')
             await ctx.send(helpMsg)
             return
 
         # check if arg is int
         elif args[0].isdigit():
+            logging.debug(f'[api/who] 1 int given -> torn user')
             tornId = int(args[0])
 
         # check if arg is a mention of a discord user ID
         elif re.match(r'<@!?\d+>', args[0]):
             discordId = re.findall(r'\d+', args[0])
+            logging.debug(f'[api/who] 1 mention given -> discord member')
+
             if len(discordId) and discordId[0].isdigit():
                 member = ctx.guild.get_member(int(discordId[0]))
             else:
@@ -352,7 +362,7 @@ class API(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def notify(self):
-        logging.info("[NOTIFICATIONS] start task")
+        logging.info("[api/notifications] start task")
 
         # YATA guild
         guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
@@ -370,7 +380,7 @@ class API(commands.Cog):
                 # get corresponding discord member
                 member = get(guild.members, id=record["dId"])
                 if member is None:
-                    logging.warning(f'[NOTIFICATIONS] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
+                    logging.warning(f'[api/notificationss] ignore member Discord: `{record["dId"]}` Torn: `{record["tId"]}`')
                     # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                     # await self.bot.send_log_main("member not found", headers=headers)
                     continue
@@ -378,6 +388,7 @@ class API(commands.Cog):
                 try:
 
                     # get notifications preferences
+                    logging.debug(f'[api/notifications] {member.nick} / {member}: {record}')
                     notifications = json.loads(record["notifications"])
 
                     # get selections for Torn API call
@@ -553,12 +564,15 @@ class API(commands.Cog):
                     await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
 
                 except BaseException as e:
-                    headers = {"guild": guild, "guild_id": guild.id, "member": f'{member.nick} / {member}', "error": "personal notification error"}
-                    await self.bot.send_log_main(e, headers=headers, full=True)
+                    console.error(f'[api/notifications] {e}')
+                    # headers = {"guild": guild, "guild_id": guild.id, "member": f'{member.nick} / {member}', "error": "personal notification error"}
+                    # await self.bot.send_log_main(e, headers=headers, full=True)
 
         await con.close()
+        logging.info("[api/notifications] end task")
 
     @notify.before_loop
     async def before_notify(self):
-        logging.info('[NOTIFICATIONS] waiting...')
+        logging.info('[api/notifications] waiting...')
         await self.bot.wait_until_ready()
+        logging.info('[api/notifications] start loop')
