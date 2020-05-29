@@ -40,9 +40,12 @@ class Misc(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
-    async def xkcd(self, ctx):
+    async def xkcd(self, ctx, *args):
         """gives random xkcd comic"""
-        comic = xkcd.getRandomComic()
+        if len(args) and args[0].isdigit():
+            comic = xkcd.Comic(args[0])
+        else:
+            comic = xkcd.getRandomComic()
         await ctx.send(f"**{comic.getTitle()}** {comic.getImageLink()}")
         await asyncio.sleep(15)
         await ctx.send(f"*{comic.getAltText()}*")
