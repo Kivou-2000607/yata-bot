@@ -24,6 +24,7 @@ import datetime
 import json
 import re
 import logging
+import html
 
 # import discord modules
 from discord.ext import commands
@@ -652,15 +653,15 @@ class Chain(commands.Cog):
                 timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
 
 
-                embed = Embed(title=f'{fName} have {tleft:.1f} minutes to retal',
+                embed = Embed(title=f'{html.unescape(fName)} have {tleft:.1f} minutes to retal',
                               description=f'Target: [{v["attacker_name"]} [{v["attacker_id"]}]](https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
                               color=550000)
 
                 embed.add_field(name='Timeout', value=f'{timeout} TCT')
-                message = f':rage:{notified}{fName} can retal on **{v["attacker_name"]} [{v["attacker_id"]}]**'
+                message = f':rage:{notified}{html.unescape(fName)} can retal on **{v["attacker_name"]} [{v["attacker_id"]}]**'
                 if v["attacker_faction"]:
-                    message += f' from **{v["attacker_factionname"]} [{v["attacker_faction"]}]**'
-                    embed.add_field(name='Faction', value=f'[{v["attacker_factionname"]} [{v["attacker_faction"]}]](https://www.torn.com/factions.php?step=profile&ID={v["attacker_faction"]})')
+                    message += f' from **{html.unescape(v["attacker_factionname"])} [{v["attacker_faction"]}]**'
+                    embed.add_field(name='Faction', value=f'[{html.unescape(v["attacker_factionname"])} [{v["attacker_faction"]}]](https://www.torn.com/factions.php?step=profile&ID={v["attacker_faction"]})')
                 else:
                     embed.add_field(name='Faction', value=f'None')
 
