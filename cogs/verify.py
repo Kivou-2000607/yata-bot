@@ -162,7 +162,10 @@ class Verify(commands.Cog):
     @commands.command(aliases=['addkey'])
     async def verifyKey(self, ctx, key):
         """Verify member with API key"""
-        logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        if ctx.guild is None:
+            logging.info(f'[verify/verifyKey] DM: {ctx.author}')
+        else:
+            logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if not isinstance(ctx.channel, PrivateChannel):
             await ctx.message.delete()
