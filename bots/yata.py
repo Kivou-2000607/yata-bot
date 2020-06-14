@@ -100,9 +100,13 @@ class YataBot(Bot):
         import random
         config = self.get_config(guild)
         ids_keys = config.get("keys", False)
-        if ids_keys:
-            id, key = random.choice([(k, v) for k, v in ids_keys.items()]) if ids_keys else (False, False)
-            return 0, id, key
+        if ids_keys and len(ids_keys):
+            user = await get_yata_user(random.choice(ids_keys))
+            if not len(user):
+                return -1, None, None
+            else:
+                user = tuple(user[0])
+                return 0, user[0], user[2]
         else:
             return -1, None, None
 
@@ -114,7 +118,7 @@ class YataBot(Bot):
             return -2, None, None, None: master key api error
             return -3, master_id, None, master_key: user not verified
             return -4, id, None, master_key: did not find torn id in yata db
-            return -5, id, Name, master_key: member did not give perm
+            return -5, id, Name, master_key: member did not give perm (OLD)
 
             if returnMaster: return master key if key not available
             else return None
@@ -171,18 +175,7 @@ class YataBot(Bot):
         # Return user if perm given
 
         user = tuple(user[0])
-        if not user[3] and needPerm:
-            # logging.info(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] didn't gave perm")
-            m = await ctx.send(f':x: {member.mention} didn\'t give their permission to use their API key. They need to check out the API keys management section here: https://yata.alwaysdata.net/bot/documentation/')
-            if delError:
-                await asyncio.sleep(5)
-                await m.delete()
-            return -5, user[0], user[1], master_key if returnMaster else None
-
-        # return id, name, key
-        else:
-            # logging.info(f"[GET MEMBER KEY] torn id {user[1]} [{user[0]}] all gooood")
-            return 0, user[0], user[1], user[2]
+        return 0, user[0], user[1], user[2]
 
     def check_module(self, guild, module):
         """ check_module: helper function

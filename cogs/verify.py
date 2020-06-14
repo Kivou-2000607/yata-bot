@@ -33,7 +33,6 @@ from discord.ext import tasks
 # import bot functions and classes
 import includes.checks as checks
 # import includes.verify as verify
-from includes.yata_db import get_yata_user
 import includes.formating as fmt
 from inc.handy import *
 
@@ -350,7 +349,7 @@ class Verify(commands.Cog):
                         req = await r.json()
 
                 if 'error' in req:
-                    return ":x: There is a API key problem ({}). It's not your fault... Try later.".format(req['error']['error']), False
+                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
                 userID = req['discord'].get("userID")
                 if userID == '':
                     return f":x: **{author}** you have not been verified because you didn't register to the official Torn discord server: https://www.torn.com/discord", False
@@ -364,7 +363,7 @@ class Verify(commands.Cog):
                         req = await r.json()
 
                 if 'error' in req:
-                    return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
+                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
                 if req['discord'].get("userID") == '':
                     return f":x: **{guild.get_member(discordID)}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
                 else:
@@ -383,7 +382,7 @@ class Verify(commands.Cog):
                 if int(req['error']['code']) == 6:
                     return f":x: Torn ID `{userID}` is not known. Please check again.", False
                 else:
-                    return ":x: There is a API key problem ({}). It's not your fault... Try again later.".format(req['error']['error']), False
+                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
 
             # check != id shouldn't append or problem in torn API
             dis = req.get("discord")
@@ -409,13 +408,6 @@ class Verify(commands.Cog):
                         # only send this message if ctx is a context (context=True)
                         await ctx.send(f"*I don't have the permission to change your nickname.*")
                 await author.add_roles(verified_role)
-
-                # set YATA role
-                yata_role = get(ctx.guild.roles, name="YATA user")
-                if yata_role is not None:
-                    r = await get_yata_user(userID)
-                    if len(r):
-                        await author.add_roles(yata_role)
 
                 # Set Faction role
                 config = self.bot.get_config(ctx.guild)
@@ -452,13 +444,6 @@ class Verify(commands.Cog):
                                 # only send this message if ctx is a context (context=True)
                                 await ctx.send(f"*I don't have the permission to change {member.nick}'s nickname.*")
                         await member.add_roles(verified_role)
-
-                        # set YATA role
-                        yata_role = get(ctx.guild.roles, name="YATA user")
-                        if yata_role is not None:
-                            r = await get_yata_user(userID)
-                            if len(r):
-                                await member.add_roles(yata_role)
 
                         # Set Faction role
                         config = self.bot.get_config(ctx.guild)
