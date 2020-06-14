@@ -45,7 +45,7 @@ async def get_yata_user(tornId):
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    user = await con.fetch(f'SELECT "tId", "name", "value", "botPerm" FROM player_view_player_key WHERE "tId" = {tornId};')
+    user = await con.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {tornId};')
     await con.close()
 
     return user
