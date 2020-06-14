@@ -44,7 +44,7 @@ class Admin(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    @commands.has_any_role(679669933680230430)
+    @commands.has_any_role(679669933680230430, 669682126203125760)
     async def reload(self, ctx, *args):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/reload] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -75,7 +75,7 @@ class Admin(commands.Cog):
         await ctx.send("```html\n</reload>```")
 
     @commands.command()
-    @commands.has_any_role(679669933680230430)
+    @commands.has_any_role(679669933680230430, 669682126203125760)
     async def check(self, ctx):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/check] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -89,7 +89,7 @@ class Admin(commands.Cog):
         for guild in self.bot.guilds:
             if str(guild.id) in self.bot.configs:
                 guildIds.append(str(guild.id))
-                await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
+                # await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
             else:
                 await ctx.send(f"```Guild {guild} owned by {guild.owner}: no config in the db```")
 
@@ -98,7 +98,25 @@ class Admin(commands.Cog):
                 await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
 
     @commands.command()
-    @commands.has_any_role(679669933680230430)
+    @commands.has_any_role(679669933680230430, 669682126203125760)
+    async def info(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+
+        config = self.bot.configs.get(args[0], dict({}))
+        if len(config):
+            embed = Embed(title="Discord server information", description=f'Server ID: `{args[0]}`', color=550000)
+            embed.add_field(name='Contact', value=f'[{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})')
+            await ctx.send("", embed=embed)
+        else:
+            await ctx.send(f':x: no config corresponding to guild id `{args[0]}`')
+
+    @commands.command()
+    @commands.has_any_role(679669933680230430, 669682126203125760)
     async def invite(self, ctx):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/invite] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -110,7 +128,7 @@ class Admin(commands.Cog):
         await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
 
     @commands.command()
-    @commands.has_any_role(679669933680230430)
+    @commands.has_any_role(679669933680230430, 669682126203125760)
     async def talk(self, ctx, *args):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/talk] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -141,7 +159,7 @@ class Admin(commands.Cog):
         await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
-    @commands.has_any_role(679669933680230430)
+    @commands.has_any_role(679669933680230430, 669682126203125760)
     async def assign(self, ctx, *args):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -169,7 +187,7 @@ class Admin(commands.Cog):
 
                 # loop over member
                 for member in ctx.guild.members:
-                    logging.info(f"[BOT HOST BOT ROLE] {member} [{member.id}] -> {member.display_name}")
+                    logging.info(f"[admin/assign] host {member} [{member.id}] -> {member.display_name}")
                     match = re.search('\[\d{1,7}\]', member.display_name)
                     if match is None:
                         continue
@@ -191,7 +209,7 @@ class Admin(commands.Cog):
                 await ctx.send(f"assigning {r}")
 
                 for member in ctx.guild.members:
-                    logging.info(f"[YATA ROLE] {member} [{member.id}]")
+                    logging.info(f"[admin/assign] yata {member} [{member.id}]")
                     if len(await get_yata_user_by_discord(member.id)):
                         await member.add_roles(r)
                     else:
