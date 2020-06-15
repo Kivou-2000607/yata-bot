@@ -103,21 +103,30 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
-            return
-
         config = self.bot.configs.get(args[0], dict({}))
         guild = get(self.bot.guilds, id=int(args[0]))
         if len(config):
-            embed = Embed(title=f'{guild}', description=f'Contact [{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})', color=550000)
-
+            contact = f'[{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})'
+            embed = Embed(title=f'{guild}', description=f'Contact {contact}', color=550000)
 
             for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api"]:
                 if module in config:
-                    c = ', '.join([f'`{s}`' for s in config[module].get("channels", [])])
-                    r = ', '.join([f'`{s}`' for s in config[module].get("roles", [])])
-                    embed.add_field(name=f'{module.title()}', value='Channels {}\nRoles {}'.format(c, r))
+                    value = []
+                    for txt in [_ for _ in config[module].get("channels", [])]:
+                        if txt in ["*"]:
+                            value.append("all channels")
+                        else:
+                            gui = get(guild.channels, name=txt)
+                            value.append(f':x: `#{txt}`' if gui is None else f':white_check_mark: `#{txt}`')
+                    for txt in [_ for _ in config[module].get("roles", [])]:
+                        if txt in ["*"]:
+                            value.append("all roles")
+                        else:
+                            gui = get(guild.roles, name=txt)
+                            value.append(f':x: `@{txt}`' if gui is None else f':white_check_mark: `@{txt}`')
+
+                    if len(value):
+                        embed.add_field(name=f'{module.title()}', value="\n".join(value))
                 else:
                     embed.add_field(name=f'{module.title()}', value=f'Disabled')
 
@@ -337,7 +346,7 @@ class Admin(commands.Cog):
 
         # headers
         headers = {
-            "guild": ctx.guild,
+            "guild": f'{ctx.guild} [{ctx.guild.id}]',
             "channel": ctx.channel,
             "author": ctx.author,
             "command": ctx.command,
