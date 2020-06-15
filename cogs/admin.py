@@ -118,6 +118,7 @@ class Admin(commands.Cog):
                         else:
                             gui = get(guild.channels, name=txt)
                             value.append(f':x: `#{txt}`' if gui is None else f':white_check_mark: `#{txt}`')
+
                     for txt in [_ for _ in config[module].get("roles", [])]:
                         if txt in ["*"]:
                             value.append("all roles")

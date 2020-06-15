@@ -377,7 +377,7 @@ class YataBot(Bot):
                 stocks = config.get("stocks")
 
                 # wssb and tcb
-                for stock in [s for s in stocks if s not in ["active", "channels", 'alerts']]:
+                for stock in [s for s in stocks if s not in ["active", "channels", 'alerts', 'roles']]:
                     stock_role = get(guild.roles, name=stock)
                     if stock_role is None:
                         lst.append(f"\tCreate role {stock}")
