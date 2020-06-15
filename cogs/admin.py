@@ -108,9 +108,21 @@ class Admin(commands.Cog):
             return
 
         config = self.bot.configs.get(args[0], dict({}))
+        guild = get(self.bot.guilds, id=int(args[0]))
         if len(config):
-            embed = Embed(title="Discord server information", description=f'Server ID: `{args[0]}`', color=550000)
-            embed.add_field(name='Contact', value=f'[{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})')
+            embed = Embed(title=f'{guild}', description=f'Contact [{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})', color=550000)
+
+
+            for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api"]:
+                if module in config:
+                    c = ', '.join([f'`{s}`' for s in config[module].get("channels", [])])
+                    r = ', '.join([f'`{s}`' for s in config[module].get("roles", [])])
+                    embed.add_field(name=f'{module.title()}', value='Channels {}\nRoles {}'.format(c, r))
+                else:
+                    embed.add_field(name=f'{module.title()}', value=f'Disabled')
+
+                embed.set_thumbnail(url=guild.icon_url)
+                embed.set_footer(text=f'Server id {args[0]}')
             await ctx.send("", embed=embed)
         else:
             await ctx.send(f':x: no config corresponding to guild id `{args[0]}`')
