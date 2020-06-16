@@ -186,39 +186,52 @@ class Admin(commands.Cog):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
-            return
-
         if not len(args) or args[0].lower() not in ["host", "yata"]:
             logging.info(":x: `!assign host` or `!assign yata`")
             return
+
+        loads = ["[***   ]",
+                 "[ ***  ]",
+                 "[  *** ]",
+                 "[   ***]",
+                 "[  *** ]",
+                 "[ ***  ]"]
 
         # Host
         if args[0].lower() == "host":
             r = get(ctx.guild.roles, name="Host")
             if r is None:
                 await ctx.send(f":x: no role {args[0]}")
-            else:
-                await ctx.send(f"assigning {r}")
+                return
 
-                # get all contacts
-                contacts = []
-                for k, v in self.bot.configs.items():
-                    contacts.append(v["admin"].get("contact_id", 0))
 
-                # loop over member
-                for member in ctx.guild.members:
-                    logging.info(f"[admin/assign] host {member} [{member.id}] -> {member.display_name}")
-                    match = re.search('\[\d{1,7}\]', member.display_name)
-                    if match is None:
-                        continue
-                    tornId = int(match.group().replace("[", "").replace("]", ""))
-                    if tornId in contacts:
-                        await member.add_roles(r)
-                    else:
-                        await member.remove_roles(r)
-                await ctx.send(f"done")
+            msg = await ctx.send(f":clock1: Assigning {r}")
+
+            # get all contacts
+            contacts = []
+            for k, v in self.bot.configs.items():
+                contacts.append(v["admin"].get("contact_id", 0))
+
+            # loop over member
+            n = len(ctx.guild.members)
+            for i, member in enumerate(ctx.guild.members):
+                match = re.search('\[\d{1,7}\]', member.display_name)
+                if match is None:
+                    continue
+
+                tornId = int(match.group().replace("[", "").replace("]", ""))
+                if tornId in contacts and r not in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} add {r}")
+                    await member.add_roles(r)
+                elif tornId not in contacts and r in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} remove {r}")
+                    await member.remove_roles(r)
+
+                progress = int(100 * i / float(n))
+                if not i%(1 + n // 4):
+                    await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
+
+            await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
 
             return
 
@@ -228,16 +241,24 @@ class Admin(commands.Cog):
             if r is None:
                 await ctx.send(f":x: no role {args[0]}")
             else:
-                await ctx.send(f"assigning {r}")
+                msg = await ctx.send(f":clock1: Assigning {r}")
 
-                for member in ctx.guild.members:
-                    logging.info(f"[admin/assign] yata {member} [{member.id}]")
-                    if len(await get_yata_user_by_discord(member.id)):
-                        await member.add_roles(r)
-                    else:
-                        await member.remove_roles(r)
+            n = len(ctx.guild.members)
+            for i, member in enumerate(ctx.guild.members):
+                if len(await get_yata_user_by_discord(member.id)) and r not in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} add {r}")
+                    await member.add_roles(r)
 
-                await ctx.send(f"done")
+                elif not len(await get_yata_user_by_discord(member.id)) and r in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} remove {r}")
+                    await member.remove_roles(r)
+
+                progress = int(100 * i / float(n))
+                if not i%(1 + n // 25):
+                    await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
+
+            await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
+
             return
 
     # helper functions
