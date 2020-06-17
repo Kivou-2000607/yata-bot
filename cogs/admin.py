@@ -24,6 +24,7 @@ import aiohttp
 import traceback
 import sys
 import logging
+import html
 
 # import discord modules
 import discord
@@ -109,9 +110,11 @@ class Admin(commands.Cog):
             contact = f'[{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})'
             embed = Embed(title=f'{guild}', description=f'Contact {contact}', color=550000)
 
-            for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api"]:
+            for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api", "factions"]:
                 if module in config:
                     value = []
+
+                    # get channels
                     for txt in [_ for _ in config[module].get("channels", [])]:
                         if txt in ["*"]:
                             value.append("all channels")
@@ -119,7 +122,19 @@ class Admin(commands.Cog):
                             gui = get(guild.channels, name=txt)
                             value.append(f':x: `#{txt}`' if gui is None else f':white_check_mark: `#{txt}`')
 
-                    for txt in [_ for _ in config[module].get("roles", [])]:
+                    # get basic roles
+                    if module == "factions":
+                        if config.get("verify", dict({})).get("id", False):
+                            role_list = [f'{html.unescape(name)} [{id}]' for id, name in config[module].items()]
+                        else:
+                            role_list = [f'{html.unescape(name)}' for id, name in config[module].items()]
+                    else:
+                        role_list = [_ for _ in config[module].get("roles", [])] + [_ for _ in [config[module].get("common")] if _ is not None]
+
+                    if module == "factions":
+                        print(role_list)
+
+                    for txt in role_list:
                         if txt in ["*"]:
                             value.append("all roles")
                         else:
@@ -189,13 +204,6 @@ class Admin(commands.Cog):
         if not len(args) or args[0].lower() not in ["host", "yata"]:
             logging.info(":x: `!assign host` or `!assign yata`")
             return
-
-        loads = ["[***   ]",
-                 "[ ***  ]",
-                 "[  *** ]",
-                 "[   ***]",
-                 "[  *** ]",
-                 "[ ***  ]"]
 
         # Host
         if args[0].lower() == "host":
