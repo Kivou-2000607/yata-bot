@@ -60,10 +60,10 @@ class Admin(commands.Cog):
         _, c, a = load_configurations(self.bot.bot_id)
         self.bot.configs = json.loads(c)
         self.bot.administrators = json.loads(a)
-        lst = []
-        for i, (k, v) in enumerate(self.bot.administrators.items()):
-            lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
-        await fmt.send_tt(ctx, lst)
+        # lst = []
+        # for i, (k, v) in enumerate(self.bot.administrators.items()):
+        #     lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
+        # await fmt.send_tt(ctx, lst)
 
         if len(args) and args[0].isdigit():
             guild = get(self.bot.guilds, id=int(args[0]))
@@ -107,8 +107,10 @@ class Admin(commands.Cog):
         config = self.bot.configs.get(args[0], dict({}))
         guild = get(self.bot.guilds, id=int(args[0]))
         if len(config):
-            contact = f'[{config["admin"]["contact"]} [{config["admin"]["contact_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact"]})'
-            embed = Embed(title=f'{guild}', description=f'Contact {contact}', color=550000)
+            contact_torn = f'[{config["admin"]["contact_torn"]} [{config["admin"]["contact_torn_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact_torn_id"]})'
+            contact_disc = f'{config["admin"]["contact_discord"]} [{config["admin"]["contact_discord_id"]}]'
+            description = [contact_torn, contact_disc]
+            embed = Embed(title=f'{guild}', description='\n'.join(description), color=550000)
 
             for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api", "factions"]:
                 if module in config:
@@ -131,9 +133,6 @@ class Admin(commands.Cog):
                     else:
                         role_list = [_ for _ in config[module].get("roles", [])] + [_ for _ in [config[module].get("common")] if _ is not None]
 
-                    if module == "factions":
-                        print(role_list)
-
                     for txt in role_list:
                         if txt in ["*"]:
                             value.append("all roles")
@@ -151,6 +150,29 @@ class Admin(commands.Cog):
             await ctx.send("", embed=embed)
         else:
             await ctx.send(f':x: no config corresponding to guild id `{args[0]}`')
+
+    @commands.command()
+    @commands.has_any_role(679669933680230430, 669682126203125760)
+    async def contact(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/contact] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        contact_discord_id = int(args[0])
+        contact_discord = self.bot.get_user(int(args[0]))
+        if contact_discord is None:
+            await ctx.send(f':x: User id {contact_discord_id} not found.')
+            return
+
+        guild_found = []
+        for guild, config in self.bot.configs.items():
+            if config["admin"].get("contact_discord_id") == contact_discord_id:
+                guild_found.append([guild, get(self.bot.guilds, id=int(guild))])
+
+        if len(guild_found):
+            await ctx.send(f"List of guild found for user {contact_discord}".format())
+            await ctx.send("\n".join([f'{b} [{a}]' for a, b in guild_found]))
+        else:
+            await ctx.send(f':x: no guild found for user {contact_discord}')
 
     @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
@@ -215,10 +237,12 @@ class Admin(commands.Cog):
 
             msg = await ctx.send(f":clock1: Assigning {r}")
 
+            # now that we have discord id of contacts it's easier to use that to assign roles
+
             # get all contacts
             contacts = []
             for k, v in self.bot.configs.items():
-                contacts.append(v["admin"].get("contact_id", 0))
+                contacts.append(v["admin"].get("contact_torn_id", 0))
 
             # loop over member
             n = len(ctx.guild.members)

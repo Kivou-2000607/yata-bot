@@ -223,7 +223,7 @@ class YataBot(Bot):
                 lst.append(f'\tWTF I\'m doing here?')
                 # send message to guild
                 owner = self.get_user(guild.owner_id)
-                await owner.send(f"Contact Kivou [2000607] if you want me on your guild {guild} [{guild.id}].")
+                await owner.send(f"Contact and @Helper in the YATA server if you want me on your guild {guild} [{guild.id}].")
                 await owner.send("As for now I can't do anything without him setting me up... so I'll be leaving.")
 
                 # leave guild
@@ -240,7 +240,13 @@ class YataBot(Bot):
 
             # push guild name to yata
             bot = get(guild.members, id=self.user.id)
-            await push_guild_info(guild, bot, self.bot_id)
+            contact = self.get_user(int(config["admin"]["contact_discord_id"]))
+            if contact is not None:
+                lst.append("Guild info updated")
+                config["admin"]["contact_discord"] = f'{contact}'
+                await push_guild_info(guild, bot, contact, self.bot_id)
+            else:
+                lst.append(f'Guild info not updated because contact id {config["admin"]["contact_discord_id"]} (from config) not found by the bot.')
 
             # stop if not managing channels
             if not config["admin"].get("manage", False):

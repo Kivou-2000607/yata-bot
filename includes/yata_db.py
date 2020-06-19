@@ -62,14 +62,14 @@ async def get_yata_user_by_discord(discordID):
     return user
 
 
-async def push_guild_info(guild, member, bot_pk):
+async def push_guild_info(guild, member, contact, bot_pk):
     """Writes the actual guild name in YATA database"""
     # get YATA user
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3, "guildJoinedTime"=$4 WHERE "guildId"=$5 AND "configuration_id"=$6', guild.name, guild.owner_id, guild.owner.name, datetime.timestamp(member.joined_at), guild.id, int(bot_pk))
+    await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3, "guildJoinedTime"=$4, "guildContactDiscordName"=$5, "guildContactDiscordId"=$6 WHERE "guildId"=$7 AND "configuration_id"=$8', guild.name, guild.owner_id, guild.owner.name, datetime.timestamp(member.joined_at), contact.name, contact.id, guild.id, int(bot_pk))
     await con.close()
 
 

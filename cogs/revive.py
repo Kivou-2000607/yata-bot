@@ -221,7 +221,7 @@ class Revive(commands.Cog):
         if len(servers):
             lst = ["List of servers with the *revive module* activated\n"]
             for k, [s, r, b] in servers.items():
-                lst.append(f'**{s["name"]}** server (contact **{s["contact"]} [{s["contact_id"]}]**)')
+                lst.append(f'**{s["name"]}** server (contact **{s["contact_torn"]} [{s["contact_torn_id"]}]**)')
                 if int(k) in myServers:
                     lst.append('\tSending: **on**')
                 else:
