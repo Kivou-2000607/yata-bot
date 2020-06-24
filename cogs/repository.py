@@ -34,22 +34,26 @@ class Repository(commands.Cog):
     async def create_issue(self, ctx, type, args):
         try:
 
+            print(args, args[-1], " ".join(args[1:-2]))
+            print(args[0] in ["yata", "yata-bot"])
+            print(args[-1].isdigit())
+            print(len(args))
             if len(args) < 3:
-                await ctx.send(f':x: You need to give repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
+                await ctx.send(f':x: You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
                 return
-            elif len(args) < 3 and args[0] in ["yata", "yata-bot"] and args[2].isdigit():
-                await ctx.send(f':x: You need to give repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
+            elif not (args[0] in ["yata", "yata-bot"] or args[-1].isdigit()):
+                await ctx.send(f':x: You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
                 return
             else:
                 connection = RepoConnection(token=self.bot.github_token, name=f"kivou-2000607/{args[0]}")
-                msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[2])]
+                msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[-1])]
                 if len(msg) < 1:
                     await ctx.send(f':x: Message id `{args[2]}` not found in the channel recent history`')
                     return
 
                 lst = [msg[0].content, "", msg[0].author.display_name, msg[0].jump_url]
                 emoji = self.bot.get_emoji(655750002630590464)
-                connection.create_issue(args[1], "\n".join(lst), label_name=type)
+                connection.create_issue(" ".join(args[1:-1]), "\n".join(lst), label_name=type)
                 await msg[0].add_reaction(emoji)
 
                 await ctx.send(f':white_check_mark: Your bug has been reported.')
