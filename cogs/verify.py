@@ -349,7 +349,7 @@ class Verify(commands.Cog):
                         req = await r.json()
 
                 if 'error' in req:
-                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
+                    return ":x: There is an API key problem ({}).".format(req['error']['error']), False
                 userID = req['discord'].get("userID")
                 if userID == '':
                     return f":x: **{author}** you have not been verified because you didn't register to the official Torn discord server: https://www.torn.com/discord", False
@@ -363,7 +363,7 @@ class Verify(commands.Cog):
                         req = await r.json()
 
                 if 'error' in req:
-                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
+                    return ":x: There is an API key problem ({}).".format(req['error']['error']), False
                 if req['discord'].get("userID") == '':
                     return f":x: **{guild.get_member(discordID)}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
                 else:

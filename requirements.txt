@@ -6,7 +6,7 @@ asyncio
 asyncpg
 
 # for repo
-PyGithub
+PyGithub==1.51
 
 # for stock alerts
 termplotlib

@@ -40,6 +40,7 @@ from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
+from cogs.repository import Repository
 
 # import includes
 from includes.yata_db import load_configurations
@@ -55,12 +56,13 @@ logging.error("error")
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
 prefix = os.environ.get("BOT_PREFIX", "!")
+github_token = os.environ.get("GITHUB_TOKEN", "")
 
 # get configurations from YATA's database
 token, configs, administrators = load_configurations(bot_id)
 
 # init yata bot
-bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id)
+bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id, github_token=github_token)
 bot.remove_command('help')
 
 # load classes
@@ -74,6 +76,7 @@ bot.add_cog(Admin(bot))
 bot.add_cog(Revive(bot))
 bot.add_cog(Misc(bot))
 bot.add_cog(Crimes(bot))
+bot.add_cog(Repository(bot))
 
 # run bot
 bot.run(token)
