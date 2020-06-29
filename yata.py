@@ -66,17 +66,17 @@ bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrat
 bot.remove_command('help')
 
 # load classes
-bot.add_cog(Verify(bot))
-bot.add_cog(Loot(bot))
-bot.add_cog(Stocks(bot))
-bot.add_cog(API(bot))
-bot.add_cog(Chain(bot))
-bot.add_cog(Racket(bot))
+# bot.add_cog(Verify(bot))
+# bot.add_cog(Loot(bot))
+# bot.add_cog(Stocks(bot))
+# bot.add_cog(API(bot))
+# bot.add_cog(Chain(bot))
+# bot.add_cog(Racket(bot))
 bot.add_cog(Admin(bot))
-bot.add_cog(Revive(bot))
-bot.add_cog(Misc(bot))
-bot.add_cog(Crimes(bot))
-bot.add_cog(Repository(bot))
+# bot.add_cog(Revive(bot))
+# bot.add_cog(Misc(bot))
+# bot.add_cog(Crimes(bot))
+# bot.add_cog(Repository(bot))
 
 # run bot
 bot.run(token)
