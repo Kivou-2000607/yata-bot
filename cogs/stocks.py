@@ -272,6 +272,7 @@ class Stocks(commands.Cog):
             logging.error("[stock/notify] error on stock notification (YATA CALL)")
             headers = {"error": "error on stock notification (YATA CALL)"}
             await self.bot.send_log_main(e, headers=headers)
+            return
 
         # loop over guilds to send alerts
         for guild in self.bot.get_guild_module("stocks"):

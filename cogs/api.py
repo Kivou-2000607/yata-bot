@@ -430,7 +430,7 @@ class API(commands.Cog):
                             req = await r.json()
 
                     if 'error' in req:
-                        logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {req["error"]}')
+                        logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {req["error"]["code"]}: {req["error"]["error"]}')
                         continue
 
                     # notify event
