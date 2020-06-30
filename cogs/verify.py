@@ -225,7 +225,7 @@ class Verify(commands.Cog):
                 await member.add_roles(role)
                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {role.name}')
             except BaseException as e:
-                await ctx.author.send(f':x: Something went wrong when assigning you the {role.name} role ({hide_key(e)}).')
+                await ctx.author.send(f':x: Something went wrong when assigning you the {role} role ({hide_key(e)}).')
                 continue
 
             # Set Faction role

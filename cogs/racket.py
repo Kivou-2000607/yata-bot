@@ -35,11 +35,10 @@ from inc.handy import *
 # import bot functions and classes
 import html
 
-import includes.checks as checks
 import includes.formating as fmt
-from includes.yata_db import get_rackets
-from includes.yata_db import push_rackets
-from includes.yata_db import get_faction_name
+from inc.yata_db import get_rackets
+from inc.yata_db import push_rackets
+from inc.yata_db import get_faction_name
 
 
 class Racket(commands.Cog):
@@ -50,13 +49,11 @@ class Racket(commands.Cog):
     def cog_unload(self):
         self.racketsTask.cancel()
 
-    # @tasks.loop(seconds=5)
     @tasks.loop(minutes=5)
     async def racketsTask(self):
         logging.debug("[racket/notifications] start task")
 
-        # guild = self.bot.get_guild(650701692853288991)  # chappie
-        guild = self.bot.get_guild(581227228537421825)  # yata
+        guild = self.bot.get_guild(self.bot.main_server_id)
         _, _, key = await self.bot.get_master_key(guild)
         url = f'https://api.torn.com/torn/?selections=rackets,territory,timestamp&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -158,27 +155,36 @@ class Racket(commands.Cog):
         logging.debug(f"[racket/notifications] push rackets")
         await push_rackets(int(req["timestamp"]), req)
 
+        # DEBUG
+        embed = Embed(title="Test Racket")
+        mentions.append(embed)
+
         if not len(mentions):
             return
 
         # iteration over all guilds
-        for guild in self.bot.get_guild_module("rackets"):
+        for guild in self.bot.get_guilds_by_module("rackets"):
             try:
                 logging.debug(f"[racket/notifications] {guild}")
-                # ignore servers with no rackets
-                # if not self.bot.check_module(guild, "rackets"):
-                #     continue
-                #
-                # guild = self.bot.get_guild(guild.id)
-                config = self.bot.get_config(guild)
+
+                config = self.bot.get_guild_configuration_by_module(guild, "rackets", check_channel=True)
+                if not config:
+                    logging.info(f"[racket/notifications] No rackets channels for guild {guild}")
+                    continue
 
                 # get role
-                role_names = config["rackets"].get("roles", False)
-                role = get(guild.roles, name=role_names[0]) if role_names and len(role_names) else None
+                role_ids = [id for id in config.get("roles", {}) if id.isdigit()]
+                if len(role_ids):
+                    role = get(guild.roles, id=int(role_ids[0]))
+                else:
+                    role = None
 
                 # get channel
-                channel_name = config["rackets"].get("channels")[0]
-                channel = get(guild.channels, name=channel_name)
+                channel_ids = [id for id in config.get("channels", {}) if id.isdigit()]
+                if len(channel_ids):
+                    channel = get(guild.channels, id=int(channel_ids[0]))
+                else:
+                    channel = None
 
                 if channel is not None:
                     for m in mentions:
@@ -186,9 +192,9 @@ class Racket(commands.Cog):
 
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(e, guild_id=guild.id)
-                headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+                # await self.bot.send_log(e, guild_id=guild.id)
+                # headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
+                # await self.bot.send_log_main(e, headers=headers)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):

@@ -43,7 +43,7 @@ from cogs.crimes import Crimes
 from cogs.repository import Repository
 
 # import includes
-from includes.yata_db import load_configurations
+from inc.yata_db import load_configurations
 
 # logging
 logging.config.fileConfig('logging.conf')
@@ -57,13 +57,23 @@ logging.error("error")
 bot_id = os.environ.get("YATA_ID", 1)
 prefix = os.environ.get("BOT_PREFIX", "!")
 github_token = os.environ.get("GITHUB_TOKEN", "")
+main_server_id = os.environ.get("MAIN_SERVER_ID", 581227228537421825)
 
 # get configurations from YATA's database
-token, configs, administrators = load_configurations(bot_id)
+token, administrators, configurations = load_configurations(bot_id)
+
+logging.info(f'Starting bot: bot id = {bot_id}')
+logging.info(f'Starting bot: prefix = {prefix}')
 
 # init yata bot
-bot = YataBot(configs=json.loads(configs), administrators=json.loads(administrators), command_prefix=prefix, bot_id=bot_id, github_token=github_token)
-bot.remove_command('help')
+bot = YataBot(configurations=configurations,
+              administrators=administrators,
+              command_prefix=prefix,
+              bot_id=bot_id,
+              main_server_id=main_server_id,
+              github_token=github_token)
+
+# bot.remove_command('help')
 
 # load classes
 # bot.add_cog(Verify(bot))
@@ -71,7 +81,7 @@ bot.remove_command('help')
 # bot.add_cog(Stocks(bot))
 # bot.add_cog(API(bot))
 # bot.add_cog(Chain(bot))
-# bot.add_cog(Racket(bot))
+bot.add_cog(Racket(bot))
 bot.add_cog(Admin(bot))
 # bot.add_cog(Revive(bot))
 # bot.add_cog(Misc(bot))

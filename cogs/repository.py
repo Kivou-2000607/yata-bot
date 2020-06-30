@@ -34,10 +34,6 @@ class Repository(commands.Cog):
     async def create_issue(self, ctx, type, args):
         try:
 
-            print(args, args[-1], " ".join(args[1:-2]))
-            print(args[0] in ["yata", "yata-bot"])
-            print(args[-1].isdigit())
-            print(len(args))
             if len(args) < 3:
                 await ctx.send(f':x: You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
                 return
@@ -48,7 +44,7 @@ class Repository(commands.Cog):
                 connection = RepoConnection(token=self.bot.github_token, name=f"kivou-2000607/{args[0]}")
                 msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[-1])]
                 if len(msg) < 1:
-                    await ctx.send(f':x: Message id `{args[2]}` not found in the channel recent history`')
+                    await ctx.send(f':x: Message id `{args[-1]}` not found in the channel recent history`')
                     return
 
                 lst = [msg[0].content, "", msg[0].author.display_name, msg[0].jump_url]
@@ -56,7 +52,7 @@ class Repository(commands.Cog):
                 connection.create_issue(" ".join(args[1:-1]), "\n".join(lst), label_name=type)
                 await msg[0].add_reaction(emoji)
 
-                await ctx.send(f':white_check_mark: Your bug has been reported.')
+                await ctx.send(f':white_check_mark: Your {type} has been reported.')
 
         except BaseException as e:
             await ctx.send(f'Failed to create the issue: {e}')
