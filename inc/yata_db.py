@@ -187,7 +187,7 @@ async def push_rackets(timestamp, rackets):
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = 1', timestamp, json.dumps(rackets))
+    await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = 2', timestamp, json.dumps(rackets))
     await con.close()
 
 
@@ -195,7 +195,7 @@ def get_rackets():
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     con = psycopg2.connect(**db_cred)
     cur = con.cursor()
-    cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = 1;")
+    cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = 2;")
     timestamp, rackets = cur.fetchone()
     cur.close()
     con.close()
