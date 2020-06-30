@@ -34,7 +34,7 @@ from discord.utils import oauth_url
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import push_configuration
+from inc.yata_db import set_configuration
 from inc.yata_db import get_server_admins
 from inc.yata_db import get_configuration
 
@@ -55,23 +55,39 @@ class Admin(commands.Cog):
         """updates dashboard and bot configuration"""
         logging.info(f'[admin/update] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
+        # for printing the updates
+        updates = ["```md", "# Updates"]
+
+        # get configuration from the database and create if new
+        configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
+
+        # create in database if new
+        if not configuration_db:
+            logging.info(f'[admin/update] Create db configuration for {ctx.guild}')
+            await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, {"admin": {}})
+            updates.append("- create server database")
+
         # check if server admin
         server_admins = await get_server_admins(self.bot_id, ctx.guild.id)
         admins_lst = ["```md", "# Bot admins"]
-        for server_admin_id, server_admin in server_admins.items():
-            admins_lst.append(f'- < torn > {server_admin["name"]} [{server_admin["torn_id"]}] < discord > {self.bot.get_user(int(server_admin_id))} [{server_admin_id}])')
+        if len(server_admins):
+            for server_admin_id, server_admin in server_admins.items():
+                you = ' (you)' if int(server_admin_id) == ctx.author.id else ''
+                admins_lst.append(f'- < torn > {server_admin["name"]} [{server_admin["torn_id"]}] < discord > {self.bot.get_user(int(server_admin_id))} [{server_admin_id}]{you}')
+        else:
+            admins_lst.append('< no admins >\n\nAsk an @Helper for help: https://yata.alwaysdata.net/discord')
         admins_lst.append('```')
         await ctx.send("\n".join(admins_lst))
 
         if str(ctx.author.id) not in server_admins:
-            await ctx.send(":x: You need to be a server admin for that. Ask and @helper in the YATA server to add you.")
+            updates.append("< You need to be a server admin to continue > \n\nAsk an @Helper for help: https://yata.alwaysdata.net/discord")
+            updates.append("```")
+            await ctx.send("\n".join(updates))
             return
 
-        # for printing the updates
-        updates = ["```md", "# Updates"]
-
-        # create configuration if need
+        # create not configuration if need
         if ctx.guild.id not in self.bot.configurations:
+            logging.info(f'[admin/update] create bot configuration')
             self.bot.configurations[ctx.guild.id] = {}
 
         # deep copy of the bot configuration in a temporary variable to check differences
@@ -96,13 +112,6 @@ class Admin(commands.Cog):
                                   "roles": roles,
                                   "server_admins": server_admins,}
 
-        # get configuration from the database and create if new
-        configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
-        # create in database is new
-        if not configuration_db:
-            logging.info(f'[admin/update] create configuration in the database')
-            await push_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
-
         # update modules
         for module in ["admin", "rackets"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
@@ -122,15 +131,17 @@ class Admin(commands.Cog):
                 else:
                     updates.append(f"- {module} ignored")
 
-            elif module in configuration:
+            elif module in configuration and module not in ["admin"]:
                 configuration.pop(module)
                 updates.append(f"- [{module}](disabled)")
 
         # push configuration
-        await push_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
+        await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
 
         self.bot.configurations[ctx.guild.id] = configuration
 
+        if len(updates) < 3:
+            updates.append("< none >")
         updates.append("```")
         await ctx.send("\n".join(updates))
 

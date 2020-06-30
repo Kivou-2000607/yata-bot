@@ -33,7 +33,7 @@ from discord.utils import get
 
 # import bot functions and classes
 # from includes.yata_db import get_member_key
-from inc.yata_db import push_configuration
+from inc.yata_db import set_configuration
 from inc.yata_db import get_yata_user
 import includes.formating as fmt
 from inc.handy import *
@@ -53,7 +53,7 @@ class YataBot(Bot):
     async def on_guild_join(self, guild):
 
         self.configurations[guild.id] = {}
-        await push_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
+        await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
 
         user_to_send = [self.get_user(administrator_did) for administrator_did in self.administrators]
         owner = self.get_user(guild.owner_id)
@@ -64,8 +64,9 @@ class YataBot(Bot):
 
 
     async def on_guild_remove(self, guild):
+
         self.configurations.pop(guild.id)
-        await push_configuration(self.bot_id, guild.id, guild.name, {})
+        await set_configuration(self.bot_id, guild.id, guild.name, {})
 
         user_to_send = [self.get_user(administrator_did) for administrator_did in self.administrators]
         owner = self.get_user(guild.owner_id)
@@ -126,7 +127,10 @@ class YataBot(Bot):
             return -1, None, None, None: no key given
         """
         import random
-        c = self.configurations[guild.id]
+        c = self.configurations.get(guild.id)
+        if c is None:
+            return -1, None, None
+
         torn_ids = [v["torn_id"] for k, v in c["admin"].get("server_admins", {}).items()]
         if len(torn_ids):
             user = await get_yata_user(random.choice(torn_ids), type="T")

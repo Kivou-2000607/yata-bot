@@ -25,6 +25,7 @@ import re
 import os
 import asyncpg
 import psycopg2
+import logging
 from datetime import datetime
 
 # definition of the view linking Player to Key
@@ -72,25 +73,25 @@ async def get_configuration(bot_id, discord_id):
     server = await con.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     return False if server is None else json.loads(server.get("configuration"))
 
-async def push_configuration(bot_id, discord_id, server_name, configurations):
+async def set_configuration(bot_id, discord_id, server_name, configuration):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
 
     # check if server already in the database
-    server = await con.fetch(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
-
-    if len(server):  # update if already in the db
-        await con.execute('''
-        UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
-        ''', bot_id, discord_id, server_name, json.dumps(configurations))
-        await con.close()
-    else:  # create otherwise
+    server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+    if server is None:  # create if not in the db
+        logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
         await con.execute('''
         INSERT INTO bot_server(bot_id, discord_id, name, configuration) VALUES($1, $2, $3, $4)
-        ''', bot_id, discord_id, server_name, json.dumps(configurations))
-        await con.close()
+        ''', bot_id, discord_id, server_name, json.dumps(configuration))
+    else:  # update otherwise
+        logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
+        await con.execute('''
+        UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
+        ''', bot_id, discord_id, server_name, json.dumps(configuration))
+    await con.close()
 
 async def get_server_admins(bot_id, discord_id):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
@@ -98,6 +99,9 @@ async def get_server_admins(bot_id, discord_id):
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+    if server is None:
+        return {}
+
     server_yata_id = server.get("id")
     players_yata_id = await con.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
 
