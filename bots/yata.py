@@ -65,7 +65,8 @@ class YataBot(Bot):
 
     async def on_guild_remove(self, guild):
 
-        self.configurations.pop(guild.id)
+        if guild.id in self.configurations:
+            self.configurations.pop(guild.id)
         await set_configuration(self.bot_id, guild.id, guild.name, {})
 
         user_to_send = [self.get_user(administrator_did) for administrator_did in self.administrators]

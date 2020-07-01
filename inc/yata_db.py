@@ -82,12 +82,12 @@ async def set_configuration(bot_id, discord_id, server_name, configuration):
     # check if server already in the database
     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     if server is None:  # create if not in the db
-        logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
+        # logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
         await con.execute('''
         INSERT INTO bot_server(bot_id, discord_id, name, configuration) VALUES($1, $2, $3, $4)
         ''', bot_id, discord_id, server_name, json.dumps(configuration))
     else:  # update otherwise
-        logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
+        # logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
         await con.execute('''
         UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
         ''', bot_id, discord_id, server_name, json.dumps(configuration))

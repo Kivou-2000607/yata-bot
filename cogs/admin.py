@@ -88,7 +88,7 @@ class Admin(commands.Cog):
         # create not configuration if need
         if ctx.guild.id not in self.bot.configurations:
             logging.info(f'[admin/update] create bot configuration')
-            self.bot.configurations[ctx.guild.id] = {}
+            self.bot.configurations[ctx.guild.id] = {"admin": {}}
 
         # deep copy of the bot configuration in a temporary variable to check differences
         configuration = dict(self.bot.configurations[ctx.guild.id])
@@ -104,13 +104,15 @@ class Admin(commands.Cog):
             roles[str(role.id)] = f'{role}'
 
         # set admin section of the configuration
-        configuration["admin"] = {"guild_id": ctx.guild.id,
-                                  "guild_name": ctx.guild.name,
-                                  "owner_did": ctx.guild.owner.id,
-                                  "owner_dname": f'{ctx.guild.owner}',
-                                  "channels": channels,
-                                  "roles": roles,
-                                  "server_admins": server_admins,}
+        if "admin" not in configuration:
+            configuration["admin"] = {}
+        configuration["admin"]["guild_id"] = ctx.guild.id
+        configuration["admin"]["guild_name"] = ctx.guild.name
+        configuration["admin"]["owner_did"] = ctx.guild.owner.id
+        configuration["admin"]["owner_dname"] = f'{ctx.guild.owner}'
+        configuration["admin"]["channels"] = channels
+        configuration["admin"]["roles"] = roles
+        configuration["admin"]["server_admins"] = server_admins
 
         # update modules
         for module in ["admin", "rackets"]:
@@ -124,9 +126,13 @@ class Admin(commands.Cog):
                             updates.append(f"- [{module}]({key})")
 
                 # choose how to sync
-                if module in ["rackets"]:  # db erase completely bot config
+                if module in ["rackets"]:
+                    # db erase completely bot config
                     configuration[module] = configuration_db[module]
-                elif module in ["admin"]:  # db is updated with bot config
+                elif module in ["admin"]:
+                    # db is updated with bot config
+                    # except for prefix
+                    configuration[module]["prefix"] = configuration_db[module].get("prefix", '!')
                     pass
                 else:
                     updates.append(f"- {module} ignored")

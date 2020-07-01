@@ -55,7 +55,6 @@ logging.error("error")
 
 # get basic config
 bot_id = os.environ.get("YATA_ID", 1)
-prefix = os.environ.get("BOT_PREFIX", "!")
 github_token = os.environ.get("GITHUB_TOKEN", "")
 main_server_id = os.environ.get("MAIN_SERVER_ID", 581227228537421825)
 
@@ -63,12 +62,15 @@ main_server_id = os.environ.get("MAIN_SERVER_ID", 581227228537421825)
 token, administrators, configurations = load_configurations(bot_id)
 
 logging.info(f'Starting bot: bot id = {bot_id}')
-logging.info(f'Starting bot: prefix = {prefix}')
+
+def get_prefix(client, message):
+    logging.debug(f'[get_prefix] {message.guild}: {client.configurations[message.guild.id]["admin"].get("prefix")}')
+    return client.configurations[message.guild.id]["admin"].get("prefix", "!")
 
 # init yata bot
 bot = YataBot(configurations=configurations,
               administrators=administrators,
-              command_prefix=prefix,
+              command_prefix=get_prefix,
               bot_id=bot_id,
               main_server_id=main_server_id,
               github_token=github_token)
