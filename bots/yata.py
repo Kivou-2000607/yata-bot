@@ -469,10 +469,10 @@ class YataBot(Bot):
         guilds = [g for g in self.guilds if self.configurations.get(g.id, {}).get(module, False)]
         return guilds
 
-    def get_guild_configuration_by_module(self, guild, module, check_channel=False):
+    def get_guild_configuration_by_module(self, guild, module, check_key=False):
         c = self.configurations.get(guild.id, {}).get(module, False)
-        if check_channel and c:
-            return c if len(c.get("channels", {})) else False
+        if check_key and c:
+            return c if len(c.get(check_key, {})) else False
         else:
             return c
 

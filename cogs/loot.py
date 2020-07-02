@@ -25,6 +25,7 @@ import datetime
 import json
 import re
 import logging
+import html
 
 # import discord modules
 from discord.ext import commands
@@ -33,7 +34,6 @@ from discord.utils import get
 from discord import Embed
 
 # import bot functions and classes
-import includes.checks as checks
 import includes.formating as fmt
 from inc.handy import *
 
@@ -52,17 +52,14 @@ class Loot(commands.Cog):
         """Gives loot timing for each NPC"""
         logging.info(f'[loot/loot] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # return if verify not active
-        if not self.bot.check_module(ctx.guild, "loot"):
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "loot")
+        if not config:
             await ctx.send(":x: Loot module not activated")
             return
 
-        # check role and channel
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "loot")
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
+        # check if channel is allowed
+        if str(ctx.channel.id) not in config.get("channels_allowed"):
             return
 
         # compute current time
@@ -106,12 +103,12 @@ class Loot(commands.Cog):
         await ctx.send("```ARM\n{}```".format("\n".join(msg)))
 
         # clean messages
-        await ctx.message.delete()
-
-        def botMessages(message):
-            return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
-        async for m in ctx.channel.history(limit=10, before=ctx.message).filter(botMessages):
-            await m.delete()
+        # await ctx.message.delete()
+        #
+        # def botMessages(message):
+        #     return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
+        # async for m in ctx.channel.history(limit=10, before=ctx.message).filter(botMessages):
+        #     await m.delete()
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
@@ -120,26 +117,39 @@ class Loot(commands.Cog):
         """Add/remove @Looter role"""
         logging.info(f'[loot/looter] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # return if loot not active
-        if not self.bot.check_module(ctx.guild, "loot"):
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "loot")
+        if not config:
             await ctx.send(":x: Loot module not activated")
             return
 
-        # Get Looter role
-        role = get(ctx.guild.roles, name="Looter")
+        # # check if channel is allowed
+        # if str(ctx.channel.id) not in config.get("channels_allowed"):
+        #     return
+
+        # get role
+        role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
+        if len(role_ids):
+            role = get(ctx.guild.roles, id=int(role_ids[0]))
+        else:
+            role = None
+
+        if role is None:
+            await ctx.send(":x: No roles has been attributer to the loot module")
 
         if role in ctx.author.roles:
             # remove Looter
             await ctx.author.remove_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for loot.")
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for loot (role @{html.unescape(role.name)}).")
         else:
             # assign Looter
             await ctx.author.add_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for loot.")
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for loot (role @{html.unescape(role.name)}).")
 
-        await asyncio.sleep(10)
-        await msg.delete()
-        await ctx.message.delete()
+        # clean messages
+        # await asyncio.sleep(10)
+        # await msg.delete()
+        # await ctx.message.delete()
 
     @tasks.loop(seconds=5)
     async def notify(self):
@@ -208,27 +218,31 @@ class Loot(commands.Cog):
         logging.debug(f"[loot/notifications] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
 
         # iteration over all guilds
-        for guild in self.bot.get_guild_module("loot"):
+        for guild in self.bot.get_guilds_by_module("loot"):
             try:
                 logging.debug(f"[loot/notifications] {guild}")
-                # # ignore non loot servers
-                # if not self.bot.check_module(guild, "loot"):
-                #     # logging.debug(f"[loot/notifications] guild {guild}: ignore.")
-                #     continue
-                # # logging.debug(f"[loot/notifications] guild {guild}: notify.")
 
-                # get full guild (async iterator doesn't return channels)
-                # guild = self.bot.get_guild(guild.id)
-
-                # get channel
-                config = self.bot.get_config(guild)
-                channel_name = self.bot.get_allowed_channels(config, "loot")[0]
-                channel = get(guild.channels, name=channel_name)
-                if channel is None:
+                config = self.bot.get_guild_configuration_by_module(guild, "loot", check_key="channels_alerts")
+                if not config:
+                    logging.info(f"[loot/notifications] No loot channels for guild {guild}")
                     continue
 
                 # get role
-                role = get(guild.roles, name="Looter")
+                role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
+                if len(role_ids):
+                    role = get(guild.roles, id=int(role_ids[0]))
+                else:
+                    role = None
+
+                # get channel
+                channel_ids = [id for id in config.get("channels_alerts", {}) if id.isdigit()]
+                if len(channel_ids):
+                    channel = get(guild.channels, id=int(channel_ids[0]))
+                else:
+                    channel = None
+
+                if channel is None:
+                    continue
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
@@ -241,9 +255,9 @@ class Loot(commands.Cog):
 
             except BaseException as e:
                 logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(e, guild_id=guild.id)
-                headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+                # await self.bot.send_log(e, guild_id=guild.id)
+                # headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
+                # await self.bot.send_log_main(e, headers=headers)
 
         # sleeps
         await asyncio.sleep(s)

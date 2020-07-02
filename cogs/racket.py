@@ -167,28 +167,30 @@ class Racket(commands.Cog):
             try:
                 logging.debug(f"[racket/notifications] {guild}")
 
-                config = self.bot.get_guild_configuration_by_module(guild, "rackets", check_channel=True)
+                config = self.bot.get_guild_configuration_by_module(guild, "rackets", check_key="channels_alerts")
                 if not config:
                     logging.info(f"[racket/notifications] No rackets channels for guild {guild}")
                     continue
 
                 # get role
-                role_ids = [id for id in config.get("roles", {}) if id.isdigit()]
+                role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
                 if len(role_ids):
                     role = get(guild.roles, id=int(role_ids[0]))
                 else:
                     role = None
 
                 # get channel
-                channel_ids = [id for id in config.get("channels", {}) if id.isdigit()]
+                channel_ids = [id for id in config.get("channels_alerts", {}) if id.isdigit()]
                 if len(channel_ids):
                     channel = get(guild.channels, id=int(channel_ids[0]))
                 else:
                     channel = None
 
-                if channel is not None:
-                    for m in mentions:
-                        msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
+                if channel is None:
+                    continue
+
+                for m in mentions:
+                    msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
 
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')

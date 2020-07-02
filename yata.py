@@ -79,7 +79,7 @@ bot = YataBot(configurations=configurations,
 
 # load classes
 # bot.add_cog(Verify(bot))
-# bot.add_cog(Loot(bot))
+bot.add_cog(Loot(bot))
 # bot.add_cog(Stocks(bot))
 # bot.add_cog(API(bot))
 # bot.add_cog(Chain(bot))
