@@ -132,7 +132,7 @@ class YataBot(Bot):
         if c is None:
             return -1, None, None
 
-        torn_ids = [v["torn_id"] for k, v in c["admin"].get("server_admins", {}).items()]
+        torn_ids = [v["torn_id"] for k, v in c.get("admin", {}).get("server_admins", {}).items()]
         if len(torn_ids):
             user = await get_yata_user(random.choice(torn_ids), type="T")
             if not len(user):

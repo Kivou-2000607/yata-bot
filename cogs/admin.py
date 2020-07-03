@@ -60,7 +60,7 @@ class Admin(commands.Cog):
 
         # get configuration from the database and create if new
         configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
-
+        
         # create in database if new
         if not configuration_db:
             logging.info(f'[admin/update] Create db configuration for {ctx.guild}')
