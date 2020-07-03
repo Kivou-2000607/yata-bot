@@ -156,8 +156,8 @@ class Racket(commands.Cog):
         await push_rackets(int(req["timestamp"]), req)
 
         # DEBUG
-        embed = Embed(title="Test Racket")
-        mentions.append(embed)
+        # embed = Embed(title="Test Racket")
+        # mentions.append(embed)
 
         if not len(mentions):
             return

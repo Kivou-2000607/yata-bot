@@ -176,8 +176,8 @@ class Stocks(commands.Cog):
     async def notify(self):
         logging.debug(f"[stock/notify] start task")
 
+        mentions = []
         try:
-
             stockInfo = {
                 "TCSE": {"id": 0, "name": "Torn City Stock Exchange", "acronym": "TCSE", "director": "None", "benefit": {"requirement": 0, "description": "None"}},
                 "TSBC": {"id": 1, "name": "Torn City and Shanghai Banking Corporation", "acronym": "TSBC", "director": "Mr. Gareth Davies", "benefit": {"requirement": 4000000, "description": "Entitled to receive occasional dividends"}},
@@ -220,9 +220,9 @@ class Stocks(commands.Cog):
                     req = await r.json()
 
             # set alerts
-            mentions = []
             for k, v in req.items():
-                del v["graph"]
+                if "graph" in v:
+                    del v["graph"]
                 alerts = v.get("alerts", dict({}))
 
                 title = False
