@@ -255,9 +255,9 @@ class Loot(commands.Cog):
 
             except BaseException as e:
                 logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                # await self.bot.send_log(e, guild_id=guild.id)
-                # headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
-                # await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
+                await self.bot.send_log_main(e, headers=headers)
 
         # sleeps
         await asyncio.sleep(s)

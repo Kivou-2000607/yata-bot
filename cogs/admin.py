@@ -132,7 +132,8 @@ class Admin(commands.Cog):
                 elif module in ["admin"]:
                     # db is updated with bot config
                     # except for prefix
-                    configuration[module]["prefix"] = configuration_db[module].get("prefix", '!')
+                    configuration[module]["prefix"] = configuration_db[module].get("prefix", {'!': '!'})
+                    configuration[module]["channel_admin"] = configuration_db[module].get("channel_admin", {'None', 0})
                     pass
                 else:
                     updates.append(f"- {module} ignored")
@@ -478,71 +479,71 @@ class Admin(commands.Cog):
     #     embed.add_field(name='How to loot', value='\n'.join(lst))
     #     await ctx.send("", embed=embed)
     #
-    # @commands.Cog.listener()
-    # async def on_command_error(self, ctx, error):
-    #     """The event triggered when an error is raised while invoking a command.
-    #     ctx   : Context
-    #     error : Exception"""
-    #
-    #     # This prevents any commands with local handlers being handled here in on_command_error.
-    #     if hasattr(ctx.command, 'on_error'):
-    #         return
-    #
-    #     # ignored errors
-    #     ignored = (commands.CommandNotFound, commands.UserInputError)
-    #     if isinstance(error, ignored):
-    #         return
-    #
-    #     logging.info(f'[admin/on_command_error] {ctx.guild} / {ctx.author.nick} / {ctx.author} / {ctx.command} / {hide_key(error)}')
-    #
-    #     # dm/guild errors
-    #     if isinstance(error, commands.NoPrivateMessage):
-    #         await self.bot.send_log_dm(error, ctx.author)
-    #         return
-    #
-    #     if isinstance(error, commands.PrivateMessageOnly):
-    #         await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
-    #         return
-    #
-    #     # classical errors
-    #     classical = (commands.MissingPermissions,
-    #                  commands.BotMissingPermissions,
-    #                  commands.MissingAnyRole,
-    #                  commands.MissingRole)
-    #     if isinstance(error, classical):
-    #         await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
-    #         return
-    #
-    #     # bugs or fatal errors
-    #
-    #     # headers
-    #     headers = {
-    #         "guild": f'{ctx.guild} [{ctx.guild.id}]',
-    #         "channel": ctx.channel,
-    #         "author": ctx.author,
-    #         "command": ctx.command,
-    #         "message": ctx.message.content,
-    #         "error": f'{type(error)}'}
-    #
-    #     # the user is missing role
-    #     if isinstance(error, commands.MissingRole):
-    #         headers["error"] = 'MissingRole'
-    #         await self.bot.send_log_main(error, headers=headers, full=True)
-    #         logging.error(error)
-    #         return
-    #
-    #     # if isinstance(error, discord.Forbidden):
-    #     #     headers["error"] = 'Forbidden'
-    #     #     logging.error(error)
-    #     #     await self.bot.send_log_main(error, headers=headers, full=True)
-    #     #     return
-    #
-    #     if isinstance(error, commands.CommandInvokeError):
-    #         headers["error"] = 'CommandInvokeError'
-    #         logging.error(f'[admin/on_command_error] {hide_key(error)}')
-    #         await self.bot.send_log_main(error, headers=headers, full=True)
-    #         return
-    #
-    #     headers["error"] = 'New error'
-    #     logging.error(f'[admin/on_command_error] {hide_key(error)}')
-    #     await self.bot.send_log_main(error, headers=headers, full=True)
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """The event triggered when an error is raised while invoking a command.
+        ctx   : Context
+        error : Exception"""
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        # ignored errors
+        ignored = (commands.CommandNotFound, commands.UserInputError)
+        if isinstance(error, ignored):
+            return
+
+        logging.info(f'[admin/on_command_error] {ctx.guild} / {ctx.author.nick} / {ctx.author} / {ctx.command} / {hide_key(error)}')
+
+        # dm/guild errors
+        if isinstance(error, commands.NoPrivateMessage):
+            await self.bot.send_log_dm(error, ctx.author)
+            return
+
+        if isinstance(error, commands.PrivateMessageOnly):
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
+
+        # classical errors
+        classical = (commands.MissingPermissions,
+                     commands.BotMissingPermissions,
+                     commands.MissingAnyRole,
+                     commands.MissingRole)
+        if isinstance(error, classical):
+            await self.bot.send_log(error, guild_id=ctx.guild.id, channel_id=ctx.channel.id, ctx=ctx)
+            return
+
+        # bugs or fatal errors
+
+        # headers
+        headers = {
+            "guild": f'{ctx.guild} [{ctx.guild.id}]',
+            "channel": ctx.channel,
+            "author": ctx.author,
+            "command": ctx.command,
+            "message": ctx.message.content,
+            "error": f'{type(error)}'}
+
+        # the user is missing role
+        if isinstance(error, commands.MissingRole):
+            headers["error"] = 'MissingRole'
+            await self.bot.send_log_main(error, headers=headers, full=True)
+            logging.error(error)
+            return
+
+        # if isinstance(error, discord.Forbidden):
+        #     headers["error"] = 'Forbidden'
+        #     logging.error(error)
+        #     await self.bot.send_log_main(error, headers=headers, full=True)
+        #     return
+
+        if isinstance(error, commands.CommandInvokeError):
+            headers["error"] = 'CommandInvokeError'
+            logging.error(f'[admin/on_command_error] {hide_key(error)}')
+            await self.bot.send_log_main(error, headers=headers, full=True)
+            return
+
+        headers["error"] = 'New error'
+        logging.error(f'[admin/on_command_error] {hide_key(error)}')
+        await self.bot.send_log_main(error, headers=headers, full=True)

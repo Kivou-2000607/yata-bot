@@ -194,9 +194,9 @@ class Racket(commands.Cog):
 
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                # await self.bot.send_log(e, guild_id=guild.id)
-                # headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
-                # await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log(f'Error during a racket alert: {e}', guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):

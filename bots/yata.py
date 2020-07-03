@@ -476,84 +476,94 @@ class YataBot(Bot):
         else:
             return c
 
-    # # NEW VERSION
-    # def get_guild_admin_channel(self, guild):
-    #     return get(guild.channels, name="yata-admin")
-    #
-    # async def send_log_main(self, log, headers=dict({}), full=False):
-    #     guild = get(self.guilds, id=581227228537421825)
-    #     channel = get(guild.channels, id=685470217002156098)
-    #     await channel.send(log_fmt(log, headers=headers, full=full))
-    #
-    # async def send_log_dm(self, log, author):
-    #     await author.send(log_fmt(log))
-    #
-    # async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
-    #     # fallback if guild_id or channel_id has not been given
-    #     if not guild_id:
-    #         logging.warning(f'[send_log] guild_id not given -> sending to main server')
-    #         await self.send_log_main(log, headers={"message": "guild_id not given"})
-    #         return
-    #
-    #     headers = {"guild_id": guild_id, "channel_id": channel_id, "note": []}
-    #     if ctx is not None:
-    #         headers["author_name"] = f'{ctx.author.nick} / {ctx.author}'
-    #         headers["author_guild"] = ctx.guild
-    #         headers["author_channel"] = ctx.channel
-    #         headers["author_message"] = ctx.message.content
-    #         headers["author_command"] = ctx.command
-    #
-    #     if not log or log == "":
-    #         loggin.warning('[send_log] empty log message')
-    #         await self.send_log_main("empty log", headers=headers)
-    #         return
-    #
-    #     logging.debug(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
-    #     guild = get(self.guilds, id=guild_id)
-    #     headers["guild"] = guild
-    #
-    #     # fallback is guild not found
-    #     if guild is None:
-    #         logging.warning(f'[send_log] guild id {guild_id} not found -> sending to main server')
-    #         await self.send_log_main(log, headers=headers)
-    #         return
-    #
-    #     channel = get(guild.channels, id=channel_id)
-    #     if channel is None:
-    #         headers["note"].append("channel id not provided")
-    #         channel = self.get_guild_admin_channel(guild)
-    #     headers["channel"] = channel
-    #
-    #     # fallback if channel is not found
-    #     if channel is None:
-    #         logging.warning(f'[send_log] channel id {channel_id} not found')
-    #         headers["note"].append("server admin channel not found")
-    #         await self.send_log_main(log, headers=headers)
-    #         return
-    #
-    #     try:
-    #         await channel.send(log_fmt(log))
-    #         logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel}')
-    #
-    #     except discord.errors.Forbidden:
-    #         headers["note"].append(f"Forbidden to write in channel {channel}")
-    #         channel_fb = self.get_guild_admin_channel(guild)
-    #
-    #         if channel_fb == channel:
-    #             await self.send_log_main(log, headers=headers)
-    #             return
-    #
-    #         headers["fallback_channel"] = channel_fb
-    #         if channel_fb is None:
-    #             headers["note"].append(f"server admin channel as fallback not found")
-    #             await self.send_log_main(log, headers=headers)
-    #             return
-    #
-    #         try:
-    #             await channel_fb.send(log_fmt(log))
-    #             logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel} (fallback channel)')
-    #             return
-    #         except discord.errors.Forbidden:
-    #             headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
-    #             await self.send_log_main(log, headers=headers)
-    #             return
+    # NEW VERSION
+    def get_guild_admin_channel(self, guild):
+        admin_id = [k for k in self.configurations.get(guild.id, {}).get("admin", {}).get("channel_admin", {})]
+        if len(admin_id) and str(admin_id[0]).isdigit():
+            return get(guild.channels, id=int(admin_id[0]))
+        else:
+            return None
+
+    async def send_log_main(self, log, headers=dict({}), full=False):
+        guild = get(self.guilds, id=self.main_server_id)
+        logging.debug(f'[send_log_main] Guild: {guild}')
+        channel = self.get_guild_admin_channel(guild)
+        logging.debug(f'[send_log_main] channel: {channel}')
+        if channel is None:
+            logging.error(f'[send_log_main] no main system channel')
+        else:
+            await channel.send(log_fmt(log, headers=headers, full=full))
+
+
+    async def send_log_dm(self, log, author):
+        await author.send(log_fmt(log))
+
+    async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
+        # fallback if guild_id or channel_id has not been given
+        if not guild_id:
+            logging.warning(f'[send_log] guild_id not given -> sending to main server')
+            await self.send_log_main(log, headers={"message": "guild_id not given"})
+            return
+
+        headers = {"guild_id": guild_id, "channel_id": channel_id, "note": []}
+        if ctx is not None:
+            headers["author_name"] = f'{ctx.author.nick} / {ctx.author}'
+            headers["author_guild"] = ctx.guild
+            headers["author_channel"] = ctx.channel
+            headers["author_message"] = ctx.message.content
+            headers["author_command"] = ctx.command
+
+        if not log or log == "":
+            loggin.warning('[send_log] empty log message')
+            await self.send_log_main("empty log", headers=headers)
+            return
+
+        logging.debug(f'[send_log] guild_id: {guild_id} channel_id: {channel_id}')
+        guild = get(self.guilds, id=guild_id)
+        headers["guild"] = guild
+
+        # fallback is guild not found
+        if guild is None:
+            logging.warning(f'[send_log] guild id {guild_id} not found -> sending to main server')
+            await self.send_log_main(log, headers=headers)
+            return
+
+        channel = get(guild.channels, id=channel_id)
+        if channel is None:
+            headers["note"].append("channel id not provided")
+            channel = self.get_guild_admin_channel(guild)
+        headers["channel"] = channel
+
+        # fallback if channel is not found
+        if channel is None:
+            logging.warning(f'[send_log] channel id {channel_id} not found')
+            headers["note"].append("server admin channel not found")
+            await self.send_log_main(log, headers=headers)
+            return
+
+        try:
+            await channel.send(log_fmt(log))
+            logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel}')
+
+        except discord.errors.Forbidden:
+            headers["note"].append(f"Forbidden to write in channel {channel}")
+            channel_fb = self.get_guild_admin_channel(guild)
+
+            if channel_fb == channel:
+                await self.send_log_main(log, headers=headers)
+                return
+
+            headers["fallback_channel"] = channel_fb
+            if channel_fb is None:
+                headers["note"].append(f"server admin channel as fallback not found")
+                await self.send_log_main(log, headers=headers)
+                return
+
+            try:
+                await channel_fb.send(log_fmt(log))
+                logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel} (fallback channel)')
+                return
+            except discord.errors.Forbidden:
+                headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
+                await self.send_log_main(log, headers=headers)
+                return
