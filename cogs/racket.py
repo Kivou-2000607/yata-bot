@@ -172,19 +172,9 @@ class Racket(commands.Cog):
                     logging.info(f"[racket/notifications] No rackets channels for guild {guild}")
                     continue
 
-                # get role
-                role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
-                if len(role_ids):
-                    role = get(guild.roles, id=int(role_ids[0]))
-                else:
-                    role = None
-
-                # get channel
-                channel_ids = [id for id in config.get("channels_alerts", {}) if id.isdigit()]
-                if len(channel_ids):
-                    channel = get(guild.channels, id=int(channel_ids[0]))
-                else:
-                    channel = None
+                # get role & channel
+                role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
                 if channel is None:
                     continue
@@ -196,7 +186,7 @@ class Racket(commands.Cog):
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a racket alert: {e}', guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on racket notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @racketsTask.before_loop
     async def before_racketsTask(self):

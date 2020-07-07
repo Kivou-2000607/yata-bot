@@ -45,6 +45,9 @@ class Loot(commands.Cog):
     def cog_unload(self):
         self.notify.cancel()
 
+    def botMessages(self, message):
+        return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
+
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
@@ -55,22 +58,19 @@ class Loot(commands.Cog):
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "loot")
         if not config:
-            await ctx.send(":x: Loot module not activated")
             return
 
         # check if channel is allowed
-        if str(ctx.channel.id) not in config.get("channels_allowed"):
+        allowed = await self.bot.check_channel_allowed(ctx, config)
+        if not allowed:
             return
 
         # compute current time
         now = int(time.time())
-        # msg = ["Latest NPC report of {} TCT, asked by {}".format(fmt.ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S"), ctx.author.mention)]
         msg = [f'NPC report of {fmt.ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT for {ctx.author.display_name}\n']
-        # msg = []
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
-        # req = requests.get(url).json()
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
@@ -87,69 +87,20 @@ class Loot(commands.Cog):
             n = 20
             i = int(advance * n / 100)
 
-            keyword = "since" if due < 0 else "to"
-
-            line = []
-            line.append(f'{npc["name"]: <7}:')
+            line = [f'{npc["name"]: <7}:']
             line.append(f'[{"=" * i}{" " * (n - i)}] ({str(advance): >3}%)')
-
-            line.append(f'{fmt.s_to_hms(abs(due))} {keyword} loot level IV')
-            # line.append(f'({fmt.ts_to_datetime(ts).strftime("%y/%m/%d %H:%M:%S")} TCT)')
+            line.append(f'{fmt.s_to_hms(abs(due))} {"since" if due < 0 else "to"} loot level IV')
             line.append(f'[{fmt.ts_to_datetime(ts).strftime("%H:%M:%S")} TCT]')
 
-            # line.append(f'https://www.torn.com/profiles.php?XID={id}')
             msg.append(" ".join(line))
 
         await ctx.send("```ARM\n{}```".format("\n".join(msg)))
 
         # clean messages
-        # await ctx.message.delete()
-        #
-        # def botMessages(message):
-        #     return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
-        # async for m in ctx.channel.history(limit=10, before=ctx.message).filter(botMessages):
-        #     await m.delete()
+        await ctx.message.delete()
 
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
-    @commands.guild_only()
-    async def looter(self, ctx):
-        """Add/remove @Looter role"""
-        logging.info(f'[loot/looter] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        # get configuration
-        config = self.bot.get_guild_configuration_by_module(ctx.guild, "loot")
-        if not config:
-            await ctx.send(":x: Loot module not activated")
-            return
-
-        # # check if channel is allowed
-        # if str(ctx.channel.id) not in config.get("channels_allowed"):
-        #     return
-
-        # get role
-        role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
-        if len(role_ids):
-            role = get(ctx.guild.roles, id=int(role_ids[0]))
-        else:
-            role = None
-
-        if role is None:
-            await ctx.send(":x: No roles has been attributer to the loot module")
-
-        if role in ctx.author.roles:
-            # remove Looter
-            await ctx.author.remove_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for loot (role @{html.unescape(role.name)}).")
-        else:
-            # assign Looter
-            await ctx.author.add_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for loot (role @{html.unescape(role.name)}).")
-
-        # clean messages
-        # await asyncio.sleep(10)
-        # await msg.delete()
-        # await ctx.message.delete()
+        async for m in ctx.channel.history(limit=10, before=ctx.message).filter(self.botMessages):
+            await m.delete()
 
     @tasks.loop(seconds=5)
     async def notify(self):
@@ -170,7 +121,6 @@ class Loot(commands.Cog):
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
-        # req = requests.get(url).json()
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
@@ -227,39 +177,27 @@ class Loot(commands.Cog):
                     logging.info(f"[loot/notifications] No loot channels for guild {guild}")
                     continue
 
-                # get role
-                role_ids = [id for id in config.get("roles_alerts", {}) if id.isdigit()]
-                if len(role_ids):
-                    role = get(guild.roles, id=int(role_ids[0]))
-                else:
-                    role = None
-
-                # get channel
-                channel_ids = [id for id in config.get("channels_alerts", {}) if id.isdigit()]
-                if len(channel_ids):
-                    channel = get(guild.channels, id=int(channel_ids[0]))
-                else:
-                    channel = None
+                # get role & channel
+                role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
                 if channel is None:
                     continue
 
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
-                    # logging.info(f"[LOOT] guild {guild}: mention {m}.")
-                    # await channel.send(f'{role.mention}, go for {m} equip Tear Gas or Smoke Grenade', embed=e)
-                    if role is None:
-                        await channel.send(f'Go for {m}', embed=e)
-                    else:
-                        await channel.send(f'{role.mention}, go for {m}', embed=e)
+                    logging.debug(f"[LOOT] guild {guild}: mention {m}.")
+                    msg = f'Go for {m}' if role is None else f'{role.mention}, go for {m}'
+                    await channel.send(msg, embed=e)
 
             except BaseException as e:
                 logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         # sleeps
+        logging.debug(f"[loot/notifications] sleep for {s} seconds")
         await asyncio.sleep(s)
 
     @notify.before_loop

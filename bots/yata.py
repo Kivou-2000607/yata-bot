@@ -24,6 +24,7 @@ import aiohttp
 import traceback
 import html
 import logging
+import asyncio
 
 # import discord modules
 import discord
@@ -143,73 +144,79 @@ class YataBot(Bot):
         else:
             return -1, None, None
 
-    # async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False):
-    #     """ gets a key from discord member
-    #         return status, tornId, Name, key
-    #         return 0, id, Name, Key: All good
-    #         return -1, None, None, None: no master key given
-    #         return -2, None, None, None: master key api error
-    #         return -3, master_id, None, master_key: user not verified
-    #         return -4, id, None, master_key: did not find torn id in yata db
-    #         return -5, id, Name, master_key: member did not give perm (OLD)
-    #
-    #         if returnMaster: return master key if key not available
-    #         else return None
-    #     """
-    #
-    #     # get master key to check identity
-    #
-    #     # logging.info(f"[GET USER KEY] <{ctx.guild}> get master key")
-    #     master_status, master_id, master_key = await self.get_master_key(ctx.guild)
-    #     if master_status == -1:
-    #         # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
-    #         m = await ctx.send(":x: no master key given")
-    #         if delError:
-    #             await asyncio.sleep(5)
-    #             await m.delete()
-    #         return -1, None, None, None
-    #     # logging.info(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
-    #
-    #     # get torn id from discord id
-    #
-    #     # logging.info(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
-    #     tornId, msg = await self.discord_to_torn(member, master_key)
-    #
-    #     # handle master api error or not verified member
-    #
-    #     if tornId == -1:
-    #         # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
-    #         m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
-    #         if delError:
-    #             await asyncio.sleep(5)
-    #             await m.delete()
-    #         return -2, None, None, None
-    #     elif tornId == -2:
-    #         # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
-    #         m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
-    #         if delError:
-    #             await asyncio.sleep(5)
-    #             await m.delete()
-    #         return -3, master_id, None, master_key if returnMaster else None
-    #
-    #     # get YATA user
-    #
-    #     user = await get_yata_user(tornId)
-    #
-    #     # handle user not on YATA
-    #     if not len(user):
-    #         # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
-    #         m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
-    #         if delError:
-    #             await asyncio.sleep(5)
-    #             await m.delete()
-    #         return -4, tornId, None, master_key if returnMaster else None
-    #
-    #     # Return user if perm given
-    #
-    #     user = tuple(user[0])
-    #     return 0, user[0], user[1], user[2]
-    #
+    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False):
+        """ gets a key from discord member
+            return status, tornId, Name, key
+            return 0, id, Name, Key: All good
+            return -1, None, None, None: no master key given
+            return -2, None, None, None: master key api error
+            return -3, master_id, None, master_key: user not verified
+            return -4, id, None, master_key: did not find torn id in yata db
+
+            if returnMaster: return master key if key not available
+            else return None
+        """
+
+        # skip all if user in yata with discord id
+        user = await get_yata_user(member.id, type="D")
+        if len(user):
+            user = tuple(user[0])
+            logging.debug(f"[get_user_key] got user from discord id: {user[1]} {user[0]}")
+            return 0, user[0], user[1], user[2]
+
+        # get master key to check identity
+
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> get master key")
+        master_status, master_id, master_key = await self.get_master_key(ctx.guild)
+        if master_status == -1:
+            # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
+            m = await ctx.send(":x: no master key given")
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
+            return -1, None, None, None
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
+
+        # get torn id from discord id
+
+        # logging.info(f"[GET USER KEY] <{ctx.guild}> get torn id for {member} [{member.id}]")
+        tornId, msg = await self.discord_to_torn(member, master_key)
+
+        # handle master api error or not verified member
+
+        if tornId == -1:
+            # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
+            m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
+            return -2, None, None, None
+        elif tornId == -2:
+            # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
+            m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
+            return -3, master_id, None, master_key if returnMaster else None
+
+        # get YATA user
+
+        user = await get_yata_user(tornId, type="T")
+
+        # handle user not on YATA
+        if not len(user):
+            # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
+            m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
+            if delError:
+                await asyncio.sleep(5)
+                await m.delete()
+            return -4, tornId, None, master_key if returnMaster else None
+
+        # Return user if perm given
+
+        user = tuple(user[0])
+        return 0, user[0], user[1], user[2]
+
     # def check_module(self, guild, module):
     #     """ check_module: helper function
     #         check if guild activated a module
@@ -476,13 +483,24 @@ class YataBot(Bot):
         else:
             return c
 
-    # NEW VERSION
     def get_guild_admin_channel(self, guild):
         admin_id = [k for k in self.configurations.get(guild.id, {}).get("admin", {}).get("channel_admin", {})]
         if len(admin_id) and str(admin_id[0]).isdigit():
             return get(guild.channels, id=int(admin_id[0]))
         else:
             return None
+
+    async def check_channel_allowed(self, ctx, config):
+        if str(ctx.channel.id) not in config.get("channels_allowed"):
+            channels = [get(ctx.guild.channels, id=int(k)) for k in config.get("channels_allowed", {}) if str(k).isdigit()]
+            msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join([c.mention for c in channels if c is not None])}.')
+            await asyncio.sleep(5)
+            await msg.delete()
+            await ctx.message.delete()
+            return False
+        else:
+            return True
+
 
     async def send_log_main(self, log, headers=dict({}), full=False):
         guild = get(self.guilds, id=self.main_server_id)
@@ -567,3 +585,43 @@ class YataBot(Bot):
                 headers["note"].append(f"Forbidden to write in admin channel {channel_fb}")
                 await self.send_log_main(log, headers=headers)
                 return
+
+    def get_module_role(self, guild_roles, configuration_roles, all=False):
+        """ gets the role of a module for a guild:
+            - guild_roles: the list of the roles of the guild
+            - configuration_roles: the list of the roles of the configuration
+            - all: return all roles if true, only the first one if False
+
+            return: role, list of roles or None (if didn't find anything)
+        """
+        role_ids = [id for id in configuration_roles if id.isdigit()]
+        if len(role_ids):
+            if all:
+                return [get(guild_roles, id=int(id)) for id in role_ids]
+            else:
+                return get(guild_roles, id=int(role_ids[0]))
+        else:
+            if all:
+                return [None]
+            else:
+                return None
+
+    def get_module_channel(self, guild_channels, configuration_channels, all=False):
+        """ gets the channel of a module for a guild:
+            - guild_channels: the list of the channels of the guild
+            - configuration_channels: the list of the channels of the configuration
+            - all: return all channels if true, only the first one if False
+
+            return: channel, list of channels or None (if didn't find anything)
+        """
+        channel_ids = [id for id in configuration_channels if id.isdigit()]
+        if len(channel_ids):
+            if all:
+                return [get(guild_channels, id=int(id)) for id in channel_ids]
+            else:
+                return get(guild_channels, id=int(channel_ids[0]))
+        else:
+            if all:
+                return [None]
+            else:
+                return None

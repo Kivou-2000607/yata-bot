@@ -25,6 +25,7 @@ import traceback
 import sys
 import logging
 import html
+import asyncio
 
 # import discord modules
 import discord
@@ -60,7 +61,7 @@ class Admin(commands.Cog):
 
         # get configuration from the database and create if new
         configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
-        
+
         # create in database if new
         if not configuration_db:
             logging.info(f'[admin/update] Create db configuration for {ctx.guild}')
@@ -115,7 +116,7 @@ class Admin(commands.Cog):
         configuration["admin"]["server_admins"] = server_admins
 
         # update modules
-        for module in ["admin", "rackets", "loot"]:
+        for module in ["admin", "rackets", "loot", "revive"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
@@ -126,14 +127,14 @@ class Admin(commands.Cog):
                             updates.append(f"- [{module}]({key})")
 
                 # choose how to sync
-                if module in ["rackets", "loot"]:
+                if module in ["rackets", "loot", "revive"]:
                     # db erase completely bot config
                     configuration[module] = configuration_db[module]
                 elif module in ["admin"]:
                     # db is updated with bot config
                     # except for prefix
                     configuration[module]["prefix"] = configuration_db[module].get("prefix", {'!': '!'})
-                    configuration[module]["channel_admin"] = configuration_db[module].get("channel_admin", {'None', 0})
+                    configuration[module]["channel_admin"] = configuration_db[module].get("channel_admin", {'None': 0})
                     pass
                 else:
                     updates.append(f"- {module} ignored")
@@ -143,6 +144,7 @@ class Admin(commands.Cog):
                 updates.append(f"- [{module}](disabled)")
 
         # push configuration
+        print(json.dumps(configuration))
         await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
 
         self.bot.configurations[ctx.guild.id] = configuration
@@ -479,6 +481,55 @@ class Admin(commands.Cog):
     #     embed.add_field(name='How to loot', value='\n'.join(lst))
     #     await ctx.send("", embed=embed)
     #
+
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.guild_only()
+    async def assign(self, ctx, *args):
+        logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        # check argument
+        logging.debug(f'[admin/assign] args: {args}')
+        modules = ["revive", "rackets", "loot"]
+        if len(args) and args[0] in modules:
+            module = args[0]
+        else:
+            await ctx.send(f':x: Modules with self assignement roles: {", ".join(modules)}.')
+            return
+
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, module)
+        if not config:
+            await ctx.send(f":x: {module} module not activated")
+            return
+
+        # # check if channel is allowed
+        # allowed = await self.bot.check_channel_allowed(ctx, config)
+        # if not allowed:
+        #     return
+
+        # get role
+        role =  self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
+
+        if role is None:
+            # not role
+            msg = await ctx.send(":x: No roles has been attributed to the rackets module")
+
+        elif role in ctx.author.roles:
+            # remove
+            await ctx.author.remove_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for {module} (role @{html.unescape(role.name)}).")
+        else:
+            # assign
+            await ctx.author.add_roles(role)
+            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for {module} (role @{html.unescape(role.name)}).")
+
+        # clean messages
+        await asyncio.sleep(5)
+        await msg.delete()
+        await ctx.message.delete()
+
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
