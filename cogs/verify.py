@@ -76,8 +76,10 @@ class Verify(commands.Cog):
         message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
         # send message to welcome channel
-        for channel in self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {})):
-            await channel.send(message)
+        channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
+        if channel is None:
+            return
+        await channel.send(message)
 
         # if not Automatically verified send private message
         if not success and config.get("other", {}).get("force_verify", False):
