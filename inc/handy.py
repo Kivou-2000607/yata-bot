@@ -17,7 +17,7 @@ def now():
     return datetime.datetime.utcnow()
 
 def ts_now():
-    return datetime.datetime.timestamp(datetime.datetime.utcnow())
+    return int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
 
 def ts_format(timestamp, fmt=None):
     d = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)

@@ -116,7 +116,7 @@ class Admin(commands.Cog):
         configuration["admin"]["server_admins"] = server_admins
 
         # update modules
-        for module in ["admin", "rackets", "loot", "revive"]:
+        for module in ["admin", "rackets", "loot", "revive", "verify"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
@@ -127,14 +127,14 @@ class Admin(commands.Cog):
                             updates.append(f"- [{module}]({key})")
 
                 # choose how to sync
-                if module in ["rackets", "loot", "revive"]:
+                if module in ["rackets", "loot", "revive", "verify"]:
                     # db erase completely bot config
                     configuration[module] = configuration_db[module]
                 elif module in ["admin"]:
                     # db is updated with bot config
                     # except for prefix
                     configuration[module]["prefix"] = configuration_db[module].get("prefix", {'!': '!'})
-                    configuration[module]["channel_admin"] = configuration_db[module].get("channel_admin", {'None': 0})
+                    configuration[module]["channels_admin"] = configuration_db[module].get("channels_admin", {'None': 0})
                     pass
                 else:
                     updates.append(f"- {module} ignored")
@@ -142,6 +142,7 @@ class Admin(commands.Cog):
             elif module in configuration and module not in ["admin"]:
                 configuration.pop(module)
                 updates.append(f"- [{module}](disabled)")
+
 
         # push configuration
         print(json.dumps(configuration))
@@ -545,7 +546,7 @@ class Admin(commands.Cog):
         if isinstance(error, ignored):
             return
 
-        logging.info(f'[admin/on_command_error] {ctx.guild} / {ctx.author.nick} / {ctx.author} / {ctx.command} / {hide_key(error)}')
+        logging.info(f'[admin/on_command_error] {ctx.guild} / {ctx.author} / {ctx.command} / {hide_key(error)}')
 
         # dm/guild errors
         if isinstance(error, commands.NoPrivateMessage):

@@ -64,8 +64,11 @@ token, administrators, configurations = load_configurations(bot_id)
 logging.info(f'Starting bot: bot id = {bot_id}')
 
 def get_prefix(client, message):
-    logging.debug(f'[get_prefix] {message.guild}: {client.configurations[message.guild.id].get("admin", {}).get("prefix")}')
-    return client.configurations[message.guild.id].get("admin", {}).get("prefix", "!")
+    if message.guild:
+        logging.debug(f'[get_prefix] {message.guild}: {client.configurations[message.guild.id].get("admin", {}).get("prefix")}')
+        return client.configurations[message.guild.id].get("admin", {}).get("prefix", "!")
+    else:
+        return "!"
 
 # init yata bot
 bot = YataBot(configurations=configurations,
@@ -78,7 +81,7 @@ bot = YataBot(configurations=configurations,
 bot.remove_command('help')
 
 # load classes
-# bot.add_cog(Verify(bot))
+bot.add_cog(Verify(bot))
 bot.add_cog(Loot(bot))
 # bot.add_cog(Stocks(bot))
 # bot.add_cog(API(bot))

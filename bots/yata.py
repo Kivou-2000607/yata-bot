@@ -484,7 +484,7 @@ class YataBot(Bot):
             return c
 
     def get_guild_admin_channel(self, guild):
-        admin_id = [k for k in self.configurations.get(guild.id, {}).get("admin", {}).get("channel_admin", {})]
+        admin_id = [k for k in self.configurations.get(guild.id, {}).get("admin", {}).get("channels_admin", {})]
         if len(admin_id) and str(admin_id[0]).isdigit():
             return get(guild.channels, id=int(admin_id[0]))
         else:
@@ -494,6 +494,17 @@ class YataBot(Bot):
         if str(ctx.channel.id) not in config.get("channels_allowed"):
             channels = [get(ctx.guild.channels, id=int(k)) for k in config.get("channels_allowed", {}) if str(k).isdigit()]
             msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join([c.mention for c in channels if c is not None])}.')
+            await asyncio.sleep(5)
+            await msg.delete()
+            await ctx.message.delete()
+            return False
+        else:
+            return True
+
+    async def check_channel_admin(self, ctx):
+        channel_admin = self.get_guild_admin_channel(ctx.guild)
+        if ctx.channel is not channel_admin or channel_admin is None:
+            msg = await ctx.send(f':no_entry: This command needs to be done in the admin channel: {"unset" if channel_admin is None else channel_admin.mention}.')
             await asyncio.sleep(5)
             await msg.delete()
             await ctx.message.delete()
