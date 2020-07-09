@@ -26,6 +26,7 @@ import os
 import asyncpg
 import psycopg2
 import logging
+import html
 from datetime import datetime
 
 # definition of the view linking Player to Key
@@ -203,13 +204,17 @@ def get_rackets():
 
 
 async def get_faction_name(tId):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    row = await con.fetchrow('SELECT name FROM faction_faction WHERE "tId" = $1', tId)
-    await con.close()
-    return f'Faction [{tId}]' if row is None else f'{row.get("name", "Faction")} [{tId}]'
+    if str(tId).isdigit():
+        tId = int(tId)
+        db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+        dbname = db_cred["dbname"]
+        del db_cred["dbname"]
+        con = await asyncpg.connect(database=dbname, **db_cred)
+        row = await con.fetchrow('SELECT name FROM faction_faction WHERE "tId" = $1', tId)
+        await con.close()
+        return f'Faction [{tId}]' if row is None else f'{html.unescape(row.get("name", "Faction"))} [{tId}]'
+    else:
+        return f'Faction [{tId}]'
 
 #
 # async def reset_notifications(tornId):

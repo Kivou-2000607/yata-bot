@@ -32,6 +32,7 @@ from discord.ext import tasks
 
 # import bot functions and classes
 from inc.yata_db import set_configuration
+from inc.yata_db import get_faction_name
 
 from inc.handy import *
 
@@ -498,18 +499,30 @@ class Verify(commands.Cog):
         # get verified role
         vrole = self.bot.get_module_role(guild.roles, config.get("roles_verified", {}))
 
+        # get unique faction_roles
+        all_faction_roles = [id for faction_id, faction_roles_id in config.get("factions", {}).items() for id in faction_roles_id]
+
         # loop over factions
         for faction_id, faction_roles_id in config.get("factions", {}).items():
-            await channel.send(f"**Check faction id `{faction_id}`**")
 
             # Get faction roles
             faction_roles = [_ for _ in self.bot.get_module_role(guild.roles, faction_roles_id, all=True) if _ is not None]
-            roles_list = [f'`@{faction_role}`' for faction_role in faction_roles]
+            faction_roles_unique = [_ for _ in faction_roles if all_faction_roles.count(str(_.id)) == 1]
+            roles_list = ", ".join([f'@{faction_role}' for faction_role in faction_roles])
+            faction_name = await get_faction_name(faction_id)
+            print(faction_name)
+
+            if not len(faction_roles_unique):
+                await channel.send(f'```md\n# Checking {faction_name}\n< Roles > {roles_list}\n< error > None of the following roles are unique```')
+                continue
+
+            await channel.send(f'```md\n# Checking {faction_name}\n< Roles > {roles_list}\n< Unique role > @{faction_roles_unique[0]}```')
 
             # api call with members list from torn
             status, tornIdForKey, key = await self.bot.get_master_key(guild)
             if status == -1:
-                await channel.send(":x: No master key given")
+                msg = "No master key given"
+                await channel.send(f"```md\n< error >{msg}```")
                 continue
 
             url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
@@ -519,7 +532,8 @@ class Verify(commands.Cog):
 
             # deal with api error
             if "error" in req:
-                await channel.send(f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*')
+                msg = f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*'
+                await channel.send(f"```md\n< error >{msg}```")
                 return
 
             members_torn = req.get("members", dict({}))
@@ -535,7 +549,8 @@ class Verify(commands.Cog):
                 if len(regex) == 1 and regex[0].isdigit():
                     tornId = int(regex[0])
                 else:
-                    await channel.send(f"`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** could not find torn ID within their display name. So I'm not checking them. :x:")
+                    await channel.send(f"```md\n< error >{msg}```")
+                    await channel.send(f"```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} could not find torn ID within their display name (not checking them)```")
                     continue
 
                 # check if member still in faction
@@ -547,7 +562,7 @@ class Verify(commands.Cog):
                         for faction_role in faction_roles:
                             await m.remove_roles(faction_role)
 
-                        await channel.send(f'`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not part of **Faction [{faction_id}]** anymore: role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)} has been removed :x:')
+                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} not part of {faction_name} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
 
                         # verify him again see if he has a new faction on the server
                         if ctx:
@@ -557,9 +572,9 @@ class Verify(commands.Cog):
                         await channel.send(message)
 
                     else:
-                        await channel.send(f'`{i+1:03d}/{len(members_with_role):03d}` **{m.display_name}** not part of **Faction [{faction_id}]** anymore: role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)} has been removed :x:')
+                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} not part of {faction_name} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
 
-        await channel.send(f"Done checking")
+        await channel.send(f"```md\n# done checking```")
 
     @tasks.loop(hours=1)
     async def dailyVerify(self):
