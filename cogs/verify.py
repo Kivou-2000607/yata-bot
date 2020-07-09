@@ -338,7 +338,7 @@ class Verify(commands.Cog):
                     return ":x: There is an API key problem ({}).".format(req['error']['error']), False
                 userID = req['discord'].get("userID")
                 if userID == '':
-                    return f":x: **{author}** you have not been verified because you didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                    return f"{author}, you are not officially verified by Torn", False
 
             # case discordID is given
             # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
@@ -351,7 +351,7 @@ class Verify(commands.Cog):
                 if 'error' in req:
                     return ":x: There is an API key problem ({}).".format(req['error']['error']), False
                 if req['discord'].get("userID") == '':
-                    return f":x: **{guild.get_member(discordID)}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                    return f"{guild.get_member(discordID)} is not officially verified by Torn", False
                 else:
                     userID = int(req['discord'].get("userID"))
 
@@ -366,9 +366,9 @@ class Verify(commands.Cog):
             # check api error
             if 'error' in req:
                 if int(req['error']['code']) == 6:
-                    return f":x: Torn ID `{userID}` is not known. Please check again.", False
+                    return f"Torn ID `{userID}` is not known. Please check again.", False
                 else:
-                    return ":x: There is a API key problem ({}).".format(req['error']['error']), False
+                    return "There is a API key problem ({}).".format(req['error']['error']), False
 
             # check != id shouldn't append or problem in torn API
             dis = req.get("discord")
@@ -382,7 +382,7 @@ class Verify(commands.Cog):
 
             if discordID is None:
                 # the guy did not log into torn discord
-                return f":x: **{nickname}** has not been verified because they didn't register to the official Torn discord server: https://www.torn.com/discord", False
+                return f"{nickname} is not officially verified by Torn", False
 
             # the guy already log in torn discord
             if author_verif:
@@ -392,7 +392,8 @@ class Verify(commands.Cog):
                 except BaseException:
                     if context:
                         # only send this message if ctx is a context (context=True)
-                        await ctx.send(f":no_entry: I don't have the permission to change your nickname.")
+                        # await ctx.send(f":no_entry: I don't have the permission to change your nickname.")
+                        pass
                 await author.add_roles(verified_role)
 
                 # Get faction roles
@@ -406,7 +407,7 @@ class Verify(commands.Cog):
                     await author.add_roles(faction_role)
                     roles_list.append(f'`@{faction_role}`')
 
-                return f':white_check_mark: **{author}**, you\'ve been verified and are now known as **{author.mention}**. You have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
+                return f'{author}, you\'ve been verified and are now known as **{author.mention}**. You have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
 
             else:
                 # loop over all members to check if the id exists
@@ -417,7 +418,8 @@ class Verify(commands.Cog):
                         except BaseException:
                             if context:
                                 # only send this message if ctx is a context (context=True)
-                                await ctx.send(f":no_entry: I don't have the permission to change {member.nick}'s nickname.")
+                                # await ctx.send(f":no_entry: I don't have the permission to change {member.nick}'s nickname.")
+                                pass
                         await member.add_roles(verified_role)
 
                         # Get faction roles
@@ -431,10 +433,10 @@ class Verify(commands.Cog):
                             await member.add_roles(faction_role)
                             roles_list.append(f'`@{faction_role}`')
 
-                        return f':white_check_mark: **{member}**, has been verified and is now known as **{member.mention}**. They have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
+                        return f'**{member}**, has been verified and is now known as **{member.mention}**. They have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
 
                 # if no match in this loop it means that the member is not in this server
-                return f":x: You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
+                return f"You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
@@ -452,12 +454,16 @@ class Verify(commands.Cog):
         # get key
         status, tornId, key = await self.bot.get_master_key(guild)
         if status == -1:
+            await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< error > no master key```')
             return
 
         # Get Verified role
         role = self.bot.get_module_role(guild.roles, config.get("roles_verified", {}))
         if role is None:
+            await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< error > no verified roles set```')
             return
+
+        await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< Verified role > @{role}```')
 
         # loop over members
         members = guild.members
@@ -470,11 +476,9 @@ class Verify(commands.Cog):
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = ":".join(message.split(":")[2:]).strip()
-                emo = message.split(":")[1]
 
                 if not _:
-                    await channel.send(f"`{i+1:03d}/{len(members):03d} {member.nick}` {msg}")
+                    await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {member.nick}: {message}```")
                 continue
 
             elif role in member.roles:
@@ -484,10 +488,11 @@ class Verify(commands.Cog):
                     message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
-                msg = ":".join(message.split(":")[2:]).strip()
-                emo = message.split(":")[1]
 
-                await channel.send(f"`{i+1:03d}/{len(members):03d}` {msg}")
+                await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {message}```")
+
+        await channel.send(f"```md\n# done verifying```")
+
 
     async def _loop_check(self, guild, channel, ctx=False, force=False):
 
