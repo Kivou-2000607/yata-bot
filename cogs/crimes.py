@@ -35,6 +35,7 @@ from discord.ext import tasks
 import includes.checks as checks
 import includes.formating as fmt
 from includes.yata_db import push_configurations
+from inc.yata_db import set_configuration
 from inc.handy import *
 
 class Crimes(commands.Cog):
@@ -45,133 +46,58 @@ class Crimes(commands.Cog):
     def cog_unload(self):
         self.ocTask.cancel()
 
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def ocs(self, ctx):
-        """ list all current ocs watching
-        """
-        # return if chain not active
-        if not self.bot.check_module(ctx.guild, "crimes"):
-            await ctx.send(":x: Crimes module not activated")
-            return
-
-        # check channels
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = ["yata-admin"]
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
-        ocs = config["crimes"].get("oc")
-        if ocs is None or not len(ocs):
-            await ctx.send("You're not watching any ocs.")
-        for v in ocs.values():
-            channel = get(ctx.guild.channels, id=v["channelId"])
-            admin = get(ctx.guild.channels, name="yata-admin")
-            notify = 'nobody' if v["roleId"] is None else f'<@&{v["roleId"]}>'
-            lst = [f'{v["name"]} [{v["tornId"]}] is notifying {notify} for ocs in #{channel}.',
-                   f'It can be stopped either by them typing `!oc` in #{channel} or anyone typing `!stopoc {v["tornId"]}` in #{admin}.']
-            await ctx.send("\n".join(lst))
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def stopoc(self, ctx, *args):
-        """ force stop a oc watching (for admin)
-        """
-        # return if chain not active
-        if not self.bot.check_module(ctx.guild, "crimes"):
-            await ctx.send(":x: Crimes module not activated")
-            return
-
-        # check channels
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
-        if len(args) and args[0].isdigit():
-            tornId = str(args[0])
-        else:
-            admin = get(ctx.guild.channels, name="yata-admin")
-            lst = ["If you want to stop watching ocs you started simply type `!oc` in the channel you started it.",
-                   f"If you want to stop watching ocs someone else started you need to enter a user Id in {admin.mention}.",
-                   f"Type `!ocs` in {admin.mention} for more detals."]
-            await ctx.send("\n".join(lst))
-            return
-
-        ocs = config["crimes"].get("oc")
-        if ocs is None:
-            await ctx.send("You're not watching any ocs.")
-        elif str(tornId) not in ocs:
-            await ctx.send(f"Player {tornId} was not watching any ocs.")
-        else:
-            v = config["crimes"]["oc"][str(tornId)]
-            name = v.get("name")
-            channel = get(ctx.guild.channels, id=v["channelId"])
-            del config["crimes"]["oc"][str(tornId)]
-            if channel is not None:
-                await channel.send(f':x: **{name} [{tornId}]**: Stop watching ocs on behalf of {ctx.author.nick}.')
-
-            self.bot.configs[str(ctx.guild.id)] = config
-            await push_configurations(self.bot.bot_id, self.bot.configs)
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def ocready(self, ctx, *args):
-        """ list oc ready
-        """
-        logging.info(f'[oc/ocready] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        # return if chain not active
-        if not self.bot.check_module(ctx.guild, "crimes"):
-            await ctx.send(":x: Crimes module not activated")
-            return
-
-        # check channels
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return
-
-        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
-
-        if status < 0:
-            return
-
-        # make api call
-        url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        # handle API error
-        if "error" in req:
-            await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
-            return
-
-        crimes = req["crimes"]
-        members = req["members"]
-        for k, v in crimes.items():
-            ready = not v["time_left"] and not v["time_completed"]
-            if ready:
-                lst = ['```YAML', f'OC: {v["crime_name"]} #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
-                # logging.info(k, v)
-                for p in v["participants"]:
-                    tId = list(p)[0]
-                    name = members.get(tId, dict({"name": "Player"}))["name"]
-                    status = list(p.values())[0]
-                    lst.append(f'    {name}: {status["state"]} ({status["description"]})')
-
-                lst.append('```')
-                await ctx.send(f"\n".join(lst))
+    # @commands.command()
+    # @commands.bot_has_permissions(send_messages=True)
+    # @commands.guild_only()
+    # async def ocready(self, ctx, *args):
+    #     """ list oc ready
+    #     """
+    #     logging.info(f'[oc/ocready] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+    #
+    #     # return if chain not active
+    #     if not self.bot.check_module(ctx.guild, "crimes"):
+    #         await ctx.send(":x: Crimes module not activated")
+    #         return
+    #
+    #     # check channels
+    #     config = self.bot.get_config(ctx.guild)
+    #     ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
+    #     if await checks.channels(ctx, ALLOWED_CHANNELS):
+    #         pass
+    #     else:
+    #         return
+    #
+    #     status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
+    #
+    #     if status < 0:
+    #         return
+    #
+    #     # make api call
+    #     url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
+    #     async with aiohttp.ClientSession() as session:
+    #         async with session.get(url) as r:
+    #             req = await r.json()
+    #
+    #     # handle API error
+    #     if "error" in req:
+    #         await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
+    #         return
+    #
+    #     crimes = req["crimes"]
+    #     members = req["members"]
+    #     for k, v in crimes.items():
+    #         ready = not v["time_left"] and not v["time_completed"]
+    #         if ready:
+    #             lst = ['```YAML', f'OC: {v["crime_name"]} #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
+    #             # logging.info(k, v)
+    #             for p in v["participants"]:
+    #                 tId = list(p)[0]
+    #                 name = members.get(tId, dict({"name": "Player"}))["name"]
+    #                 status = list(p.values())[0]
+    #                 lst.append(f'    {name}: {status["state"]} ({status["description"]})')
+    #
+    #             lst.append('```')
+    #             await ctx.send(f"\n".join(lst))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -181,68 +107,85 @@ class Crimes(commands.Cog):
         """
         logging.info(f'[oc/oc] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # return if chain not active
-        if not self.bot.check_module(ctx.guild, "crimes"):
-            await ctx.send(":x: Crimes module not activated")
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "oc")
+        if not config:
             return
 
-        # check channels
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
-        if await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
+        # check if channel is allowed
+        allowed = await self.bot.check_channel_allowed(ctx, config)
+        if not allowed:
             return
 
-        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
+        # init currents
+        if "currents" not in self.bot.configurations[ctx.guild.id]["oc"]:
+            self.bot.configurations[ctx.guild.id]["oc"]["currents"] = {}
 
-        # just to be sure
-        tornId = str(tornId)
+        currents = config.get("currents", {})
 
-        if config["crimes"].get("oc") is None:
-            config["crimes"]["oc"] = dict({})
+        # delete if already exists
+        if str(ctx.author.id) in currents:
+            lst = ["```md", "# Tracking organized crimes"]
+            for k, v in currents[str(ctx.author.id)].items():
+                lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
+            lst += ['', '<STOP>', "```"]
+            await ctx.channel.send("\n".join(lst))
+            del self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)]
+            await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+            return
 
-        if status == 0:
+        current = {"channel": [str(ctx.channel.id), f'{ctx.channel.name}', '#'],
+                   "discord_user": [str(ctx.author.id), f'{ctx.author}', '']}
 
-            if len(args) and args[0].replace("<@&", "").replace(">", "").isdigit():
-                roleId = int(args[0].replace("<@&", "").replace(">", ""))
-            else:
-                roleId = None
+       # get torn user
+        status, tornId, name, _ = await self.bot.get_user_key(ctx, ctx.author)
+        if status < 0:
+            lst = ['```md', f'# Tracking organized crimes', f'< error > could not get {ctx.author}\'s API key```']
+            await ctx.channel.send("\n".join(lst))
+            return
+        current["torn_user"] = [str(tornId), name, '']
 
-            if str(tornId) in config["crimes"].get("oc"):
-                del config["crimes"]["oc"][str(tornId)]
-                await ctx.send(f':x: **{name} [{tornId}]**: Stop watching organized crimes.')
-            else:
-                oc = {"name": name,
-                      "tornId": str(tornId),
-                      "key": key,
-                      "roleId": roleId,
-                      "channelId": ctx.channel.id}
-                config["crimes"]["oc"][str(tornId)] = oc
-
-                notified = "Nobody" if roleId is None else f"<@&{roleId}>"
-                await ctx.send(f':white_check_mark: **{name} [{tornId}]** Start watching organized crimes for their faction in {ctx.channel.mention}. {notified} will be notified.')
-
+        # get role
+        if len(args) and args[0].replace("<@&", "").replace(">", "").isdigit():
+            role = get(ctx.guild.roles, id=int(int(args[0].replace("<@&", "").replace(">", ""))))
         else:
-            if str(tornId) in config["crimes"].get("oc"):
-                del config["crimes"]["oc"][str(tornId)]
-                await ctx.send(f':x: **{name} [{tornId}]**: Stop watching organized crimes.')
+            role = None
 
-        self.bot.configs[str(ctx.guild.id)] = config
-        await push_configurations(self.bot.bot_id, self.bot.configs)
+        if role is not None:
+            current["role"] = [str(role.id), f'{role}', '@']
+
+        lst = ["```md", "# Tracking organized crimes"]
+        for k, v in current.items():
+            lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
+        lst += ['', '<START>', "```"]
+        await ctx.channel.send("\n".join(lst))
+        self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)] = current
+        await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
     async def _oc(self, guild, oc):
-
-        key = oc.get("key")
-        tornId = str(oc.get("tornId"))
-        name = oc.get("name")
-        roleId = oc.get("roleId")
-        channelId = oc.get("channelId")
-
-        channel = get(guild.channels, id=channelId)
-        notified = " " if roleId is None else f" <@&{roleId}> "
+        print(oc)
+        # get channel
+        channelId = oc.get("channel")[0] if len(oc.get("channel", {})) else None
+        channel = get(guild.channels, id=int(channelId))
         if channel is None:
             return False
+
+        # get discord member
+        discord_id = oc.get("discord_user")[0] if len(oc.get("discord_user", {})) else "0"
+        discord_member = get(guild.members, id=int(discord_id))
+        if discord_member is None:
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > discord member {discord_member} not found```')
+            return False
+
+        # get torn id, name and key
+        status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
+
+        if status < 0:
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
+            return False
+
+        roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
+        notified = " " if roleId is None else f" <@&{roleId}> "
 
         url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -251,18 +194,22 @@ class Crimes(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            await channel.send(f':x: `{name} [{tornId}]` Problem with their key for oc: *{req["error"]["error"]}*')
+            lst = [f'```md', f'# Tracking organized crimes\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}```']
             if req["error"]["code"] in [7]:
-                await channel.send("It means that you don't have the required AA permission (AA for API access) for this API request. This is an in-game permission that faction leader and co-leader can grant to their members.")
+                lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
+                lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
 
             if req["error"]["code"] in [1, 2, 6, 7, 10]:
-                await channel.send(f':x: `{name} [{tornId}]` oc stopped...')
+                lst += ["", "<STOP>", "```"]
+                await channel.send("\n".join(lst))
                 return False
             else:
+                lst.append("```")
+                await channel.send("\n".join(lst))
                 return True
 
         if not int(req["ID"]):
-            await channel.send(f':x: `{name} [{tornId}]` No factions found... oc stopped...')
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > no faction found for {name} {tornId}\n\n<STOP>```')
             return False
 
         # faction id and name
@@ -288,7 +235,8 @@ class Crimes(commands.Cog):
             mentionned = True if str(k) in oc["mentions"] else False
 
             # is ready (without members)
-            ready = v["time_left"] == 0
+            # ready = v["time_left"] == 0
+            ready = True
 
             # is completed
             completed = v["time_completed"] > 0
@@ -349,48 +297,42 @@ class Crimes(commands.Cog):
         logging.debug(f"[oc/notifications] start task")
 
         # iteration over all guilds
-        for guild in self.bot.get_guild_module("crimes"):
-            try:
-                # ignore servers with no verify
-                # if not self.bot.check_module(guild, "crimes"):
-                #     continue
+        for guild in self.bot.get_guilds_by_module("oc"):
+            # try:
 
-                # ignore servers with no option daily check
-                config = self.bot.get_config(guild)
-                if not config["crimes"].get("oc", False):
-                    continue
+            config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
+            if not config:
+                logging.info(f"[loot/notifications] No oc for {guild}")
+                continue
+            logging.info(f"[loot/notifications] OC for {guild}")
 
-                # logging.info(f"[OC] oc {guild}: start")
+            # iteration over all members asking for oc watch
+            # guild = self.bot.get_guild(guild.id)
+            todel = []
+            for discord_user_id, oc in config["currents"].items():
+                logging.debug(f"[oc/notifications] {guild}: {oc}")
 
-                # iteration over all members asking for oc watch
-                # guild = self.bot.get_guild(guild.id)
-                todel = []
-                for tornId, oc in config["crimes"]["oc"].items():
-                    logging.debug(f"[oc/notifications] {guild}: {tornId}")
+                # call oc faction
+                status = await self._oc(guild, oc)
 
-                    # call oc faction
-                    status = await self._oc(guild, oc)
+                if status:
+                    self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
+                else:
+                    todel.append(discord_user_id)
 
-                    # update metionned messages (but don't save in database, will remention in case of reboot)
-                    if status:
-                        self.bot.configs[str(guild.id)]["crimes"]["oc"][str(tornId)] = oc
-                    else:
-                        todel.append(str(tornId))
+            for d in todel:
+                del self.bot.configurations[guild.id]["oc"]["currents"][d]
 
-                for d in todel:
-                    del self.bot.configs[str(guild.id)]["crimes"]["oc"][d]
-                    await push_configurations(self.bot.bot_id, self.bot.configs)
+            await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
 
-                # logging.info(f"[OC] oc {guild}: end")
+            # logging.info(f"[OC] oc {guild}: end")
 
-            except BaseException as e:
-                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(e, guild_id=guild.id)
-                headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+            # except BaseException as e:
+            #     logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+            #     await self.bot.send_log(e, guild_id=guild.id)
+            #     headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
+            #     await self.bot.send_log_main(e, headers=headers)
 
     @ocTask.before_loop
     async def before_ocTask(self):
-        logging.debug('[oc/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.debug('[oc/notifications] start loop')

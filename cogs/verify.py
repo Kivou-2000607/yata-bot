@@ -613,9 +613,9 @@ class Verify(commands.Cog):
                 if channel is None:
                     logging.debug(f"[verify/dailyVerify] {guild}: no admin channel found")
                     continue
-                await channel.send("Daily verification of your members: **START**")
+                await channel.send("```md\nDaily verification of your members < START >```")
                 await self._loop_verify(guild, channel, force=True)
-                await channel.send("Daily verification of your members: **DONE**")
+                await channel.send("```md\nDaily verification of your members < DONE >```")
                 config["other"]["daily_verify"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
@@ -659,9 +659,9 @@ class Verify(commands.Cog):
             channel = self.bot.get_guild_admin_channel(guild)
             if channel is None:
                 continue
-            await channel.send("Weekly verification of your members: **START**")
+            await channel.send("```md\nWeekly verification of your members < START >```")
             await self._loop_verify(guild, channel, force=True)
-            await channel.send("Weekly verification of your members: **DONE**")
+            await channel.send("```md\nWeekly verification of your members < DONE >```")
             config["other"]["weekly_verify"] = ts_now()
             self.bot.configurations[guild.id]["verify"] = config
             await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
@@ -706,9 +706,9 @@ class Verify(commands.Cog):
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     continue
-                await channel.send("Daily check of your factions members: **START**")
+                await channel.send("```md\nDaily check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("Daily check of your factions members: **DONE**")
+                await channel.send("```md\nDaily check of your factions members < DONE >```")
                 config["other"]["daily_check"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
@@ -753,9 +753,9 @@ class Verify(commands.Cog):
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     continue
-                await channel.send("Weekly check of your factions members: **START**")
+                await channel.send("```md\nWeekly check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("Weekly check of your factions members: **DONE**")
+                await channel.send("```md\nWeekly check of your factions members < DONE >```")
                 config["other"]["weekly_check"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])

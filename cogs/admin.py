@@ -116,7 +116,7 @@ class Admin(commands.Cog):
         configuration["admin"]["server_admins"] = server_admins
 
         # update modules
-        for module in ["admin", "rackets", "loot", "revive", "verify"]:
+        for module in ["admin", "rackets", "loot", "revive", "verify", "oc"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
@@ -127,7 +127,7 @@ class Admin(commands.Cog):
                             updates.append(f"- [{module}]({key})")
 
                 # choose how to sync
-                if module in ["rackets", "loot", "revive", "verify"]:
+                if module in ["rackets", "loot", "revive", "verify", "oc"]:
                     # db erase completely bot config
                     configuration[module] = configuration_db[module]
                 elif module in ["admin"]:

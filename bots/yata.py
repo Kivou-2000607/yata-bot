@@ -144,7 +144,7 @@ class YataBot(Bot):
         else:
             return -1, None, None
 
-    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False):
+    async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False, guild=False):
         """ gets a key from discord member
             return status, tornId, Name, key
             return 0, id, Name, Key: All good
@@ -156,6 +156,7 @@ class YataBot(Bot):
             if returnMaster: return master key if key not available
             else return None
         """
+        guild = ctx.guild if not guild and ctx else guild
 
         # skip all if user in yata with discord id
         user = await get_yata_user(member.id, type="D")
@@ -170,10 +171,11 @@ class YataBot(Bot):
         master_status, master_id, master_key = await self.get_master_key(ctx.guild)
         if master_status == -1:
             # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
-            m = await ctx.send(":x: no master key given")
-            if delError:
-                await asyncio.sleep(5)
-                await m.delete()
+            if ctx:
+                m = await ctx.send(":x: no master key given")
+                if delError:
+                    await asyncio.sleep(5)
+                    await m.delete()
             return -1, None, None, None
         # logging.info(f"[GET USER KEY] <{ctx.guild}> master key id {master_id}")
 
@@ -186,17 +188,19 @@ class YataBot(Bot):
 
         if tornId == -1:
             # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
-            m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
-            if delError:
-                await asyncio.sleep(5)
-                await m.delete()
+            if ctx:
+                m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
+                if delError:
+                    await asyncio.sleep(5)
+                    await m.delete()
             return -2, None, None, None
         elif tornId == -2:
             # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
-            m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
-            if delError:
-                await asyncio.sleep(5)
-                await m.delete()
+            if ctx:
+                m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
+                if delError:
+                    await asyncio.sleep(5)
+                    await m.delete()
             return -3, master_id, None, master_key if returnMaster else None
 
         # get YATA user
@@ -206,10 +210,11 @@ class YataBot(Bot):
         # handle user not on YATA
         if not len(user):
             # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
-            m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
-            if delError:
-                await asyncio.sleep(5)
-                await m.delete()
+            if ctx:
+                m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
+                if delError:
+                    await asyncio.sleep(5)
+                    await m.delete()
             return -4, tornId, None, master_key if returnMaster else None
 
         # Return user if perm given
