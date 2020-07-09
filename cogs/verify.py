@@ -80,7 +80,7 @@ class Verify(commands.Cog):
         channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
         if channel is None:
             return
-        await channel.send(message)
+        await channel.send(f'```md\n# Verify\n {message}```')
 
         # if not Automatically verified send private message
         if not success and config.get("other", {}).get("force_verify", False):
@@ -150,7 +150,7 @@ class Verify(commands.Cog):
         else:  # no args
             message, _ = await self._member(ctx, role, API_KEY=key)
 
-        await ctx.send(message)
+        await ctx.send(f'```md\n# Verify\n{message}```')
 
     # @commands.command(aliases=['addkey'])
     # async def verifyKey(self, ctx, key):
@@ -401,13 +401,14 @@ class Verify(commands.Cog):
                 faction_roles_id = config.get("factions", {}).get(fId, {})
                 faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
-                roles_list = [f'`@{verified_role}`']
+                roles_list = [f'@{html.unescape(verified_role.name)}']
                 for faction_role in faction_roles:
                     # add faction role if role exists
                     await author.add_roles(faction_role)
-                    roles_list.append(f'`@{faction_role}`')
+                    roles_list.append(f'@{html.unescape(faction_role.name)}')
 
-                return f'{author}, you\'ve been verified and are now known as **{author.mention}**. You have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
+                nl = '\n- '
+                return f'< {author} >\nYou have been verified and are now known as < {author.nick} >. You have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
             else:
                 # loop over all members to check if the id exists
@@ -433,16 +434,17 @@ class Verify(commands.Cog):
                             await member.add_roles(faction_role)
                             roles_list.append(f'`@{faction_role}`')
 
-                        return f'**{member}**, has been verified and is now known as **{member.mention}**. They have been given the role{"s" if len(roles_list)>1 else ""} {", ".join(roles_list)}.', True
+                        nl = '\n- '
+                        return f'< {member} >\nThey have been verified and are now known as < {member.nick} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
                 # if no match in this loop it means that the member is not in this server
-                return f"You're trying to verify **{nickname}** but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
+                return f"You are trying to verify < {nickname} > but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
-            return f":x: Error while doing the verification: {hide_key(e)}", False
+            return f"< error > while doing the verification: {hide_key(e)}", False
 
-        return ":x: Weird... I didn't do anything...", False
+        return "< error > Weird... I didn't do anything...", False
 
     async def _loop_verify(self, guild, channel, ctx=False, force=False):
 
@@ -513,15 +515,14 @@ class Verify(commands.Cog):
             # Get faction roles
             faction_roles = [_ for _ in self.bot.get_module_role(guild.roles, faction_roles_id, all=True) if _ is not None]
             faction_roles_unique = [_ for _ in faction_roles if all_faction_roles.count(str(_.id)) == 1]
-            roles_list = ", ".join([f'@{faction_role}' for faction_role in faction_roles])
+            roles_list = ", ".join([f'@{html.unescape(faction_role.name)}' for faction_role in faction_roles])
             faction_name = await get_faction_name(faction_id)
-            print(faction_name)
 
             if not len(faction_roles_unique):
-                await channel.send(f'```md\n# Checking {faction_name}\n< Roles > {roles_list}\n< error > None of the following roles are unique```')
+                await channel.send(f'```md\n# Checking {faction_name}\n< Force > {force}\n< Roles > {roles_list}\n< error > None of the following roles are unique```')
                 continue
 
-            await channel.send(f'```md\n# Checking {faction_name}\n< Roles > {roles_list}\n< Unique role > @{faction_roles_unique[0]}```')
+            await channel.send(f'```md\n# Checking {faction_name}\n< Force > {force}\n< Roles > {roles_list}\n< Unique role > @{html.unescape(faction_roles_unique[0].name)}```')
 
             # api call with members list from torn
             status, tornIdForKey, key = await self.bot.get_master_key(guild)
@@ -544,7 +545,7 @@ class Verify(commands.Cog):
             members_torn = req.get("members", dict({}))
 
             # loop over the members with this role
-            members_with_role = [m for m in guild.members if faction_roles[0] in m.roles]
+            members_with_role = [m for m in guild.members if faction_roles_unique[0] in m.roles]
             for i, m in enumerate(members_with_role):
                 if m.bot:
                     continue
@@ -567,17 +568,17 @@ class Verify(commands.Cog):
                         for faction_role in faction_roles:
                             await m.remove_roles(faction_role)
 
-                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} not part of {faction_name} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
+                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} is not part of {html.unescape(faction_name)} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
 
                         # verify him again see if he has a new faction on the server
                         if ctx:
                             message, success = await self._member(ctx, vrole, discordID=m.id, API_KEY=key)
                         else:
                             message, success = await self._member(m, vrole, discordID=m.id, API_KEY=key, context=False)
-                        await channel.send(message)
+                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {message}```')
 
                     else:
-                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} not part of {faction_name} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
+                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} is not part of {html.unescape(faction_name)} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
 
         await channel.send(f"```md\n# done checking```")
 

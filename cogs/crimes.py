@@ -46,58 +46,55 @@ class Crimes(commands.Cog):
     def cog_unload(self):
         self.ocTask.cancel()
 
-    # @commands.command()
-    # @commands.bot_has_permissions(send_messages=True)
-    # @commands.guild_only()
-    # async def ocready(self, ctx, *args):
-    #     """ list oc ready
-    #     """
-    #     logging.info(f'[oc/ocready] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     # return if chain not active
-    #     if not self.bot.check_module(ctx.guild, "crimes"):
-    #         await ctx.send(":x: Crimes module not activated")
-    #         return
-    #
-    #     # check channels
-    #     config = self.bot.get_config(ctx.guild)
-    #     ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "crimes")
-    #     if await checks.channels(ctx, ALLOWED_CHANNELS):
-    #         pass
-    #     else:
-    #         return
-    #
-    #     status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
-    #
-    #     if status < 0:
-    #         return
-    #
-    #     # make api call
-    #     url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(url) as r:
-    #             req = await r.json()
-    #
-    #     # handle API error
-    #     if "error" in req:
-    #         await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
-    #         return
-    #
-    #     crimes = req["crimes"]
-    #     members = req["members"]
-    #     for k, v in crimes.items():
-    #         ready = not v["time_left"] and not v["time_completed"]
-    #         if ready:
-    #             lst = ['```YAML', f'OC: {v["crime_name"]} #{k}', f'Started: {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'Participants: {len(v["participants"])}']
-    #             # logging.info(k, v)
-    #             for p in v["participants"]:
-    #                 tId = list(p)[0]
-    #                 name = members.get(tId, dict({"name": "Player"}))["name"]
-    #                 status = list(p.values())[0]
-    #                 lst.append(f'    {name}: {status["state"]} ({status["description"]})')
-    #
-    #             lst.append('```')
-    #             await ctx.send(f"\n".join(lst))
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
+    async def ocready(self, ctx, *args):
+        """ list oc ready
+        """
+        logging.info(f'[oc/ocready] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "oc")
+        if not config:
+            return
+
+        # check if channel is allowed
+        allowed = await self.bot.check_channel_allowed(ctx, config)
+        if not allowed:
+            return
+
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, delError=True)
+
+        if status < 0:
+            return
+
+        # make api call
+        url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        # handle API error
+        if "error" in req:
+            await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
+            return
+
+        crimes = req["crimes"]
+        members = req["members"]
+        for k, v in crimes.items():
+            ready = not v["time_left"] and not v["time_completed"]
+            if ready:
+                lst = ['```md', f'# organized crime ready', f'< Crime > {v["crime_name"]} #{k}', f'< Started > {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'< Ready > {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'< Participants > {len(v["participants"])}\n']
+                # logging.info(k, v)
+                for p in v["participants"]:
+                    tId = list(p)[0]
+                    name = members.get(tId, dict({"name": "Player"}))["name"]
+                    status = list(p.values())[0]
+                    lst.append(f'- {name}: {status["state"]} ({status["description"]})')
+
+                lst.append('```')
+                await ctx.send(f"\n".join(lst))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -126,7 +123,7 @@ class Crimes(commands.Cog):
         # delete if already exists
         if str(ctx.author.id) in currents:
             lst = ["```md", "# Tracking organized crimes"]
-            for k, v in currents[str(ctx.author.id)].items():
+            for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
                 lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
             lst += ['', '<STOP>', "```"]
             await ctx.channel.send("\n".join(lst))
@@ -163,7 +160,7 @@ class Crimes(commands.Cog):
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
     async def _oc(self, guild, oc):
-        print(oc)
+
         # get channel
         channelId = oc.get("channel")[0] if len(oc.get("channel", {})) else None
         channel = get(guild.channels, id=int(channelId))
@@ -235,8 +232,7 @@ class Crimes(commands.Cog):
             mentionned = True if str(k) in oc["mentions"] else False
 
             # is ready (without members)
-            # ready = v["time_left"] == 0
-            ready = True
+            ready = v["time_left"] == 0
 
             # is completed
             completed = v["time_completed"] > 0
@@ -248,9 +244,15 @@ class Crimes(commands.Cog):
             # if completed and already mentionned -> remove the already mentionned
             if completed and mentionned:
                 initId = str(v["initiated_by"])
-                lst = [f'{fName}: {v["crime_name"]} #{k} has been completed by {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
-                       f'Money: ${v["money_gain"]:,}',
-                       f'Respect: {v["respect_gain"]:,}',
+                lst = [
+                        '```md',
+                        f'# Organized crime completed',
+                        f'< Faction > {fName}',
+                        f'< Crime > {v["crime_name"]}',
+                        f'< Initiated > {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
+                        f'< Money > ${v["money_gain"]:,}',
+                        f'< Respect > {v["respect_gain"]:,}',
+                        '```'
                        ]
                 await channel.send("\n".join(lst))
                 oc["mentions"].remove(str(k))
@@ -267,12 +269,12 @@ class Crimes(commands.Cog):
 
             # if ready and not already mentionned -> mention
             if ready and not mentionned:
-                await channel.send(f'{notified}{fName}: {v["crime_name"]} #{k} is ready.')
+                await channel.send(f'{notified}```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
             if not ready and mentionned:
-                await channel.send(f'{fName}: {v["crime_name"]} #{k} is not ready anymore because of non Okay participants.')
+                await channel.send(f'```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
                 oc["mentions"].remove(str(k))
 
         # clean mentions
@@ -298,40 +300,40 @@ class Crimes(commands.Cog):
 
         # iteration over all guilds
         for guild in self.bot.get_guilds_by_module("oc"):
-            # try:
+            try:
 
-            config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
-            if not config:
-                logging.info(f"[loot/notifications] No oc for {guild}")
-                continue
-            logging.info(f"[loot/notifications] OC for {guild}")
+                config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
+                if not config:
+                    logging.info(f"[loot/notifications] No oc for {guild}")
+                    continue
+                logging.info(f"[loot/notifications] OC for {guild}")
 
-            # iteration over all members asking for oc watch
-            # guild = self.bot.get_guild(guild.id)
-            todel = []
-            for discord_user_id, oc in config["currents"].items():
-                logging.debug(f"[oc/notifications] {guild}: {oc}")
+                # iteration over all members asking for oc watch
+                # guild = self.bot.get_guild(guild.id)
+                todel = []
+                for discord_user_id, oc in config["currents"].items():
+                    logging.debug(f"[oc/notifications] {guild}: {oc}")
 
-                # call oc faction
-                status = await self._oc(guild, oc)
+                    # call oc faction
+                    status = await self._oc(guild, oc)
 
-                if status:
-                    self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
-                else:
-                    todel.append(discord_user_id)
+                    if status:
+                        self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
+                    else:
+                        todel.append(discord_user_id)
 
-            for d in todel:
-                del self.bot.configurations[guild.id]["oc"]["currents"][d]
+                for d in todel:
+                    del self.bot.configurations[guild.id]["oc"]["currents"][d]
 
-            await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
 
             # logging.info(f"[OC] oc {guild}: end")
 
-            # except BaseException as e:
-            #     logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-            #     await self.bot.send_log(e, guild_id=guild.id)
-            #     headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
-            #     await self.bot.send_log_main(e, headers=headers)
+            except BaseException as e:
+                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @ocTask.before_loop
     async def before_ocTask(self):
