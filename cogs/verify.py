@@ -428,7 +428,7 @@ class Verify(commands.Cog):
                         faction_roles_id = config.get("factions", {}).get(fId, {})
                         faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
-                        roles_list = [f'`@{verified_role}`']
+                        roles_list = [f'@{verified_role}']
                         for faction_role in faction_roles:
                             # add faction role if role exists
                             await member.add_roles(faction_role)

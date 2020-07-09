@@ -183,25 +183,31 @@ async def get_yata_user(user_id, type="T"):
 #     return uid, secret, hookurl
 #
 
-async def push_rackets(timestamp, rackets):
+async def push_data(bot_id, timestamp, data, module):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = 2', timestamp, json.dumps(rackets))
+    if module == "rackets":
+        await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
+    elif module == "stocks":
+        await con.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
     await con.close()
 
 
-def get_rackets():
+def get_data(bot_id, module):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     con = psycopg2.connect(**db_cred)
     cur = con.cursor()
-    cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = 2;")
-    timestamp, rackets = cur.fetchone()
+    if module == "rackets":
+        cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {bot_id};")
+    elif module == "stocks":
+        cur.execute(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {bot_id};")
+    # print(cur.fetchone())
+    timestamp, data = cur.fetchone()
     cur.close()
     con.close()
-    return timestamp, json.loads(rackets)
-
+    return timestamp, json.loads(data)
 
 async def get_faction_name(tId):
     if str(tId).isdigit():

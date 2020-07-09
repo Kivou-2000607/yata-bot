@@ -36,8 +36,8 @@ from inc.handy import *
 import html
 
 import includes.formating as fmt
-from inc.yata_db import get_rackets
-from inc.yata_db import push_rackets
+from inc.yata_db import get_data
+from inc.yata_db import push_data
 from inc.yata_db import get_faction_name
 
 
@@ -67,7 +67,7 @@ class Racket(commands.Cog):
         if "error" in req:
             return
 
-        timestamp_p, randt_p = get_rackets()
+        timestamp_p, randt_p = get_data(bot_id, "rackets")
         rackets_p = randt_p["rackets"]
         territory_p = randt_p["territory"]
 
@@ -153,7 +153,7 @@ class Racket(commands.Cog):
         logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
 
         logging.debug(f"[racket/notifications] push rackets")
-        await push_rackets(int(req["timestamp"]), req)
+        await push_data(bot_id, int(req["timestamp"]), req, "rackets")
 
         # DEBUG
         # embed = Embed(title="Test Racket")
