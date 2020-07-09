@@ -33,28 +33,10 @@ from discord.utils import get
 from discord import Embed
 
 # import bot functions and classes
-import includes.checks as checks
 import includes.formating as fmt
+from inc.yata_db import get_data
+from inc.yata_db import push_data
 from inc.handy import *
-
-#
-# def plot_stocks(graph):
-#     x = []
-#     y = []
-#     for _, price in graph:
-#         x.append(_)
-#         y.append(price)
-#
-#     fig = tpl.figure()
-#     # fig.plot(x, y, width=80, height=15)
-#     fig.plot(x, y, width=40, height=40)
-#     lst = ["```"]
-#     fig.save("tmp.png")
-#     for l in fig.get_string().split("\n"):
-#         lst.append(l)
-#     lst.append("```")
-#     # lst[-1] = " " * 33 + "14 days prices" + " " * 33
-#     return lst
 
 class Stocks(commands.Cog):
     def __init__(self, bot):
@@ -70,26 +52,25 @@ class Stocks(commands.Cog):
         # [user api selection, stock id, n shares for BB]
         so = {"wssb": ["education", 25, 1000000], "tcb": ["money", 2, 1500000]}
 
-        # return if stocks not active
-        if not self.bot.check_module(ctx.guild, "stocks"):
-            await ctx.send(":x: Stocks module not activated")
-            return [], False
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "stocks", check_key=f"channels_{stock}")
+        if not config:
+            return [], None
 
-        # check role and channel
-        ALLOWED_CHANNELS = [stock]
-        ALLOWED_ROLES = [stock]
-        if await checks.roles(ctx, ALLOWED_ROLES) and await checks.channels(ctx, ALLOWED_CHANNELS):
-            pass
-        else:
-            return [], False
+        # check if channel is allowed
+        allowed = await self.bot.check_channel_allowed(ctx, config, channel_key=f"channels_{stock}")
+        if not allowed:
+            return [], None
 
         # list all users
         stockOwners = []
         timeLeft = dict()
-        role = get(ctx.guild.roles, name=stock)
-        for member in role.members:
-            # logging.debug(f"[stock/{stock.lower()}]: {member.display_name}")
+        role = self.bot.get_module_role(ctx.guild.roles, config.get(f"alerts_{stock}", {}))
+        if role is None:
+            await ctx.send(f"```md\n# Stock module: shared {stock.upper()} bonus block\n< error > no roles attributed to {stock}```")
+            return [], None
 
+        for member in role.members:
             # get user key from YATA database
             status, id, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
             if status < 0:
@@ -108,17 +89,19 @@ class Stocks(commands.Cog):
 
             # send pull request to member
             info = 'bank investment' if stock == "tcb" else "education"
-            lst = [f'Your **{info} time** has just been pulled.',
-                   f'```YAML',
-                   f'Command: {stock}',
-                   f'Time: {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
-                   f'Server: {ctx.guild} [{ctx.guild.id}]',
-                   f'Channel: {ctx.channel}',
-                   f'Author: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
+            lst = [
+                   f'```md',
+                   f'# Stock module: shared {stock.upper()} bonus block',
+                   f'Your <{info}> time has just been pulled',
+                   f'< Command > {stock}',
+                   f'< Time > {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
+                   f'< Server > {ctx.guild} [{ctx.guild.id}]',
+                   f'< Channel > {ctx.channel}',
+                   f'< Author > {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
             try:
                 await member.send("\n".join(lst))
             except BaseException:
-                await ctx.send(f":x: DM couldn't be sent to **{member.nick}** (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.")
+                await ctx.send(f"```md\n# Stock module: shared {stock.upper()} bonus block\n< error > DM couldn't be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.```")
                 continue
 
             # get stock owner
@@ -127,7 +110,6 @@ class Stocks(commands.Cog):
                 for k, v in user_stocks.items():
                     if v['stock_id'] == so.get(stock)[1] and v['shares'] >= so.get(stock)[2]:
                         stockOwners.append(name)
-                        # logging.info("        stock {}: {}".format(k, v))
 
             # get time left
             if stock == "tcb":
@@ -152,7 +134,7 @@ class Stocks(commands.Cog):
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
 
-            await ctx.send(f"Here you go {ctx.author.display_name}, the list of education time left and WSSB owners:\n```\n{lst}```")
+            await ctx.send(f"List of education time left and WSSB owners:\n```md\n{lst}```")
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -169,13 +151,15 @@ class Stocks(commands.Cog):
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
 
-            await ctx.send(f"Here you go {ctx.author.display_name}, the list of investment time left and TCB owners:\n```\n{lst}```")
+            await ctx.send(f"List of investment time left and TCB owners:\n```md\n{lst}```")
 
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
         logging.debug(f"[stock/notify] start task")
 
+        _, mentions_keys_prev = get_data(self.bot.bot_id, "stocks")
+        mentions_keys = []
         mentions = []
         try:
             stockInfo = {
@@ -223,11 +207,19 @@ class Stocks(commands.Cog):
             for k, v in req.items():
                 if "graph" in v:
                     del v["graph"]
+
+                v["key"] = k
+
+                if v in mentions_keys_prev:
+                    mentions_keys.append(v)
+                    print("skip", k, v)
+                    continue
+
                 alerts = v.get("alerts", dict({}))
 
                 title = False
-                # if alerts.get("below", False):
-                if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
+                # if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
+                if alerts.get("below", False):
                     title = f'{stockInfo[k]["name"]}'
                     description = f'Below average and forecast moved from bad to good'
 
@@ -262,6 +254,10 @@ class Stocks(commands.Cog):
                     # thumbnail
                     embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/stocks/{stockInfo[k]["id"]}.png')
                     mentions.append(embed)
+                    mentions_keys.append(v)
+
+
+            await push_data(self.bot.bot_id, ts_now(), mentions_keys, "stocks")
 
             # create message to send
             if not len(mentions):
@@ -275,70 +271,33 @@ class Stocks(commands.Cog):
             return
 
         # loop over guilds to send alerts
-        for guild in self.bot.get_guild_module("stocks"):
-            try:
-                # check if module activated
-                config = self.bot.get_config(guild)
-                if not config.get("stocks", dict({})).get("alerts", False):
-                    # logging.info(f"[stock/notify] guild {guild}: ignore notifications")
-                    continue
+        for guild in self.bot.get_guilds_by_module("stocks"):
+            # try:
+            logging.debug(f"[loot/notifications] {guild}")
 
-                # get full guild (async iterator doesn't return channels)
-                guild = self.bot.get_guild(guild.id)
-                role = get(guild.roles, name="Trader")
+            config = self.bot.get_guild_configuration_by_module(guild, "stocks", check_key="channels_alerts")
+            if not config:
+                continue
 
-                # loop over channels and role
-                channelName = self.bot.get_allowed_channels(config, "stocks")[0]
-                channel = get(guild.channels, name=channelName)
-                if channel is not None:
-                    s = "" if len(mentions) == 1 else "s"
-                    txt = f"{len(mentions)} stock alert{s}!" if role is None else f"{role.mention}, {len(mentions)} stock alert{s}!"
-                    await channel.send(txt, embed=mentions[0])
-                    for embed in mentions[1:]:
-                        await channel.send(embed=embed)
+            # get role & channel
+            role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+            channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
-                else:
-                    logging.error(f'[stock] {guild} [{guild.id}]: channel not found')
-                    await self.bot.send_log("channel not found", guild_id=guild.id)
-                    headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification", "note": f"No channel {channelName}"}
-                    await self.bot.send_log_main("channel not found", headers=headers)
+            if channel is None:
+                continue
 
-            except BaseException as e:
-                logging.error(f'[stock] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(e, guild_id=guild.id)
-                headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
-                await self.bot.send_log_main(e, headers=headers)
+            s = "" if len(mentions) == 1 else "s"
+            txt = f"{len(mentions)} stock alert{s}!" if role is None else f"{role.mention}, {len(mentions)} stock alert{s}!"
+            await channel.send(txt, embed=mentions[0])
+            for embed in mentions[1:]:
+                await channel.send(embed=embed)
 
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True, manage_messages=True, manage_roles=True)
-    @commands.guild_only()
-    async def trader(self, ctx):
-        """Add/remove @Trader role"""
-        logging.info(f'[stock/trader] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        # return if stocks not active
-        if not self.bot.check_module(ctx.guild, "stocks"):
-            await ctx.send(":x: Loot module not activated")
-            return
-
-        # Get Trader role
-        role = get(ctx.guild.roles, name="Trader")
-
-        if role in ctx.author.roles:
-            # remove Trader
-            await ctx.author.remove_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for stocks.")
-        else:
-            # assign Trader
-            await ctx.author.add_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for stocks.")
-
-        await asyncio.sleep(10)
-        await msg.delete()
-        await ctx.message.delete()
+            # except BaseException as e:
+            #     logging.error(f'[stock] {guild} [{guild.id}]: {hide_key(e)}')
+            #     await self.bot.send_log(e, guild_id=guild.id)
+            #     headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
+            #     await self.bot.send_log_main(e, headers=headers)
 
     @notify.before_loop
     async def before_notify(self):
-        logging.debug('[stock/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.debug('[stock/notifications] start loop')

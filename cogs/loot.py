@@ -174,7 +174,6 @@ class Loot(commands.Cog):
 
                 config = self.bot.get_guild_configuration_by_module(guild, "loot", check_key="channels_alerts")
                 if not config:
-                    logging.info(f"[loot/notifications] No loot channels for guild {guild}")
                     continue
 
                 # get role & channel
@@ -202,6 +201,4 @@ class Loot(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.debug('[loot/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.debug('[loot/notifications] start loop')
