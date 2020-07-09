@@ -218,8 +218,8 @@ class Stocks(commands.Cog):
                 alerts = v.get("alerts", dict({}))
 
                 title = False
-                # if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
-                if alerts.get("below", False):
+                # if alerts.get("below", False):
+                if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                     title = f'{stockInfo[k]["name"]}'
                     description = f'Below average and forecast moved from bad to good'
 
