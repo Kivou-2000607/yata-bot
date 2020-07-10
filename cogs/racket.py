@@ -67,7 +67,7 @@ class Racket(commands.Cog):
         if "error" in req:
             return
 
-        timestamp_p, randt_p = get_data(bot_id, "rackets")
+        timestamp_p, randt_p = get_data(self.bot.bot_id, "rackets")
         rackets_p = randt_p["rackets"]
         territory_p = randt_p["territory"]
 
@@ -153,7 +153,7 @@ class Racket(commands.Cog):
         logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
 
         logging.debug(f"[racket/notifications] push rackets")
-        await push_data(bot_id, int(req["timestamp"]), req, "rackets")
+        await push_data(self.bot.bot_id, int(req["timestamp"]), req, "rackets")
 
         # DEBUG
         # embed = Embed(title="Test Racket")

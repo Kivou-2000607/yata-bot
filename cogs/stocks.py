@@ -65,7 +65,7 @@ class Stocks(commands.Cog):
         # list all users
         stockOwners = []
         timeLeft = dict()
-        role = self.bot.get_module_role(ctx.guild.roles, config.get(f"alerts_{stock}", {}))
+        role = self.bot.get_module_role(ctx.guild.roles, config.get(f"roles_{stock}", {}))
         if role is None:
             await ctx.send(f"```md\n# Stock module: shared {stock.upper()} bonus block\n< error > no roles attributed to {stock}```")
             return [], None
@@ -88,11 +88,11 @@ class Stocks(commands.Cog):
                 continue
 
             # send pull request to member
-            info = 'bank investment' if stock == "tcb" else "education"
+            info = 'bank' if stock == "tcb" else "education"
             lst = [
                    f'```md',
                    f'# Stock module: shared {stock.upper()} bonus block',
-                   f'Your <{info}> time has just been pulled',
+                   f'Your <{info}> information has just been pulled',
                    f'< Command > {stock}',
                    f'< Time > {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
                    f'< Server > {ctx.guild} [{ctx.guild.id}]',
