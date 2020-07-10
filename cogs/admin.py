@@ -532,6 +532,61 @@ class Admin(commands.Cog):
 
 
     @commands.Cog.listener()
+    async def on_member_join(self, member):
+        """Welcome message"""
+        # check if bot
+        if member.bot:
+            return
+
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(member.guild, "admin", check_key="message_welcome")
+        if not config:
+            return
+
+        # get welcome channel
+        welcome_channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
+
+        # fall back to system channel
+        if welcome_channel is None:
+            welcome_channel = member.guild.system_channel
+
+        if welcome_channel is None:
+            return
+
+        # get system channel and send message
+        logging.debug(f'[admin/on_member_join] welcome channel {welcome_channel}')
+
+        msg = []
+        for line in config["message_welcome"]:
+            discord_line = []
+            for w in line.split(" "):
+                if not len(w):
+                    pass
+
+                elif w[0] == "#":
+                    ch = get(member.guild.channels, name=w[1:])
+                    if ch is not None:
+                        discord_line.append(f'{ch.mention}')
+                    else:
+                        discord_line.append(f'`{w}`')
+                elif w[0] == "@":
+                    if w in ["@new_member"]:
+                        discord_line.append(f'{member.mention}')
+                    else:
+                        ro = get(member.guild.roles, name=w[1:])
+                        if ro is not None:
+                            discord_line.append(f'{ro.mention}')
+                        else:
+                            discord_line.append(f'`{w}`')
+                else:
+                    discord_line.append(w)
+
+            msg.append(" ".join(discord_line))
+
+        await welcome_channel.send("\n".join(msg))
+
+
+    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
         ctx   : Context
