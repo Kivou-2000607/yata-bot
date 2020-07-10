@@ -222,14 +222,13 @@ async def get_faction_name(tId):
     else:
         return f'Faction [{tId}]'
 
-#
-# async def reset_notifications(tornId):
-#     """Writes the actual guild name in YATA database"""
-#
-#     # get YATA user
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     dbname = db_cred["dbname"]
-#     del db_cred["dbname"]
-#     con = await asyncpg.connect(database=dbname, **db_cred)
-#     await con.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
-#     await con.close()
+async def reset_notifications(tornId):
+    """Writes the actual guild name in YATA database"""
+
+    # get YATA user
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    await con.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
+    await con.close()

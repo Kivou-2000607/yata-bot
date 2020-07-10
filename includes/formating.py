@@ -96,7 +96,7 @@ def chat_message(d):
     return '```markdown\n[{}]({} [{}]) {}\n```'.format(time, name, uid, message)
 
 
-async def send_tt(ctx, lst, limit=1800, tt=True, style="YAML"):
+async def send_tt(ctx, lst, limit=1800, tt=True, style="md"):
     if len(lst):
         msg = ""
         for line in lst:

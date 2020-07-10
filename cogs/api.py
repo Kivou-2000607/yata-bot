@@ -36,14 +36,14 @@ from discord.utils import get
 # import bot functions and classes
 import includes.checks as checks
 import includes.formating as fmt
-from includes.yata_db import reset_notifications
+from inc.yata_db import reset_notifications
 from inc.handy import *
 
 
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.notify.start()
+        # self.notify.start()
 
     def cog_unload(self):
         self.notify.cancel()
@@ -54,21 +54,11 @@ class API(commands.Cog):
         """DM weaponexp to author"""
         logging.info(f'[api/weaponexp] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # check role and channel
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
-        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
         await ctx.message.delete()
 
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.debug(f"[api/weaponexp] error {status}")
             return
 
         # make api call
@@ -79,12 +69,12 @@ class API(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f':x: You asked for your weapons experience but an error occured with your API key: *{req["error"]["error"]}*')
+            await ctx.author.send(f'```md\n# {name} [{id}]: weapon experience\n< error > {req["error"]["error"]}```')
             return
 
         # if no weapon exp
         if not len(req.get("weaponexp", [])):
-            await ctx.author.send(f"no weapon exp")
+            await ctx.author.send(f"```md\n# {name} [{id}]: weapon experience\n< error > no weapon exp```")
             return
 
         # send list
@@ -101,12 +91,12 @@ class API(commands.Cog):
         if len(maxed):
             lst.append("# weapon maxed")
         for i, w in enumerate(maxed):
-            lst.append(f'{i+1: >2}: {w["name"]} ({w["exp"]}%)')
+            lst.append(f'< {i+1: >2} > {w["name"]} ({w["exp"]}%)')
 
         if len(tomax):
             lst.append("# experience > 5%")
         for i, w in enumerate(tomax):
-            lst.append(f'{i+1: >2}: {w["name"]} ({w["exp"]}%)')
+            lst.append(f'< {i+1: >2} > {w["name"]} ({w["exp"]}%)')
 
         await fmt.send_tt(ctx.author, lst)
         return
@@ -117,21 +107,11 @@ class API(commands.Cog):
         """DM number of finishing hits to author"""
         logging.info(f'[api/finishing] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # check role and channel
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
-        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
         await ctx.message.delete()
 
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.debug(f"[api/finishing] error {status}")
             return
 
         # make api call
@@ -142,7 +122,7 @@ class API(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f':x: You asked for your finishing hits but an error occured with your API key: *{req["error"]["error"]}*')
+            await ctx.author.send(f'```md\n# {name} [{id}]: finishing hits\n< error > {req["error"]["error"]}```')
             return
 
         bridge = {"heahits": "Heavy artillery",
@@ -165,9 +145,9 @@ class API(commands.Cog):
         lst = [f"# {name} [{id}]: finishing hits\n"]
         # send list
         for fh in sorted(finishingHits, key=lambda x: -x[1]):
-            lst.append(f"{fh[0]}: {fh[1]:,d}")
+            lst.append(f"< {fh[0]: <16} > {fh[1]: >6,d}")
 
-        await fmt.send_tt(ctx.author, lst, style="python")
+        await fmt.send_tt(ctx.author, lst)
         return
 
     @commands.command(aliases=['net'])
@@ -176,21 +156,11 @@ class API(commands.Cog):
         """DM your networth breakdown (in case you're flying)"""
         logging.info(f'[api/networth] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # check role and channel
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
-        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
-
         await ctx.message.delete()
 
         # get user key
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            logging.debug(f"[api/networth] error {status}")
             return
 
         # make api call
@@ -201,18 +171,18 @@ class API(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f':x: You asked for your networth but an error occured with your API key: *{req["error"]["error"]}*')
+            await ctx.author.send(f'```md\n# {name} [{id}]: networth breakdown\n< error > {req["error"]["error"]}```')
             return
 
         # send list
         lst = [f"# {name} [{id}]: Networth breakdown\n"]
         for k, v in req.get("networth", dict({})).items():
             if k in ['total']:
-                lst.append('---')
+                lst += ['', '---', '']
             if int(v):
-                a = f"{k}:"
+                a = f"{k}"
                 b = f"${v:,.0f}"
-                lst.append(f'{a: <13}{b: >16}')
+                lst.append(f'< {a: <13} > {b: >16}')
 
         await fmt.send_tt(ctx.author, lst)
         return
@@ -223,15 +193,6 @@ class API(commands.Cog):
     async def who(self, ctx, *args):
         """Gives information on a user"""
         logging.info(f'[api/who] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        # check role and channel
-        config = self.bot.get_config(ctx.guild)
-        ALLOWED_CHANNELS = self.bot.get_allowed_channels(config, "api")
-        ALLOWED_ROLES = self.bot.get_allowed_roles(config, "api")
-        if await checks.channels(ctx, ALLOWED_CHANNELS) and await checks.roles(ctx, ALLOWED_ROLES):
-            pass
-        else:
-            return
 
         # init variables
         helpMsg = f":x: You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
@@ -262,7 +223,7 @@ class API(commands.Cog):
 
             # check if member
             if member is None:
-                await ctx.send(f":x: Couldn't find discord member: {discordId}. Try `!who <torn ID>`.")
+                await ctx.send(f"```md\n# who\nCouldn't find discord member: {discordId}. Try !who < torn ID >```")
                 return
 
             # try to parse Torn user ID
@@ -272,7 +233,7 @@ class API(commands.Cog):
             else:
                 status, tornId, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
                 if status in [-1, -2, -3]:
-                    await ctx.send(f":x: `{member.display_name}` could not find Torn ID within their display name and verification failed. Try `!who <Torn ID>`.")
+                    await ctx.send(f"```md\n# who\nCould not find Torn ID within their display name and verification failed. Try !who < Torn ID >```")
                     return
 
         # other cases I didn't think of
@@ -283,9 +244,10 @@ class API(commands.Cog):
         # at this point tornId should be a interger corresponding to a torn ID
 
         # get configuration for guild
-        status, _, key = await self.bot.get_master_key(ctx.guild)
-        if status == -1:
-            await ctx.send(":x: No master key given")
+        # status, _, key = await self.bot.get_master_key(ctx.guild)
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
+            await ctx.send("```md\n# who\n< error > key not found```")
             return
 
         # Torn API call
@@ -304,57 +266,57 @@ class API(commands.Cog):
         lst = []
 
         # status
-        lst.append(f'Name: {r["name"]} [{r["player_id"]}]    <{linki}>')
+        lst.append(f'< Name > {r["name"]} [{r["player_id"]}]    <{linki}>')
         links[linki] = f'https://www.torn.com/profiles.php?XID={tornId}'
         linki += 1
-        lst.append(f'Action: {r["last_action"]["relative"]} ({r["last_action"]["status"]})')
+        lst.append(f'< Action > {r["last_action"]["relative"]} ({r["last_action"]["status"]})')
         s = r["status"]
         # lst.append(f'State: {s["state"]}')
-        lst.append(f'Status: {s["description"]}')
+        lst.append(f'< Status > {s["description"]}')
         if s["details"]:
-            lst.append(f'Details: {fmt.cleanhtml(s["details"])}')
+            lst.append(f'< Details > {fmt.cleanhtml(s["details"])}')
         p = 100 * r['life']['current'] // r['life']['maximum']
         i = int(p * 20 / 100)
-        lst.append(f'Life: {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d} [{"+" * i}{"-" * (20 - i)}]')
-        lst.append('---')
+        lst.append(f'< Life > {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d} [{"+" * i}{"-" * (20 - i)}]')
+        lst += ['', '---', '']
 
         # levels
-        lst.append(f'Level: {r["level"]}')
-        lst.append(f'Rank: {r["rank"]}')
-        lst.append(f'Age: {r["age"]:,d} days old')
-        lst.append(f'Networth: ${r["personalstats"]["networth"]:,d}')
-        lst.append(f'X-R-SE: {r["personalstats"].get("xantaken", 0):,d} {r["personalstats"].get("refills", 0):,d} {r["personalstats"].get("statenhancersused", 0):,d}')
-        lst.append('---')
+        lst.append(f'< Level > {r["level"]}')
+        lst.append(f'< Rank > {r["rank"]}')
+        lst.append(f'< Age > {r["age"]:,d} days old')
+        lst.append(f'< Networth > ${r["personalstats"].get("networth", 0):,d}')
+        lst.append(f'< X-R-SE > {r["personalstats"].get("xantaken", 0):,d} {r["personalstats"].get("refills", 0):,d} {r["personalstats"].get("statenhancersused", 0):,d}')
+        lst += ['', '---', '']
 
         # faction
         if int(r["faction"]["faction_id"]):
             f = r["faction"]
-            lst.append(f'Faction: {f["position"]} of {html.unescape(f["faction_name"])} [{f["faction_id"]}]    <{linki}>')
+            lst.append(f'< Faction > {f["position"]} of {html.unescape(f["faction_name"])} [{f["faction_id"]}]    <{linki}>')
             links[linki] = f'https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}'
             linki += 1
-            lst.append(f'Days: In faction since {f["days_in_faction"]} days')
-            lst.append('---')
+            lst.append(f'< Days > In faction since {f["days_in_faction"]} days')
+            lst += ['', '---', '']
 
         # company
         if int(r["job"]["company_id"]):
             j = r["job"]
-            lst.append(f'Company: {html.unescape(j["company_name"])} [{j["company_id"]}]    <{linki}>')
-            lst.append(f'Position: {j["position"]}')
+            lst.append(f'< Company > {html.unescape(j["company_name"])} [{j["company_id"]}]    <{linki}>')
+            lst.append(f'< Position > {j["position"]}')
             links[linki] = f'https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]}'
             linki += 1
-            lst.append('---')
+            lst += ['', '---', '']
 
         # social
-        lst.append(f'Friends: {r["friends"]:,d}')
-        lst.append(f'Enemies: {r["enemies"]:,d}')
+        lst.append(f'< Friends > {r["friends"]:,d}')
+        lst.append(f'< Enemies > {r["enemies"]:,d}')
         if r["forum_posts"]:
-            lst.append(f'Karma: {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
+            lst.append(f'< Karma > {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
         else:
-            lst.append(f'Karma: No forum post')
+            lst.append(f'< Karma > No forum post')
 
         s = r["married"]
         if s["spouse_id"]:
-            lst.append(f'Married: {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
+            lst.append(f'< Married > {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
             links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
             linki += 1
 
@@ -366,8 +328,8 @@ class API(commands.Cog):
     async def notify(self):
         logging.debug("[api/notifications] start task")
 
-        # YATA guild
-        guild = get(self.bot.guilds, id=581227228537421825)  # yata guild
+        # main guild
+        guild = get(self.bot.guilds, id=self.bot.main_server_id)
 
         # connect to YATA database of notifiers
         db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
@@ -391,7 +353,7 @@ class API(commands.Cog):
                 try:
 
                     # get notifications preferences
-                    logging.debug(f'[api/notifications] {member.nick} / {member}: {record}')
+                    logging.debug(f'[api/notifications] {member.nick} / {member}')
                     notifications = json.loads(record["notifications"])
 
                     # get selections for Torn API call
@@ -579,6 +541,4 @@ class API(commands.Cog):
 
     @notify.before_loop
     async def before_notify(self):
-        logging.debug('[api/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.debug('[api/notifications] start loop')

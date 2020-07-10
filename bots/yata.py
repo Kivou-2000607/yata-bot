@@ -100,28 +100,28 @@ class YataBot(Bot):
     #         return ["*"]
     #     else:
     #         return roles["roles"]
-    #
-    # async def discord_to_torn(self, member, key):
-    #     """ get a torn id form discord id
-    #         return tornId, None: okay
-    #         return -1, error: api error
-    #         return -2, None: not verified on discord
-    #     """
-    #     url = f"https://api.torn.com/user/{member.id}?selections=discord&key={key}"
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(url) as r:
-    #             req = await r.json()
-    #
-    #     if 'error' in req:
-    #         # logging.info(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
-    #         return -1, req['error']
-    #
-    #     elif req['discord'].get("userID") == '':
-    #         # logging.info(f'[DISCORD TO TORN] discord id {member.id} not verified')
-    #         return -2, None
-    #
-    #     else:
-    #         return int(req['discord'].get("userID")), None
+
+    async def discord_to_torn(self, member, key):
+        """ get a torn id form discord id
+            return tornId, None: okay
+            return -1, error: api error
+            return -2, None: not verified on discord
+        """
+        url = f"https://api.torn.com/user/{member.id}?selections=discord&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        if 'error' in req:
+            # logging.info(f'[DISCORD TO TORN] api error "{key}": {req["error"]["error"]}')
+            return -1, req['error']
+
+        elif req['discord'].get("userID") == '':
+            # logging.info(f'[DISCORD TO TORN] discord id {member.id} not verified')
+            return -2, None
+
+        else:
+            return int(req['discord'].get("userID")), None
 
     async def get_master_key(self, guild):
         """ gets a random master key from configuration
@@ -172,7 +172,7 @@ class YataBot(Bot):
         if master_status == -1:
             # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
             if ctx:
-                m = await ctx.send(":x: no master key given")
+                m = await ctx.send(f'```md\n# Get torn ID\n< error > no master key given```')
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -189,7 +189,7 @@ class YataBot(Bot):
         if tornId == -1:
             # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
             if ctx:
-                m = await ctx.send(f':x: Torn API error with master key id {master_id}: *{msg["error"]}*')
+                m = await ctx.send(f'```md\n# Get torn ID\n< error > Torn API error with master key id {master_id}: {msg["error"]}```')
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -197,7 +197,7 @@ class YataBot(Bot):
         elif tornId == -2:
             # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
             if ctx:
-                m = await ctx.send(f':x: {member.mention} is not verified in the official Torn discord. They have to go there and get verified first: https://www.torn.com/discord')
+                m = await ctx.send(f'```md\n# Get torn ID\n< error > {member} are not not officially verified by Torn```')
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()

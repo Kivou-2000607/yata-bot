@@ -205,6 +205,10 @@ class Crimes(commands.Cog):
                 await channel.send("\n".join(lst))
                 return True
 
+        if req is None or "ID" not in req:
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > wrong API output\n\n{hide_key(req)}```')
+            return True
+
         if not int(req["ID"]):
             await channel.send(f'```md\n# Tracking organized crimes\n< error > no faction found for {name} {tornId}\n\n<STOP>```')
             return False
@@ -331,9 +335,9 @@ class Crimes(commands.Cog):
 
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(e, guild_id=guild.id)
+                await self.bot.send_log(f'error on oc notifications: {e}', guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
     @ocTask.before_loop
     async def before_ocTask(self):
