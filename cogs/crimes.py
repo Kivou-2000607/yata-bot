@@ -273,12 +273,12 @@ class Crimes(commands.Cog):
 
             # if ready and not already mentionned -> mention
             if ready and not mentionned:
-                await channel.send(f'{notified}```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
+                await channel.send(f'{notified} {v["crime_name"]} ready```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
             if not ready and mentionned:
-                await channel.send(f'```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
+                await channel.send(f'{v["crime_name"]} ready```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
                 oc["mentions"].remove(str(k))
 
         # clean mentions
@@ -308,9 +308,9 @@ class Crimes(commands.Cog):
 
                 config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
                 if not config:
-                    logging.info(f"[loot/notifications] No oc for {guild}")
+                    logging.info(f"[oc/notifications] No oc for {guild}")
                     continue
-                logging.info(f"[loot/notifications] OC for {guild}")
+                logging.info(f"[oc/notifications] OC for {guild}")
 
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
@@ -330,8 +330,6 @@ class Crimes(commands.Cog):
                     del self.bot.configurations[guild.id]["oc"]["currents"][d]
 
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-
-            # logging.info(f"[OC] oc {guild}: end")
 
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')

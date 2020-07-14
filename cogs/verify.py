@@ -432,7 +432,7 @@ class Verify(commands.Cog):
                         for faction_role in faction_roles:
                             # add faction role if role exists
                             await member.add_roles(faction_role)
-                            roles_list.append(f'`@{faction_role}`')
+                            roles_list.append(f'@{faction_role}')
 
                         nl = '\n- '
                         return f'< {member} >\nThey have been verified and are now known as < {member.nick} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
@@ -555,7 +555,6 @@ class Verify(commands.Cog):
                 if len(regex) == 1 and regex[0].isdigit():
                     tornId = int(regex[0])
                 else:
-                    await channel.send(f"```md\n< error >{msg}```")
                     await channel.send(f"```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} could not find torn ID within their display name (not checking them)```")
                     continue
 
@@ -626,7 +625,7 @@ class Verify(commands.Cog):
                 logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily verify"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         logging.debug("[verify/dailyVerify] end task")
 
@@ -636,43 +635,44 @@ class Verify(commands.Cog):
 
         # iteration over all guilds
         async for guild in self.bot.fetch_guilds(limit=250):
-            # get configuration
-            config = self.bot.get_guild_configuration_by_module(guild, "verify")
-            if not config:
-                continue
-
-            # ignore servers with no option weekly check
-            if not config.get("other", {}).get("weekly_verify", False):
-                continue
-
             try:
-                last_update = int(config["other"]["weekly_verify"])
+                # get configuration
+                config = self.bot.get_guild_configuration_by_module(guild, "verify")
+                if not config:
+                    continue
+
+                # ignore servers with no option weekly check
+                if not config.get("other", {}).get("weekly_verify", False):
+                    continue
+
+                try:
+                    last_update = int(config["other"]["weekly_verify"])
+                except BaseException as e:
+                    logging.error(f'[verify/weeklyVerify] Failed to cast last update into int guild {guild}: {config["other"]["weekly_verify"]}')
+                    last_update = 1
+                if ts_now() - last_update < 7 * 24 * 3600:
+                    continue
+
+                # get full guild (async iterator doesn't return channels)
+                guild = self.bot.get_guild(guild.id)
+                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: start")
+                # get channel
+                channel = self.bot.get_guild_admin_channel(guild)
+                if channel is None:
+                    continue
+                await channel.send("```md\nWeekly verification of your members < START >```")
+                await self._loop_verify(guild, channel, force=True)
+                await channel.send("```md\nWeekly verification of your members < DONE >```")
+                config["other"]["weekly_verify"] = ts_now()
+                self.bot.configurations[guild.id]["verify"] = config
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
+
             except BaseException as e:
-                logging.error(f'[verify/weeklyVerify] Failed to cast last update into int guild {guild}: {config["other"]["weekly_verify"]}')
-                last_update = 1
-            if ts_now() - last_update < 7 * 24 * 3600:
-                continue
-
-            # get full guild (async iterator doesn't return channels)
-            guild = self.bot.get_guild(guild.id)
-            logging.debug(f"[verify/weeklyVerify] verifying all {guild}: start")
-            # get channel
-            channel = self.bot.get_guild_admin_channel(guild)
-            if channel is None:
-                continue
-            await channel.send("```md\nWeekly verification of your members < START >```")
-            await self._loop_verify(guild, channel, force=True)
-            await channel.send("```md\nWeekly verification of your members < DONE >```")
-            config["other"]["weekly_verify"] = ts_now()
-            self.bot.configurations[guild.id]["verify"] = config
-            await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-            logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
-
-            # except BaseException as e:
-            #     logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
-            #     await self.bot.send_log(e, guild_id=guild.id)
-            #     headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
-            #     await self.bot.send_log_main(e, headers=headers)
+                logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         logging.debug("[verify/weeklyVerify] end task")
 
@@ -719,7 +719,7 @@ class Verify(commands.Cog):
                 logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily check"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         logging.debug("[verify/dailyCheck] end task")
 
@@ -766,7 +766,7 @@ class Verify(commands.Cog):
                 logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly check"}
-                await self.bot.send_log_main(e, headers=headers)
+                await self.bot.send_log_main(e, headers=headers, full=True)
 
         logging.debug("[verify/weeklyCheck] end task")
 

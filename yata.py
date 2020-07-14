@@ -89,7 +89,7 @@ bot.add_cog(Racket(bot))
 bot.add_cog(Revive(bot))
 bot.add_cog(Crimes(bot))
 bot.add_cog(API(bot))
-# bot.add_cog(Chain(bot))
+bot.add_cog(Chain(bot))
 # bot.add_cog(Misc(bot))
 # bot.add_cog(Repository(bot))
 
