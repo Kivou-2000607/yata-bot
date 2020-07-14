@@ -529,13 +529,13 @@ class Chain(commands.Cog):
     async def _retal(self, guild, retal):
 
         # get channel
-        channelId = retal.get("channel")[0] if len(oc.get("channel", {})) else None
+        channelId = retal.get("channel")[0] if len(retal.get("channel", {})) else None
         channel = get(guild.channels, id=int(channelId))
         if channel is None:
             return False
 
         # get discord member
-        discord_id = retal.get("discord_user")[0] if len(oc.get("discord_user", {})) else "0"
+        discord_id = retal.get("discord_user")[0] if len(retal.get("discord_user", {})) else "0"
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:
             await channel.send(f'```md\n# Tracking retals\n< error > discord member {discord_member} not found```')
@@ -548,7 +548,7 @@ class Chain(commands.Cog):
             await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
             return False
 
-        roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
+        roleId = retal.get("role")[0] if len(retal.get("role", {})) else None
         notified = " " if roleId is None else f" <@&{roleId}> "
 
         url = f'https://api.torn.com/faction/?selections=basic,attacks&key={key}'
