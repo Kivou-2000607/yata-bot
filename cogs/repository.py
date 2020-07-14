@@ -5,9 +5,6 @@ from github import Github
 from discord.ext import commands
 from discord import Embed
 
-# import bot functions and classes
-import includes.checks as checks
-
 
 class RepoConnection():
     """ helper class that connects to repo

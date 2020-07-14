@@ -39,9 +39,6 @@ from inc.yata_db import set_configuration
 from inc.yata_db import get_server_admins
 from inc.yata_db import get_configuration
 
-import includes.formating as fmt
-from includes.checks import is_mention
-from includes.yata_db import get_yata_user_by_discord
 from inc.handy import *
 
 
@@ -143,9 +140,8 @@ class Admin(commands.Cog):
                 configuration.pop(module)
                 updates.append(f"- [{module}](disabled)")
 
-
         # push configuration
-        print(json.dumps(configuration))
+        # print(json.dumps(configuration))
         await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
 
         self.bot.configurations[ctx.guild.id] = configuration
@@ -166,37 +162,6 @@ class Admin(commands.Cog):
 
         # await ctx.send(":white_check_mark: configuration updated")
 
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def reload(self, ctx, *args):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/reload] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     from includes.yata_db import load_configurations
-    #
-    #     if ctx.channel.name != "yata-admin":
-    #         await ctx.send(":x: Use this command in `#yata-admin`")
-    #         return
-    #
-    #     await ctx.send("```html\n<reload>```")
-    #     _, c, a = load_configurations(self.bot.bot_id)
-    #     self.bot.configs = json.loads(c)
-    #     self.bot.administrators = json.loads(a)
-    #     # lst = []
-    #     # for i, (k, v) in enumerate(self.bot.administrators.items()):
-    #     #     lst.append(f'Administartor {i+1}: Discord {k}, Torn {v}')
-    #     # await fmt.send_tt(ctx, lst)
-    #
-    #     if len(args) and args[0].isdigit():
-    #         guild = get(self.bot.guilds, id=int(args[0]))
-    #         if guild is not None:
-    #             await self.bot.rebuildGuild(guild, verbose=ctx)
-    #         else:
-    #             await ctx.send(f"```ERROR: guild id {args[0]} bot found```")
-    #     else:
-    #         await self.bot.rebuildGuilds(verbose=ctx)
-    #     await ctx.send("```html\n</reload>```")
-    #
     # @commands.command()
     # @commands.has_any_role(679669933680230430, 669682126203125760)
     # async def check(self, ctx):
@@ -295,199 +260,187 @@ class Admin(commands.Cog):
     #         await ctx.send("\n".join([f'{b} [{a}]' for a, b in guild_found]))
     #     else:
     #         await ctx.send(f':x: no guild found for user {contact_discord}')
-    #
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def invite(self, ctx):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/invite] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     if ctx.channel.name != "yata-admin":
-    #         await ctx.send(":x: Use this command in `#yata-admin`")
-    #         return
-    #     # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
-    #     await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
-    #
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def talk(self, ctx, *args):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/talk] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     if ctx.channel.name != "yata-admin":
-    #         await ctx.send(":x: Use this command in `#yata-admin`")
-    #         return
-    #
-    #     for k in args:
-    #         logging.info("args:", k, is_mention(k, type="channel"))
-    #
-    #     if len(args) < 2:
-    #         await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: number of arguments = {}".format(len(args)))
-    #         return
-    #
-    #     channel_id = is_mention(args[0], type="channel")
-    #     if not channel_id or not channel_id.isdigit():
-    #         await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel id = {}".format(channel_id))
-    #         return
-    #
-    #     channel = get(ctx.guild.channels, id=int(channel_id))
-    #     if channel is None:
-    #         await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel = {}".format(channel))
-    #         return
-    #
-    #     msg = " ".join(args[1:])
-    #     await channel.send(msg)
-    #     await ctx.send(f"Message send to {channel.mention}```{msg}```")
-    #
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def assign(self, ctx, *args):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     if not len(args) or args[0].lower() not in ["host", "yata"]:
-    #         logging.info(":x: `!assign host` or `!assign yata`")
-    #         return
-    #
-    #     # Host
-    #     if args[0].lower() == "host":
-    #         r = get(ctx.guild.roles, name="Host")
-    #         if r is None:
-    #             await ctx.send(f":x: no role {args[0]}")
-    #             return
-    #
-    #         msg = await ctx.send(f":clock1: Assigning {r}")
-    #
-    #         # now that we have discord id of contacts it's easier to use that to assign roles
-    #
-    #         # get all contacts
-    #         contacts = []
-    #         for k, v in self.bot.configs.items():
-    #             contacts.append(v["admin"].get("contact_torn_id", 0))
-    #
-    #         # loop over member
-    #         n = len(ctx.guild.members)
-    #         for i, member in enumerate(ctx.guild.members):
-    #             match = re.search('\[\d{1,7}\]', member.display_name)
-    #             if match is None:
-    #                 continue
-    #
-    #             tornId = int(match.group().replace("[", "").replace("]", ""))
-    #             if tornId in contacts and r not in member.roles:
-    #                 logging.info(f"[admin/assign] {member.display_name} add {r}")
-    #                 await member.add_roles(r)
-    #             elif tornId not in contacts and r in member.roles:
-    #                 logging.info(f"[admin/assign] {member.display_name} remove {r}")
-    #                 await member.remove_roles(r)
-    #
-    #             progress = int(100 * i / float(n))
-    #             if not i % (1 + n // 4):
-    #                 await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
-    #
-    #         await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
-    #
-    #         return
-    #
-    #     if args[0].lower() == "yata":
-    #         r = get(ctx.guild.roles, name="Yata")
-    #         # loop over member
-    #         if r is None:
-    #             await ctx.send(f":x: no role {args[0]}")
-    #         else:
-    #             msg = await ctx.send(f":clock1: Assigning {r}")
-    #
-    #         n = len(ctx.guild.members)
-    #         for i, member in enumerate(ctx.guild.members):
-    #             if len(await get_yata_user_by_discord(member.id)) and r not in member.roles:
-    #                 logging.info(f"[admin/assign] {member.display_name} add {r}")
-    #                 await member.add_roles(r)
-    #
-    #             elif not len(await get_yata_user_by_discord(member.id)) and r in member.roles:
-    #                 logging.info(f"[admin/assign] {member.display_name} remove {r}")
-    #                 await member.remove_roles(r)
-    #
-    #             progress = int(100 * i / float(n))
-    #             if not i % (1 + n // 25):
-    #                 await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
-    #
-    #         await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
-    #
-    #         return
-    #
-    # # helper functions
-    # async def role_exists(self, ctx, guild, name):
-    #     r = get(guild.roles, name=f"{name}")
-    #     s = f":white_check_mark: {name} role present" if r is not None else f":x: no {name} role"
-    #     await ctx.send(s)
-    #
-    # async def channel_exists(self, ctx, guild, name):
-    #     r = get(guild.channels, name=f"{name}")
-    #     s = f":white_check_mark: {name} channel present" if r is not None else f":x: no {name} channel"
-    #     await ctx.send(s)
-    #
-    # @commands.command()
-    # @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
-    # @commands.has_permissions(manage_messages=True)
-    # @commands.guild_only()
-    # async def clear(self, ctx, *args):
-    #     """Clear not pinned messages"""
-    #     logging.info(f'[admin/clear] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
-    #     async for m in ctx.channel.history(limit=limit):
-    #         if not m.pinned:
-    #             try:
-    #                 await m.delete()
-    #             except BaseException as e:
-    #                 return
-    #
-    # @commands.command()
-    # @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
-    # @commands.has_permissions(manage_messages=True)
-    # @commands.guild_only()
-    # async def suppress(self, ctx, *args):
-    #     """Clear not pinned messages"""
-    #     logging.info(f'[admin/suppress] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     await ctx.message.delete()
-    #     limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
-    #     async for m in ctx.channel.history(limit=limit):
-    #         if not m.pinned:
-    #             try:
-    #                 await m.edit(suppress=True)
-    #             except BaseException as e:
-    #                 return
-    #
-    # @commands.command()
-    # @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    # async def help(self, ctx):
-    #     """help command"""
-    #     logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     embed = Embed(title="YATA bot help", description="If you need more information, ping an @helper in the YATA server", color=550000)
-    #
-    #     lst = ["[General information](https://yata.alwaysdata.net/bot/)",
-    #            "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
-    #            "[Host the bot](https://yata.alwaysdata.net/bot/host/)"]
-    #     embed.add_field(name='About the bot', value='\n'.join(lst))
-    #
-    #     lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
-    #            "[YATA discord](https://yata.alwaysdata.net/discord)",
-    #            "[YATA website](https://yata.alwaysdata.net/)"]
-    #     embed.add_field(name='Links', value='\n'.join(lst))
-    #
-    #     lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
-    #            "[Loot level timers](https://yata.alwaysdata.net/loot/)",
-    #            "[Loot bot](https://discordapp.com/channels/581227228537421825/623906124428476427/629065571207479308)"]
-    #     embed.add_field(name='How to loot', value='\n'.join(lst))
-    #     await ctx.send("", embed=embed)
-    #
+
+    @commands.command()
+    @commands.has_any_role(679669933680230430, 669682126203125760)
+    async def invite(self, ctx):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/invite] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        if ctx.channel.name != "yata-admin":
+            await ctx.send(":x: Use this command in `#yata-admin`")
+            return
+        # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
+        await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
+
+    @commands.command()
+    @commands.has_any_role(669682126203125760)
+    async def talk(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/talk] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        for k in args:
+            logging.info("args:", k, is_mention(k, type="channel"))
+
+        if len(args) < 2:
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: number of arguments = {}".format(len(args)))
+            return
+
+        channel_id = is_mention(args[0], type="channel")
+        if not channel_id or not channel_id.isdigit():
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel id = {}".format(channel_id))
+            return
+
+        channel = get(ctx.guild.channels, id=int(channel_id))
+        if channel is None:
+            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel = {}".format(channel))
+            return
+
+        msg = " ".join(args[1:])
+        await channel.send(msg)
+        await ctx.send(f"Message send to {channel.mention}```{msg}```")
+
+    @commands.command()
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def clear(self, ctx, *args):
+        """Clear not pinned messages"""
+        logging.info(f'[admin/clear] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
+            if not m.pinned:
+                try:
+                    await m.delete()
+                except BaseException as e:
+                    return
+
+    @commands.command()
+    @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def suppress(self, ctx, *args):
+        """Clear not pinned messages"""
+        logging.info(f'[admin/suppress] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        await ctx.message.delete()
+        limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
+        async for m in ctx.channel.history(limit=limit):
+            if not m.pinned:
+                try:
+                    await m.edit(suppress=True)
+                except BaseException as e:
+                    return
+
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True, embed_links=True)
+    async def help(self, ctx):
+        """help command"""
+        logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        embed = Embed(title="YATA bot help", description="If you need more information, ping an @helper in the YATA server", color=550000)
+
+        lst = ["[General information](https://yata.alwaysdata.net/bot/)",
+               "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
+               "[Dashboard](https://yata.alwaysdata.net/bot/dashboard/)"]
+        embed.add_field(name='About the bot', value='\n'.join(lst))
+
+        lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
+               "[YATA discord](https://yata.alwaysdata.net/discord)",
+               "[YATA website](https://yata.alwaysdata.net/)"]
+        embed.add_field(name='Links', value='\n'.join(lst))
+
+        lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
+               "[Loot level timers](https://yata.alwaysdata.net/loot/)",
+               "[Loot bot](https://discordapp.com/channels/581227228537421825/623906124428476427/629065571207479308)"]
+        embed.add_field(name='How to loot', value='\n'.join(lst))
+        await ctx.send("", embed=embed)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def assign(self, ctx, *args):
         logging.info(f'[admin/assign] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        # ADMIN PART
+
+        if len(args) and args[0].lower() == "host":
+            # return if not admin
+            admin_role = get(ctx.guild.roles, id=669682126203125760)
+            if admin_role not in ctx.author.roles:
+                return
+
+            r = get(ctx.guild.roles, id=657131110077169664)
+            if r is None:
+                await ctx.send(f":x: no role {args[0]}")
+                return
+
+            msg = await ctx.send(f":clock1: Assigning {r}")
+
+            # now that we have discord id of contacts it's easier to use that to assign roles
+
+            # get all contacts
+            contacts = []
+            for k, v in self.bot.configs.items():
+                contacts.append(v["admin"].get("contact_torn_id", 0))
+
+            # loop over member
+            n = len(ctx.guild.members)
+            for i, member in enumerate(ctx.guild.members):
+                match = re.search('\[\d{1,7}\]', member.display_name)
+                if match is None:
+                    continue
+
+                tornId = int(match.group().replace("[", "").replace("]", ""))
+                if tornId in contacts and r not in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} add {r}")
+                    await member.add_roles(r)
+                elif tornId not in contacts and r in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} remove {r}")
+                    await member.remove_roles(r)
+
+                progress = int(100 * i / float(n))
+                if not i % (1 + n // 4):
+                    await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
+
+            await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
+
+            return
+
+        elif len(args) and args[0].lower() == "yata":
+            # return if not admin
+            admin_role = get(ctx.guild.roles, id=669682126203125760)
+            if admin_role not in ctx.author.roles:
+                return
+
+            r = get(ctx.guild.roles, id=703674852476846171)
+
+            # loop over member
+            if r is None:
+                await ctx.send(f":x: no role {args[0]}")
+            else:
+                msg = await ctx.send(f":clock1: Assigning {r}")
+
+            n = len(ctx.guild.members)
+            for i, member in enumerate(ctx.guild.members):
+                if len(await get_yata_user(member.id, type="D")) and r not in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} add {r}")
+                    await member.add_roles(r)
+
+                elif not len(await get_yata_user(member.id, type="D")) and r in member.roles:
+                    logging.info(f"[admin/assign] {member.display_name} remove {r}")
+                    await member.remove_roles(r)
+
+                progress = int(100 * i / float(n))
+                if not i % (1 + n // 25):
+                    await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
+
+            await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
+
+            return
+
+        # PUBLIC PART
 
         # check argument
         logging.debug(f'[admin/assign] args: {args}')
@@ -504,13 +457,8 @@ class Admin(commands.Cog):
             await ctx.send(f":x: {module} module not activated")
             return
 
-        # # check if channel is allowed
-        # allowed = await self.bot.check_channel_allowed(ctx, config)
-        # if not allowed:
-        #     return
-
         # get role
-        role =  self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
+        role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
 
         if role is None:
             # not role
@@ -529,7 +477,6 @@ class Admin(commands.Cog):
         await asyncio.sleep(5)
         await msg.delete()
         await ctx.message.delete()
-
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -584,7 +531,6 @@ class Admin(commands.Cog):
             msg.append(" ".join(discord_line))
 
         await welcome_channel.send("\n".join(msg))
-
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

@@ -33,10 +33,10 @@ from discord.utils import get
 from discord import Embed
 
 # import bot functions and classes
-import includes.formating as fmt
 from inc.yata_db import get_data
 from inc.yata_db import push_data
 from inc.handy import *
+
 
 class Stocks(commands.Cog):
     def __init__(self, bot):
@@ -89,12 +89,11 @@ class Stocks(commands.Cog):
 
             # send pull request to member
             info = 'bank' if stock == "tcb" else "education"
-            lst = [
-                   f'```md',
+            lst = [f'```md',
                    f'# Stock module: shared {stock.upper()} bonus block',
                    f'Your <{info}> information has just been pulled',
                    f'< Command > {stock}',
-                   f'< Time > {fmt.ts_to_datetime(req["timestamp"], fmt="short")}',
+                   f'< Time > {ts_to_datetime(req["timestamp"], fmt="short")}',
                    f'< Server > {ctx.guild} [{ctx.guild.id}]',
                    f'< Channel > {ctx.channel}',
                    f'< Author > {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
@@ -132,7 +131,7 @@ class Stocks(commands.Cog):
             lst += "-" * (len(lst) - 1) + "\n"
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
+                lst += "{: <15} | {} |  {}  \n".format(k, s_to_dhm(v), "x" if k in stockOwners else " ")
 
             await ctx.send(f"List of education time left and WSSB owners:\n```md\n{lst}```")
 
@@ -149,7 +148,7 @@ class Stocks(commands.Cog):
             lst += "-" * (len(lst) - 1) + "\n"
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst += "{: <15} | {} |  {}  \n".format(k, fmt.s_to_dhm(v), "x" if k in stockOwners else " ")
+                lst += "{: <15} | {} |  {}  \n".format(k, s_to_dhm(v), "x" if k in stockOwners else " ")
 
             await ctx.send(f"List of investment time left and TCB owners:\n```md\n{lst}```")
 
@@ -256,7 +255,6 @@ class Stocks(commands.Cog):
                     mentions.append(embed)
                     mentions_keys.append(v)
 
-
             await push_data(self.bot.bot_id, ts_now(), mentions_keys, "stocks")
 
             # create message to send
@@ -280,8 +278,8 @@ class Stocks(commands.Cog):
                 continue
 
             # get role & channel
-            role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
-            channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
+            role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+            channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
             if channel is None:
                 continue

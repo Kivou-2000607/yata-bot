@@ -6,13 +6,15 @@
 - Revive
 - Loot
 - Chain
+- OC
+- Rackets
 - Torn API
 
 ### Documentation
 https://yata.alwaysdata.net/bot/
 
 ### Host the bot
-If you want to host the bot on your server read the documentation, join the YATA discord and send me a PM on discord to set it up.
+If you want to host the bot on your server read the documentation, join the YATA discord and ping and @Helper for a setup.
 
 Enjoy,
 

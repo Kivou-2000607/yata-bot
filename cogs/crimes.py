@@ -32,11 +32,9 @@ from discord.utils import get
 from discord.ext import tasks
 
 # import bot functions and classes
-import includes.checks as checks
-import includes.formating as fmt
-from includes.yata_db import push_configurations
 from inc.yata_db import set_configuration
 from inc.handy import *
+
 
 class Crimes(commands.Cog):
     def __init__(self, bot):
@@ -85,7 +83,7 @@ class Crimes(commands.Cog):
         for k, v in crimes.items():
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
-                lst = ['```md', f'# organized crime ready', f'< Crime > {v["crime_name"]} #{k}', f'< Started > {fmt.ts_to_datetime(v["time_started"], fmt="short")}', f'< Ready > {fmt.ts_to_datetime(v["time_ready"], fmt="short")}', f'< Participants > {len(v["participants"])}\n']
+                lst = ['```md', f'# organized crime ready', f'< Crime > {v["crime_name"]} #{k}', f'< Started > {ts_to_datetime(v["time_started"], fmt="short")}', f'< Ready > {ts_to_datetime(v["time_ready"], fmt="short")}', f'< Participants > {len(v["participants"])}\n']
                 # logging.info(k, v)
                 for p in v["participants"]:
                     tId = list(p)[0]
@@ -134,7 +132,7 @@ class Crimes(commands.Cog):
         current = {"channel": [str(ctx.channel.id), f'{ctx.channel.name}', '#'],
                    "discord_user": [str(ctx.author.id), f'{ctx.author}', '']}
 
-       # get torn user
+        # get torn user
         status, tornId, name, _ = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
             lst = ['```md', f'# Tracking organized crimes', f'< error > could not get {ctx.author}\'s API key```']
@@ -191,7 +189,7 @@ class Crimes(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            lst = [f'```md', f'# Tracking organized crimes\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}```']
+            lst = [f'```md', f'# Tracking organized crimes\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
             if req["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
@@ -201,12 +199,12 @@ class Crimes(commands.Cog):
                 await channel.send("\n".join(lst))
                 return False
             else:
-                lst.append("```")
+                lst += ["", "<CONTINUE>", "```"]
                 await channel.send("\n".join(lst))
                 return True
 
         if req is None or "ID" not in req:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > wrong API output\n\n{hide_key(req)}```')
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > wrong API output\n\n{hide_key(req)}\n\n<CONTINUE>```')
             return True
 
         if not int(req["ID"]):
@@ -249,15 +247,14 @@ class Crimes(commands.Cog):
             if completed and mentionned:
                 initId = str(v["initiated_by"])
                 lst = [
-                        '```md',
-                        f'# Organized crime completed',
-                        f'< Faction > {fName}',
-                        f'< Crime > {v["crime_name"]}',
-                        f'< Initiated > {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
-                        f'< Money > ${v["money_gain"]:,}',
-                        f'< Respect > {v["respect_gain"]:,}',
-                        '```'
-                       ]
+                    '```md',
+                    f'# Organized crime completed',
+                    f'< Faction > {fName}',
+                    f'< Crime > {v["crime_name"]}',
+                    f'< Initiated > {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
+                    f'< Money > ${v["money_gain"]:,}',
+                    f'< Respect > {v["respect_gain"]:,}',
+                    '```']
                 await channel.send("\n".join(lst))
                 oc["mentions"].remove(str(k))
 

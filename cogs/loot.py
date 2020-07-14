@@ -34,8 +34,8 @@ from discord.utils import get
 from discord import Embed
 
 # import bot functions and classes
-import includes.formating as fmt
 from inc.handy import *
+
 
 class Loot(commands.Cog):
     def __init__(self, bot):
@@ -67,7 +67,7 @@ class Loot(commands.Cog):
 
         # compute current time
         now = int(time.time())
-        msg = [f'NPC report of {fmt.ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT for {ctx.author.display_name}\n']
+        msg = [f'NPC report of {ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT for {ctx.author.display_name}\n']
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
@@ -89,8 +89,8 @@ class Loot(commands.Cog):
 
             line = [f'{npc["name"]: <7}:']
             line.append(f'[{"=" * i}{" " * (n - i)}] ({str(advance): >3}%)')
-            line.append(f'{fmt.s_to_hms(abs(due))} {"since" if due < 0 else "to"} loot level IV')
-            line.append(f'[{fmt.ts_to_datetime(ts).strftime("%H:%M:%S")} TCT]')
+            line.append(f'{s_to_hms(abs(due))} {"since" if due < 0 else "to"} loot level IV')
+            line.append(f'[{ts_to_datetime(ts).strftime("%H:%M:%S")} TCT]')
 
             msg.append(" ".join(line))
 
@@ -136,7 +136,7 @@ class Loot(commands.Cog):
 
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
-                notification = "{} {}".format(npc["name"], "in " + fmt.s_to_ms(due) if due > 0 else "**NOW**")
+                notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "**NOW**")
                 mentions.append(notification)
 
                 title = "**{}** is currently {}".format(npc["name"], ll[lvl])
@@ -144,11 +144,11 @@ class Loot(commands.Cog):
                 embed = Embed(title=title, description=msg, color=550000)
 
                 if due < 0:
-                    embed.add_field(name='Loot level IV since', value='{}'.format(fmt.s_to_ms(abs(due))))
-                    embed.add_field(name='Date', value='{} TCT'.format(fmt.ts_to_datetime(npc["timings"]["4"]["ts"]).strftime("%y/%m/%d %H:%M:%S")))
+                    embed.add_field(name='Loot level IV since', value='{}'.format(s_to_ms(abs(due))))
+                    embed.add_field(name='Date', value='{} TCT'.format(ts_to_datetime(npc["timings"]["4"]["ts"]).strftime("%y/%m/%d %H:%M:%S")))
                 else:
-                    embed.add_field(name='Loot {} in'.format(ll[lvl + 1]), value='{}'.format(fmt.s_to_ms(due)))
-                    embed.add_field(name='At', value='{} TCT'.format(fmt.ts_to_datetime(ts).strftime("%H:%M:%S")))
+                    embed.add_field(name='Loot {} in'.format(ll[lvl + 1]), value='{}'.format(s_to_ms(due)))
+                    embed.add_field(name='At', value='{} TCT'.format(ts_to_datetime(ts).strftime("%H:%M:%S")))
 
                 url = thumbs.get(id, "?")
                 embed.set_thumbnail(url=url)
@@ -165,7 +165,7 @@ class Loot(commands.Cog):
         # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
         s = nextDue[0] - 7 * 60 - 5  # next due - 7 minutes - 5 seconds of the task ticker
-        logging.debug(f"[loot/notifications] end task... sleeping for {fmt.s_to_hms(s)} minutes.")
+        logging.debug(f"[loot/notifications] end task... sleeping for {s_to_hms(s)} minutes.")
 
         # iteration over all guilds
         for guild in self.bot.get_guilds_by_module("loot"):
@@ -177,8 +177,8 @@ class Loot(commands.Cog):
                     continue
 
                 # get role & channel
-                role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
-                channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
+                role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
                 if channel is None:
                     continue

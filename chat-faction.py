@@ -26,8 +26,8 @@ import cloudscraper
 import aiohttp
 import json
 
-from includes.yata_db import get_secret
-import includes.formating as fmt
+from inc.handy import chat_message
+from inc.yata_db import get_secret
 
 room = "Faction:33241"
 iud, secret, hooks = get_secret(room)
@@ -52,7 +52,7 @@ async def chat(uid, secret, hooks, room):
                 d = json.loads(data).get("data", [dict({})])[0]
                 txt = d.get("messageText")
                 if d.get("roomId", "") == room and txt:
-                    msg = fmt.chat_message(d)
+                    msg = chat_message(d)
                     await webhooks["full"].send(msg)
 
                     for keyword in [k for k in webhooks if k != "full"]:

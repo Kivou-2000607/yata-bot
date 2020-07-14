@@ -33,7 +33,6 @@ from discord.ext import tasks
 # import bot functions and classes
 from inc.yata_db import set_configuration
 from inc.yata_db import get_faction_name
-
 from inc.handy import *
 
 
@@ -495,7 +494,6 @@ class Verify(commands.Cog):
 
         await channel.send(f"```md\n# done verifying```")
 
-
     async def _loop_check(self, guild, channel, ctx=False, force=False):
 
         # get configuration
@@ -697,7 +695,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/dailyCheck] Failed to cast last update into int guild {guild}: {config["other"]["daily_check"]}')
                     last_update = 1
-                if ts_now() - last_update <  24 * 3600:
+                if ts_now() - last_update < 24 * 3600:
                     continue
 
                 # get full guild (async iterator doesn't return channels)
@@ -744,7 +742,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/weeklyCheck] Failed to cast last update into int guild {guild}: {config["other"]["weekly_check"]}')
                     last_update = 1
-                if ts_now() - last_update <  7 * 24 * 3600:
+                if ts_now() - last_update < 7 * 24 * 3600:
                     continue
 
                 # get full guild (async iterator doesn't return channels)

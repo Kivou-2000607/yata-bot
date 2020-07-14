@@ -33,8 +33,6 @@ from discord.ext import tasks
 from discord import Embed
 
 # import bot functions and classes
-import includes.checks as checks
-import includes.formating as fmt
 from inc.yata_db import set_configuration
 from inc.handy import *
 
@@ -281,7 +279,7 @@ class Chain(commands.Cog):
             if len(travels[t]) and t != "Traveling":
                 lst.append("---")
 
-        await fmt.send_tt(ctx, lst)
+        await send_tt(ctx, lst)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -336,7 +334,7 @@ class Chain(commands.Cog):
             if v["status"]["state"] in ["Hospital"]:
                 s = v["status"]
                 a = v["last_action"]
-                hosps[k] = [v["name"], s["description"], fmt.cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
+                hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
 
         lst = [f'Members of **{r["name"]} [{r["ID"]}]** hospitalized: {len(hosps)}']
         for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
@@ -344,7 +342,7 @@ class Chain(commands.Cog):
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
             lst.append(line)
 
-        await fmt.send_tt(ctx, lst, tt=False)
+        await send_tt(ctx, lst, tt=False)
 
     @commands.command(aliases=['ok'])
     @commands.bot_has_permissions(send_messages=True)
@@ -399,7 +397,7 @@ class Chain(commands.Cog):
             if v["status"]["state"] in ["Okay"]:
                 s = v["status"]
                 a = v["last_action"]
-                hosps[k] = [v["name"], s["description"], fmt.cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
+                hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
 
         lst = [f'Members of **{r["name"]} [{r["ID"]}]** that are Okay: {len(hosps)}']
         for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
@@ -407,7 +405,7 @@ class Chain(commands.Cog):
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
             lst.append(line)
 
-        await fmt.send_tt(ctx, lst, tt=False)
+        await send_tt(ctx, lst, tt=False)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -461,7 +459,7 @@ class Chain(commands.Cog):
             lst.append(f'Money: No vault records')
             lst.append(f'Points: No vault records')
 
-        await fmt.send_tt(ctx, lst)
+        await send_tt(ctx, lst)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -558,7 +556,7 @@ class Chain(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            lst = [f'```md', f'# Tracking retals\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}```']
+            lst = [f'```md', f'# Tracking retals\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
             if req["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
@@ -568,12 +566,12 @@ class Chain(commands.Cog):
                 await channel.send("\n".join(lst))
                 return False
             else:
-                lst.append("```")
+                lst += ["", "<CONTINUE>", "```"]
                 await channel.send("\n".join(lst))
                 return True
 
         if req is None or "ID" not in req:
-            await channel.send(f'```md\n# Tracking retals\n< error > wrong API output\n\n{hide_key(req)}```')
+            await channel.send(f'```md\n# Tracking retals\n< error > wrong API output\n\n{hide_key(req)}\n\n<CONTINUE>```')
             return True
 
         if not int(req["ID"]):
@@ -596,8 +594,7 @@ class Chain(commands.Cog):
 
             if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
                 tleft = 5 - delay
-                timeout = fmt.ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
-
+                timeout = ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
 
                 embed = Embed(title=f'{html.unescape(fName)} have {tleft:.1f} minutes to retal',
                               description=f'Target: [{v["attacker_name"]} [{v["attacker_id"]}]](https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
@@ -620,7 +617,7 @@ class Chain(commands.Cog):
                 retal["mentions"].append(str(k))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
-                attack_time = fmt.ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
+                attack_time = ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
                 await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
@@ -654,7 +651,6 @@ class Chain(commands.Cog):
                     continue
                 logging.info(f"[chain/retal-notifications] retal for {guild}")
 
-
                 # iteration over all members asking for retal watch
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
@@ -674,7 +670,6 @@ class Chain(commands.Cog):
                     del self.bot.configurations[guild.id]["chain"]["currents"][d]
 
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-
 
             except BaseException as e:
                 logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')

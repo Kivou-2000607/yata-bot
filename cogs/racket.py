@@ -24,21 +24,19 @@ import datetime
 import json
 import re
 import logging
+import html
 
 # import discord modules
 from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
 from discord import Embed
-from inc.handy import *
 
 # import bot functions and classes
-import html
-
-import includes.formating as fmt
 from inc.yata_db import get_data
 from inc.yata_db import push_data
 from inc.yata_db import get_faction_name
+from inc.handy import *
 
 
 class Racket(commands.Cog):
@@ -100,8 +98,8 @@ class Racket(commands.Cog):
                     embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
 
                 embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
-                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
-                embed.set_footer(text=f'{fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
 
         for k, v in rackets_p.items():
@@ -116,8 +114,8 @@ class Racket(commands.Cog):
                 embed.add_field(name='Owner', value=f'[{html.unescape(factionO)}](https://www.torn.com/factions.php?step=profile&ID={v["faction"]})')
 
                 embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
-                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
-                embed.set_footer(text=f'{fmt.ts_to_datetime(v["changed"], fmt="short")}')
+                # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
 
         # req["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
@@ -146,8 +144,8 @@ class Racket(commands.Cog):
                 embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
 
                 embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/citymap/territories/50x50/{k}.png')
-                # embed.set_footer(text=f'Created {fmt.ts_to_datetime(v["created"], fmt="short")} Changed {fmt.ts_to_datetime(v["changed"], fmt="short")}')
-                embed.set_footer(text=f'{fmt.ts_to_datetime(racket["changed"], fmt="short")}')
+                # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
+                embed.set_footer(text=f'{ts_to_datetime(racket["changed"], fmt="short")}')
                 mentions.append(embed)
 
         logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
@@ -173,8 +171,8 @@ class Racket(commands.Cog):
                     continue
 
                 # get role & channel
-                role =  self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
-                channel =  self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
+                role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
                 if channel is None:
                     continue

@@ -34,8 +34,6 @@ from discord.ext import tasks
 from discord.utils import get
 
 # import bot functions and classes
-import includes.checks as checks
-import includes.formating as fmt
 from inc.yata_db import reset_notifications
 from inc.handy import *
 
@@ -98,7 +96,7 @@ class API(commands.Cog):
         for i, w in enumerate(tomax):
             lst.append(f'< {i+1: >2} > {w["name"]} ({w["exp"]}%)')
 
-        await fmt.send_tt(ctx.author, lst)
+        await send_tt(ctx.author, lst)
         return
 
     @commands.command(aliases=['fh'])
@@ -147,7 +145,7 @@ class API(commands.Cog):
         for fh in sorted(finishingHits, key=lambda x: -x[1]):
             lst.append(f"< {fh[0]: <16} > {fh[1]: >6,d}")
 
-        await fmt.send_tt(ctx.author, lst)
+        await send_tt(ctx.author, lst)
         return
 
     @commands.command(aliases=['net'])
@@ -184,7 +182,7 @@ class API(commands.Cog):
                 b = f"${v:,.0f}"
                 lst.append(f'< {a: <13} > {b: >16}')
 
-        await fmt.send_tt(ctx.author, lst)
+        await send_tt(ctx.author, lst)
         return
 
     @commands.command(aliases=['profile', 'p'])
@@ -274,7 +272,7 @@ class API(commands.Cog):
         # lst.append(f'State: {s["state"]}')
         lst.append(f'< Status > {s["description"]}')
         if s["details"]:
-            lst.append(f'< Details > {fmt.cleanhtml(s["details"])}')
+            lst.append(f'< Details > {cleanhtml(s["details"])}')
         p = 100 * r['life']['current'] // r['life']['maximum']
         i = int(p * 20 / 100)
         lst.append(f'< Life > {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d} [{"+" * i}{"-" * (20 - i)}]')
@@ -320,7 +318,7 @@ class API(commands.Cog):
             links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
             linki += 1
 
-        await fmt.send_tt(ctx, lst)
+        await send_tt(ctx, lst)
         for k, v in links.items():
             await ctx.send(f'<{k}> {v}')
 
@@ -404,7 +402,7 @@ class API(commands.Cog):
                             for k, v in req["events"].items():
                                 # if new event not notified -> notify
                                 if not v["seen"] and k not in notifications["event"]:
-                                    await member.send(fmt.cleanhtml(v["event"]).replace(" [View]", ""))
+                                    await member.send(cleanhtml(v["event"]).replace(" [View]", ""))
                                     notifications["event"][k] = True
 
                                 # if seen even already notified -> clean table

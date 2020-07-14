@@ -77,7 +77,6 @@ bot = YataBot(configurations=configurations,
               bot_id=bot_id,
               main_server_id=main_server_id,
               github_token=github_token)
-
 bot.remove_command('help')
 
 # load classes
@@ -90,8 +89,8 @@ bot.add_cog(Revive(bot))
 bot.add_cog(Crimes(bot))
 bot.add_cog(API(bot))
 bot.add_cog(Chain(bot))
-# bot.add_cog(Misc(bot))
-# bot.add_cog(Repository(bot))
+bot.add_cog(Misc(bot))
+bot.add_cog(Repository(bot))
 
 # run bot
 bot.run(token)

@@ -29,8 +29,8 @@ from discord.ext import commands
 from discord.utils import get
 
 # import bot functions and classes
-import includes.formating as fmt
 from inc.handy import *
+
 
 class Revive(commands.Cog):
     def __init__(self, bot):
@@ -104,7 +104,6 @@ class Revive(commands.Cog):
                     errors.append(f':x: Problem with API key (status = {status}): *{req["error"]["error"]}*')
                 errors.append(":x: I cannot specify faction or hospitalization time")
 
-
         # create call message
         name = req.get("name", "Player")
         url = f'https://www.torn.com/profiles.php?XID={tornId}'
@@ -115,7 +114,7 @@ class Revive(commands.Cog):
 
         # add status
         if req.get('status', False) and req["status"]["state"] == "Hospital":
-            lst.append(f'{req["status"]["description"]} ({fmt.cleanhtml(req["status"]["details"])})')
+            lst.append(f'{req["status"]["description"]} ({cleanhtml(req["status"]["details"])})')
 
         # list of messages to delete them after
         msgList = []
@@ -125,7 +124,7 @@ class Revive(commands.Cog):
             m = await ctx.send(f'{msg}')
             msgList.append([m, ctx.channel])
         msg = "\n".join(lst)
-        role =  self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
+        role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
         mention = '' if role is None else f'{role.mention} '
         m = await ctx.send(f'{mention}{msg}')
         msgList.append([m, ctx.channel])
@@ -136,7 +135,7 @@ class Revive(commands.Cog):
                 # get remote server coonfig
                 remote_guild = get(self.bot.guilds, id=int(id))
                 logging.debug(f'[revive/revive] Sending call: {ctx.guild} -> {remote_guild}')
-                remote_config =  self.bot.get_guild_configuration_by_module(remote_guild, "revive")
+                remote_config = self.bot.get_guild_configuration_by_module(remote_guild, "revive")
 
                 if str(ctx.guild.id) in remote_config.get("blacklist", {}):
                     m = await ctx.send(f'*Server {remote_guild.name} has blacklisted you*')

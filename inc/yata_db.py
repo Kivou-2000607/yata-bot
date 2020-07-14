@@ -41,6 +41,7 @@ from datetime import datetime
 #   FROM player_key
 #     JOIN player_player ON player_key.player_id = player_player.id;
 
+
 def load_configurations(bot_id):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     con = psycopg2.connect(**db_cred)
@@ -66,6 +67,7 @@ def load_configurations(bot_id):
     con.close()
     return token, administrators, configurations
 
+
 async def get_configuration(bot_id, discord_id):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
@@ -73,6 +75,7 @@ async def get_configuration(bot_id, discord_id):
     con = await asyncpg.connect(database=dbname, **db_cred)
     server = await con.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     return False if server is None else json.loads(server.get("configuration"))
+
 
 async def set_configuration(bot_id, discord_id, server_name, configuration):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
@@ -94,6 +97,7 @@ async def set_configuration(bot_id, discord_id, server_name, configuration):
         ''', bot_id, discord_id, server_name, json.dumps(configuration))
     await con.close()
 
+
 async def get_server_admins(bot_id, discord_id):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
@@ -114,6 +118,7 @@ async def get_server_admins(bot_id, discord_id):
             admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
 
     return admins
+
 
 async def get_yata_user(user_id, type="T"):
     # get YATA user
@@ -170,18 +175,18 @@ async def get_yata_user(user_id, type="T"):
 #     con = await asyncpg.connect(database=dbname, **db_cred)
 #     await con.execute('UPDATE bot_discordapp SET variables = $1 WHERE id = $2', json.dumps(configs), int(bot_id))
 #     await con.close()
-#
-#
-# def get_secret(name):
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     con = psycopg2.connect(**db_cred)
-#     cur = con.cursor()
-#     cur.execute(f"SELECT uid, secret, hookurl FROM bot_chat WHERE name = '{name}';")
-#     uid, secret, hookurl = cur.fetchone()
-#     cur.close()
-#     con.close()
-#     return uid, secret, hookurl
-#
+
+
+def get_secret(name):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    con = psycopg2.connect(**db_cred)
+    cur = con.cursor()
+    cur.execute(f"SELECT uid, secret, hookurl FROM bot_chat WHERE name = '{name}';")
+    uid, secret, hookurl = cur.fetchone()
+    cur.close()
+    con.close()
+    return uid, secret, hookurl
+
 
 async def push_data(bot_id, timestamp, data, module):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
@@ -209,6 +214,7 @@ def get_data(bot_id, module):
     con.close()
     return timestamp, json.loads(data)
 
+
 async def get_faction_name(tId):
     if str(tId).isdigit():
         tId = int(tId)
@@ -221,6 +227,7 @@ async def get_faction_name(tId):
         return f'Faction [{tId}]' if row is None else f'{html.unescape(row.get("name", "Faction"))} [{tId}]'
     else:
         return f'Faction [{tId}]'
+
 
 async def reset_notifications(tornId):
     """Writes the actual guild name in YATA database"""

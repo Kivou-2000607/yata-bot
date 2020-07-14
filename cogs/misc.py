@@ -26,12 +26,10 @@ import logging
 
 # import discord modules
 from discord.ext import commands
-from discord.utils import get
 
 # import bot functions and classes
-import includes.formating as fmt
-from includes.torn_pages import pages
 from inc.handy import *
+
 
 class Misc(commands.Cog):
     def __init__(self, bot):
@@ -90,73 +88,3 @@ class Misc(commands.Cog):
     async def crimes2(self, ctx):
         """gives latest update on crimes 2.0"""
         await ctx.send("https://yata.alwaysdata.net/static/images/crimes2.gif")
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def banners(self, ctx, *args):
-        """Gives missing honor banners or displays banner if id given"""
-
-        # get yata's honor dict
-        url = "https://yata.alwaysdata.net/awards/bannersId"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                honorBanners = await r.json()
-
-        # display honor banners
-        if len(args):
-            for id in args:
-                bannerId = honorBanners.get(id)
-                if bannerId is None:
-                    await ctx.send("Honor **#{}**: *honor not known*".format(id))
-                elif int(bannerId) == 0:
-                    await ctx.send("Honor **#{}**: *banner not known*".format(id))
-                else:
-                    await ctx.send("Honor **#{}**: https://awardimages.torn.com/{}.png".format(id, bannerId))
-
-        # display missing banners
-        else:
-            # get configuration for guild
-            status, tornId, key = await self.bot.get_master_key(ctx.guild)
-            if status == -1:
-                await ctx.send(":x: No master key given")
-                return
-
-            # get torn's honor dict
-            url = "https://api.torn.com/torn/?selections=honors&key={}".format(key)
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    tornHonors = await r.json()
-
-            # handle API error
-            if 'error' in tornHonors:
-                await ctx.send(f':x: Master key problem: *{tornHonors["error"]["error"]}*')
-                return
-
-            # dirtiest way to deal with API error
-            tornHonors = tornHonors.get('honors', dict({}))
-
-            # select missing honors
-            honors = []
-            for k, v in honorBanners.items():
-                if int(v) == 0:
-                    honor = tornHonors.get(k, dict({}))
-                    h = " #{} **{}** *{}*".format(k, honor.get('name', 'API'), honor.get('description', 'ERROR'))
-                    honors.append(h)
-
-            message = "Missing banners:\n{}".format("\n".join(honors))
-
-            await ctx.send(message)
-
-
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def egg(self, ctx):
-        logging.info(f'[misc/egg] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        p = random.choice(pages)
-        lst = [f'You want to find an egg? Try here:',
-               f'**{p.get("title", "here")}** https://www.torn.com{p.get("url", "")}']
-        await ctx.send("\n".join(lst))
