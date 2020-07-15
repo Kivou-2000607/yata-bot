@@ -381,7 +381,7 @@ class Admin(commands.Cog):
             # get all contacts
             contacts = []
             for k, v in self.bot.configurations.items():
-                admins = [discord_id for discord_id in v.get("server_admins", {})]
+                admins = [discord_id for discord_id in v.get("admin", {}).get("server_admins", {})]
                 contacts += admins
 
             # loop over member
@@ -612,7 +612,7 @@ class Admin(commands.Cog):
         # get all contacts
         contacts = []
         for k, v in self.bot.configurations.items():
-            admins = [discord_id for discord_id in v.get("server_admins", {})]
+            admins = [discord_id for discord_id in v.get("admin", {}).get("server_admins", {})]
             contacts += admins
 
         # loop over member and toggle roles
