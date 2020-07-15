@@ -126,7 +126,11 @@ class Revive(commands.Cog):
         msg = "\n".join(lst)
         role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
         mention = '' if role is None else f'{role.mention} '
-        m = await ctx.send(f'{mention}{msg}')
+        alert_channel = self.bot.get_module_channel(ctx.guild.channels, config.get("channels_alerts", {}))
+        if alert_channel is None:
+            m = await ctx.send(f'{mention}{msg}')
+        else:
+            m = await alert_channel.send(f'{mention}{msg}')
         msgList.append([m, ctx.channel])
 
         # loop over all server to send the calls
@@ -154,8 +158,8 @@ class Revive(commands.Cog):
             except BaseException as e:
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
 
-        # wait for 1 minute
-        await asyncio.sleep(50)
+        # wait for 5 minutes
+        await asyncio.sleep(60 * 5)
         for [msg, cha] in msgList:
             try:
                 await msg.delete()
