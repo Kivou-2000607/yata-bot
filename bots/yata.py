@@ -222,7 +222,7 @@ class YataBot(Bot):
 
     async def check_channel_allowed(self, ctx, config, channel_key=None):
         channel_key = "channels_allowed" if channel_key is None else channel_key
-        print(channel_key)
+
         if str(ctx.channel.id) not in config.get(channel_key, []):
             channels = [get(ctx.guild.channels, id=int(k)) for k in config.get(channel_key, {}) if str(k).isdigit()]
             msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join([c.mention for c in channels if c is not None])}.')

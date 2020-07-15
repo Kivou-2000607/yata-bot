@@ -20,8 +20,11 @@ class RepoConnection():
         if label_name is None:
             return self.repo.create_issue(title=title, body=body)
         else:
-            label = self.repo.get_label(label_name)
-            return self.repo.create_issue(title=title, body=body, labels=[label])
+            try:
+                label = self.repo.get_label(label_name)
+                return self.repo.create_issue(title=title, body=body, labels=[label])
+            except BaseException:
+                return self.repo.create_issue(title=title, body=body)
 
 
 class Repository(commands.Cog):
@@ -54,16 +57,12 @@ class Repository(commands.Cog):
         except BaseException as e:
             await ctx.send(f'Failed to create the issue: {e}')
 
-    @commands.command()
+    # @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
     async def bug(self, ctx, *args):
         await self.create_issue(ctx, "bug", args)
 
-    @commands.command()
+    # @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
     async def suggestion(self, ctx, *args):
         await self.create_issue(ctx, "suggestion", args)
-
-    @commands.command()
-    async def issue(self, ctx, *args):
-        await self.create_issue(ctx, None, args)

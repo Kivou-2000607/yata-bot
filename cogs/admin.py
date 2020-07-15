@@ -26,6 +26,7 @@ import sys
 import logging
 import html
 import asyncio
+import datetime
 
 # import discord modules
 import discord
@@ -33,11 +34,13 @@ from discord.ext import commands
 from discord.utils import get
 from discord.utils import oauth_url
 from discord import Embed
+from discord.ext import tasks
 
 # import bot functions and classes
 from inc.yata_db import set_configuration
 from inc.yata_db import get_server_admins
 from inc.yata_db import get_configuration
+from inc.yata_db import get_yata_user
 
 from inc.handy import *
 
@@ -46,10 +49,14 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
+        self.assignRoles.start()
+
+    def cog_unload(self):
+        self.assignRoles.cancel()
 
     @commands.command()
     @commands.guild_only()
-    async def update(self, ctx):
+    async def sync(self, ctx):
         """updates dashboard and bot configuration"""
         logging.info(f'[admin/update] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
@@ -65,8 +72,8 @@ class Admin(commands.Cog):
             await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, {"admin": {}})
             updates.append("- create server database")
 
-        # check if server admin
-        server_admins = await get_server_admins(self.bot_id, ctx.guild.id)
+        # check if server admin and secret
+        server_admins, server_secret = await get_server_admins(self.bot_id, ctx.guild.id)
         admins_lst = ["```md", "# Bot admins"]
         if len(server_admins):
             for server_admin_id, server_admin in server_admins.items():
@@ -104,6 +111,8 @@ class Admin(commands.Cog):
         # set admin section of the configuration
         if "admin" not in configuration:
             configuration["admin"] = {}
+        bot = get(ctx.guild.members, id=self.bot.user.id)
+        configuration["admin"]["joined_at"] = int(datetime.datetime.timestamp(bot.joined_at))
         configuration["admin"]["guild_id"] = ctx.guild.id
         configuration["admin"]["guild_name"] = ctx.guild.name
         configuration["admin"]["owner_did"] = ctx.guild.owner.id
@@ -111,6 +120,7 @@ class Admin(commands.Cog):
         configuration["admin"]["channels"] = channels
         configuration["admin"]["roles"] = roles
         configuration["admin"]["server_admins"] = server_admins
+        configuration["admin"]["secret"] = server_secret
 
         # update modules
         for module in ["admin", "rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
@@ -262,18 +272,6 @@ class Admin(commands.Cog):
     #         await ctx.send(f':x: no guild found for user {contact_discord}')
 
     @commands.command()
-    @commands.has_any_role(679669933680230430, 669682126203125760)
-    async def invite(self, ctx):
-        """Admin tool for the bot owner"""
-        logging.info(f'[admin/invite] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        if ctx.channel.name != "yata-admin":
-            await ctx.send(":x: Use this command in `#yata-admin`")
-            return
-        # await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=469837840)))
-        await ctx.send(oauth_url(self.bot.user.id, discord.Permissions(permissions=8)))
-
-    @commands.command()
     @commands.has_any_role(669682126203125760)
     async def talk(self, ctx, *args):
         """Admin tool for the bot owner"""
@@ -343,7 +341,7 @@ class Admin(commands.Cog):
 
         lst = ["[General information](https://yata.alwaysdata.net/bot/)",
                "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
-               "[Dashboard](https://yata.alwaysdata.net/bot/dashboard/)"]
+               f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))})"]
         embed.add_field(name='About the bot', value='\n'.join(lst))
 
         lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
@@ -382,21 +380,18 @@ class Admin(commands.Cog):
 
             # get all contacts
             contacts = []
-            for k, v in self.bot.configs.items():
-                contacts.append(v["admin"].get("contact_torn_id", 0))
+            for k, v in self.bot.configurations.items():
+                admins = [discord_id for discord_id in v.get("server_admins", {})]
+                contacts += admins
 
             # loop over member
             n = len(ctx.guild.members)
             for i, member in enumerate(ctx.guild.members):
-                match = re.search('\[\d{1,7}\]', member.display_name)
-                if match is None:
-                    continue
 
-                tornId = int(match.group().replace("[", "").replace("]", ""))
-                if tornId in contacts and r not in member.roles:
+                if str(member.id) in contacts and r not in member.roles:
                     logging.info(f"[admin/assign] {member.display_name} add {r}")
                     await member.add_roles(r)
-                elif tornId not in contacts and r in member.roles:
+                elif str(member.id) not in contacts and r in member.roles:
                     logging.info(f"[admin/assign] {member.display_name} remove {r}")
                     await member.remove_roles(r)
 
@@ -600,3 +595,46 @@ class Admin(commands.Cog):
         headers["error"] = 'New error'
         logging.error(f'[admin/on_command_error] {hide_key(error)}')
         await self.bot.send_log_main(error, headers=headers, full=True)
+
+
+    @tasks.loop(hours=24)
+    async def assignRoles(self):
+        logging.debug("[admin/assignRoles] start task")
+
+        guild = get(self.bot.guilds, id=self.bot.main_server_id)
+
+        # assign @host and @yata
+        host = get(guild.roles, id=657131110077169664)
+        yata = get(guild.roles, id=703674852476846171)
+        if host is None or yata is None:
+            return
+
+        # get all contacts
+        contacts = []
+        for k, v in self.bot.configurations.items():
+            admins = [discord_id for discord_id in v.get("server_admins", {})]
+            contacts += admins
+
+        # loop over member and toggle roles
+        for member in guild.members:
+
+            if str(member.id) in contacts and host not in member.roles:
+                logging.info(f"[admin/assignRoles] {member.display_name} add {host}")
+                await member.add_roles(host)
+            elif str(member.id) not in contacts and host in member.roles:
+                logging.info(f"[admin/assignRoles] {member.display_name} remove {host}")
+                await member.remove_roles(host)
+
+            is_yata = await get_yata_user(member.id, type="D")
+            if len(is_yata) and yata not in member.roles:
+                logging.info(f"[admin/assignRoles] {member.display_name} add {yata}")
+                await member.add_roles(yata)
+
+            elif not len(is_yata) and yata in member.roles:
+                logging.info(f"[admin/assignRoles] {member.display_name} remove {yata}")
+                await member.remove_roles(yata)
+
+
+    @assignRoles.before_loop
+    async def before_assignRoles(self):
+        await self.bot.wait_until_ready()

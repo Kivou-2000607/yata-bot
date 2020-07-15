@@ -270,12 +270,12 @@ class Crimes(commands.Cog):
 
             # if ready and not already mentionned -> mention
             if ready and not mentionned:
-                await channel.send(f'{notified} {v["crime_name"]} ready```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
+                await channel.send(f'{notified} {v["crime_name"]} ready\n```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
             if not ready and mentionned:
-                await channel.send(f'{v["crime_name"]} ready```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
+                await channel.send(f'{v["crime_name"]} ready\n```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
                 oc["mentions"].remove(str(k))
 
         # clean mentions

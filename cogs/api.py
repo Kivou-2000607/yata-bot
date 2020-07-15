@@ -143,7 +143,7 @@ class API(commands.Cog):
         lst = [f"# {name} [{id}]: finishing hits\n"]
         # send list
         for fh in sorted(finishingHits, key=lambda x: -x[1]):
-            lst.append(f"< {fh[0]: <16} > {fh[1]: >6,d}")
+            lst.append(f"< {fh[0]: <17} > {fh[1]: >6,d}")
 
         await send_tt(ctx.author, lst)
         return

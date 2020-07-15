@@ -27,6 +27,8 @@ import asyncpg
 import psycopg2
 import logging
 import html
+import string
+import random
 from datetime import datetime
 
 # definition of the view linking Player to Key
@@ -105,7 +107,7 @@ async def get_server_admins(bot_id, discord_id):
     con = await asyncpg.connect(database=dbname, **db_cred)
     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     if server is None:
-        return {}
+        return {}, 'x'
 
     server_yata_id = server.get("id")
     players_yata_id = await con.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
@@ -117,7 +119,11 @@ async def get_server_admins(bot_id, discord_id):
         if dId:
             admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
 
-    return admins
+    secret = server.get("secret", "x")
+    if secret == 'x':
+        secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
+
+    return admins, secret
 
 
 async def get_yata_user(user_id, type="T"):
@@ -208,7 +214,7 @@ def get_data(bot_id, module):
         cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {bot_id};")
     elif module == "stocks":
         cur.execute(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {bot_id};")
-    # print(cur.fetchone())
+
     timestamp, data = cur.fetchone()
     cur.close()
     con.close()
