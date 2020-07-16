@@ -169,7 +169,7 @@ class Crimes(commands.Cog):
         discord_id = oc.get("discord_user")[0] if len(oc.get("discord_user", {})) else "0"
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > discord member {discord_member} not found```')
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > discord member {discord_member} not found\n\n<STOP>```')
             return False
 
         # get torn id, name and key
@@ -178,6 +178,10 @@ class Crimes(commands.Cog):
         # if status < 0:
         #     await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
+
+        if len(oc.get("torn_user")) < 4:
+            await channel.send(f'```md\n# Tracking organized crimes\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
+            return False
 
         tornId = oc.get("torn_user")[0]
         name = oc.get("torn_user")[1]

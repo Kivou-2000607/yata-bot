@@ -536,7 +536,7 @@ class Chain(commands.Cog):
         discord_id = retal.get("discord_user")[0] if len(retal.get("discord_user", {})) else "0"
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:
-            await channel.send(f'```md\n# Tracking retals\n< error > discord member {discord_member} not found```')
+            await channel.send(f'```md\n# Tracking retals\n< error > discord member {discord_member} not found\n\n<STOP>```')
             return False
 
         # get torn id, name and key
@@ -545,6 +545,10 @@ class Chain(commands.Cog):
         # if status < 0:
         #     await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
+
+        if len(retal.get("torn_user")) < 4:
+            await channel.send(f'```md\n# Tracking retals\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
+            return False
 
         tornId = retal.get("torn_user")[0]
         name = retal.get("torn_user")[1]
