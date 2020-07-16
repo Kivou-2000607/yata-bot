@@ -119,7 +119,7 @@ async def get_server_admins(bot_id, discord_id):
         if dId:
             admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
 
-    secret = server.get("secret", "x")
+    secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
     if secret == 'x':
         secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
 
@@ -236,8 +236,6 @@ async def get_faction_name(tId):
 
 
 async def reset_notifications(tornId):
-    """Writes the actual guild name in YATA database"""
-
     # get YATA user
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]

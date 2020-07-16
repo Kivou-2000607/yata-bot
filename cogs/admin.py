@@ -121,6 +121,7 @@ class Admin(commands.Cog):
         configuration["admin"]["roles"] = roles
         configuration["admin"]["server_admins"] = server_admins
         configuration["admin"]["secret"] = server_secret
+        configuration["admin"]["last_sync"] = ts_now()
 
         # update modules
         for module in ["admin", "rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
@@ -278,25 +279,63 @@ class Admin(commands.Cog):
         logging.info(f'[admin/talk] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         for k in args:
-            logging.info("args:", k, is_mention(k, type="channel"))
+            logging.info(f'[admin/talk] args: {k}')
 
-        if len(args) < 2:
-            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: number of arguments = {}".format(len(args)))
+        if not(len(args) == 2 and args[1].isdigit()):
+            await ctx.send(":x: You need to enter a channel and a message```!talk < #channel > < message_id >```Error: number of arguments = {}".format(len(args)))
             return
 
-        channel_id = is_mention(args[0], type="channel")
-        if not channel_id or not channel_id.isdigit():
-            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel id = {}".format(channel_id))
-            return
 
-        channel = get(ctx.guild.channels, id=int(channel_id))
-        if channel is None:
-            await ctx.send(":x: You need to enter a channel and a message```!talk #channel Hello there!```Error: channel = {}".format(channel))
+        msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[1])]
+        if len(msg) < 1:
+            await ctx.send(f':x: Message id `{args[1]}` not found in the channel recent history')
             return
+        msg = msg[0].content
 
-        msg = " ".join(args[1:])
-        await channel.send(msg)
-        await ctx.send(f"Message send to {channel.mention}```{msg}```")
+        if args[0] == "all_servers":  # send message to all servers
+            for guild in self.bot.guilds:
+                sent = False
+
+                # try and get yata admin
+                channel = get(guild.channels, name="yata-admin")
+                if channel is None:
+                    logging.info(f"[admin/talk] Guild {guild}: yata-admin not found")
+                else:
+                    try:
+                        await channel.send(msg)
+                        logging.info(f"[admin/talk] Guild {guild}: message sent to #{channel}")
+                        sent = True
+                        continue
+                    except BaseException as e:
+                        logging.info(f"[admin/talk] Guild {guild}: failed to send in #{channel} ({e})")
+                        pass
+
+                for channel in guild.text_channels:
+                    try:
+                        await channel.send(msg)
+                        logging.info(f"[admin/talk] Guild {guild}: message sent to #{channel}")
+                        sent = True
+                        break
+                    except BaseException as e:
+                        logging.info(f"[admin/talk] Guild {guild}: failed to send in #{channel} ({e})")
+                        pass
+
+                if not sent:
+                    logging.warning(f"[admin/talk] Guild {guild}: failed to send message")
+
+        else:  # send message to specific channel on yata server
+            channel_id = is_mention(args[0], type="channel")
+            if not channel_id or not channel_id.isdigit():
+                await ctx.send(":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel id = {}".format(channel_id))
+                return
+
+            channel = get(ctx.guild.channels, id=int(channel_id))
+            if channel is None:
+                await ctx.send(":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel = {}".format(channel))
+                return
+
+            await channel.send(msg)
+            await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
