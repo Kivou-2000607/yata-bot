@@ -49,7 +49,7 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
-        self.assignRoles.start()
+        # self.assignRoles.start()
 
     def cog_unload(self):
         self.assignRoles.cancel()
@@ -159,7 +159,7 @@ class Admin(commands.Cog):
 
         if len(updates) < 3:
             updates.append("< none >")
-        updates.append("```")
+        updates.append("```Check out your dashboard: https://yata.alwaysdata.net/bot/dashboard/")
         await ctx.send("\n".join(updates))
 
         # print current configurations
@@ -478,7 +478,7 @@ class Admin(commands.Cog):
 
         # check argument
         logging.debug(f'[admin/assign] args: {args}')
-        modules = ["revive", "rackets", "loot"]
+        modules = ["revive", "rackets", "loot", "stocks"]
         if len(args) and args[0] in modules:
             module = args[0]
         else:
@@ -496,7 +496,7 @@ class Admin(commands.Cog):
 
         if role is None:
             # not role
-            msg = await ctx.send(":x: No roles has been attributed to the rackets module")
+            msg = await ctx.send(f":x: No roles has been attributed to the {modules} module")
 
         elif role in ctx.author.roles:
             # remove

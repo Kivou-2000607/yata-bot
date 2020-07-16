@@ -90,8 +90,8 @@ async def set_configuration(bot_id, discord_id, server_name, configuration):
     if server is None:  # create if not in the db
         # logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
         await con.execute('''
-        INSERT INTO bot_server(bot_id, discord_id, name, configuration) VALUES($1, $2, $3, $4)
-        ''', bot_id, discord_id, server_name, json.dumps(configuration))
+        INSERT INTO bot_server(bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
+        ''', bot_id, discord_id, server_name, json.dumps(configuration), 'x')
     else:  # update otherwise
         # logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
         await con.execute('''
