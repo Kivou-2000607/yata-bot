@@ -57,12 +57,12 @@ class Repository(commands.Cog):
         except BaseException as e:
             await ctx.send(f'Failed to create the issue: {e}')
 
-    # @commands.command()
+    @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
     async def bug(self, ctx, *args):
         await self.create_issue(ctx, "bug", args)
 
-    # @commands.command()
+    @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
     async def suggestion(self, ctx, *args):
         await self.create_issue(ctx, "suggestion", args)
