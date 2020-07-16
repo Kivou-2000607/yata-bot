@@ -320,6 +320,7 @@ class Crimes(commands.Cog):
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
+                changes = False
                 for discord_user_id, oc in config["currents"].items():
                     logging.debug(f"[oc/notifications] {guild}: {oc}")
 
@@ -327,14 +328,22 @@ class Crimes(commands.Cog):
                     status = await self._oc(guild, oc)
 
                     if status:
-                        self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
+                        if self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] != oc:
+                            self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
+                            changes = True
                     else:
                         todel.append(discord_user_id)
 
                 for d in todel:
                     del self.bot.configurations[guild.id]["oc"]["currents"][d]
+                    changes = True
 
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                if changes:
+                    await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                    logging.info(f"[chain/oc-notifications] push notifications for {guild}")
+                else:
+                    logging.info(f"[chain/oc-notifications] don't push notifications for {guild}")
+
 
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
