@@ -500,12 +500,12 @@ class Chain(commands.Cog):
                    "discord_user": [str(ctx.author.id), f'{ctx.author}', '']}
 
         # get torn user
-        status, tornId, name, _ = await self.bot.get_user_key(ctx, ctx.author)
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
             lst = ['```md', f'# Tracking retals', f'< error > could not get {ctx.author}\'s API key```']
             await ctx.channel.send("\n".join(lst))
             return
-        current["torn_user"] = [str(tornId), name, '']
+        current["torn_user"] = [str(tornId), name, '', key]
 
         # get role
         if len(args) and args[0].replace("<@&", "").replace(">", "").isdigit():
@@ -540,11 +540,15 @@ class Chain(commands.Cog):
             return False
 
         # get torn id, name and key
-        status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
+        # # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
+        #
+        # if status < 0:
+        #     await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
+        #     return False
 
-        if status < 0:
-            await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
-            return False
+        tornId = retal.get("torn_user")[0]
+        name = retal.get("torn_user")[1]
+        key = retal.get("torn_user")[3]
 
         roleId = retal.get("role")[0] if len(retal.get("role", {})) else None
         notified = " " if roleId is None else f" <@&{roleId}> "

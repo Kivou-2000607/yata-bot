@@ -133,12 +133,12 @@ class Crimes(commands.Cog):
                    "discord_user": [str(ctx.author.id), f'{ctx.author}', '']}
 
         # get torn user
-        status, tornId, name, _ = await self.bot.get_user_key(ctx, ctx.author)
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
             lst = ['```md', f'# Tracking organized crimes', f'< error > could not get {ctx.author}\'s API key```']
             await ctx.channel.send("\n".join(lst))
             return
-        current["torn_user"] = [str(tornId), name, '']
+        current["torn_user"] = [str(tornId), name, '', key]
 
         # get role
         if len(args) and args[0].replace("<@&", "").replace(">", "").isdigit():
@@ -173,11 +173,15 @@ class Crimes(commands.Cog):
             return False
 
         # get torn id, name and key
-        status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
+        # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
+        #
+        # if status < 0:
+        #     await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
+        #     return False
 
-        if status < 0:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
-            return False
+        tornId = oc.get("torn_user")[0]
+        name = oc.get("torn_user")[1]
+        key = oc.get("torn_user")[3]
 
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
         notified = " " if roleId is None else f" <@&{roleId}> "
