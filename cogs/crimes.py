@@ -313,9 +313,9 @@ class Crimes(commands.Cog):
 
                 config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
                 if not config:
-                    logging.info(f"[oc/notifications] No oc for {guild}")
+                    logging.debug(f"[oc/notifications] No oc for {guild}")
                     continue
-                logging.info(f"[oc/notifications] OC for {guild}")
+                logging.debug(f"[oc/notifications] OC for {guild}")
 
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
@@ -340,9 +340,9 @@ class Crimes(commands.Cog):
 
                 if changes:
                     await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-                    logging.info(f"[chain/oc-notifications] push notifications for {guild}")
+                    logging.debug(f"[chain/oc-notifications] push notifications for {guild}")
                 else:
-                    logging.info(f"[chain/oc-notifications] don't push notifications for {guild}")
+                    logging.debug(f"[chain/oc-notifications] don't push notifications for {guild}")
 
 
             except BaseException as e:
