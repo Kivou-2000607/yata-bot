@@ -322,7 +322,7 @@ class Crimes(commands.Cog):
                 todel = []
                 changes = False
                 for discord_user_id, oc in config["currents"].items():
-                    logging.debug(f"[oc/notifications] {guild}: {oc}")
+                    # logging.debug(f"[oc/notifications] {guild}: {oc}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)

@@ -669,7 +669,7 @@ class Chain(commands.Cog):
                 todel = []
                 changes = False
                 for discord_user_id, retal in config["currents"].items():
-                    logging.debug(f"[chain/retal-notifications] {guild}: {retal}")
+                    # logging.debug(f"[chain/retal-notifications] {guild}: {retal}")
 
                     # call retal faction
                     status = await self._retal(guild, retal)

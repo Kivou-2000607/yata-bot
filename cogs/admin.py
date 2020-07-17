@@ -58,7 +58,7 @@ class Admin(commands.Cog):
     @commands.guild_only()
     async def sync(self, ctx):
         """updates dashboard and bot configuration"""
-        logging.info(f'[admin/update] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[admin/sync] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # for printing the updates
         updates = ["```md", "# Updates"]
@@ -68,7 +68,7 @@ class Admin(commands.Cog):
 
         # create in database if new
         if not configuration_db:
-            logging.info(f'[admin/update] Create db configuration for {ctx.guild}')
+            logging.info(f'[admin/sync] Create db configuration for {ctx.guild}')
             await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, {"admin": {}})
             updates.append("- create server database")
 
@@ -92,7 +92,7 @@ class Admin(commands.Cog):
 
         # create not configuration if need
         if ctx.guild.id not in self.bot.configurations:
-            logging.info(f'[admin/update] create bot configuration')
+            logging.info(f'[admin/sync] create bot configuration')
             self.bot.configurations[ctx.guild.id] = {"admin": {}}
 
         # deep copy of the bot configuration in a temporary variable to check differences
@@ -132,7 +132,10 @@ class Admin(commands.Cog):
                 else:
                     for key, value in configuration_db[module].items():
                         if configuration[module].get(key, {}) != value:
-                            updates.append(f"- [{module}]({key})")
+                            updates.append(f"- [{module}]({key}) updated")
+                    for key in configuration[module]:
+                        if key not in configuration_db[module]:
+                            updates.append(f"- [{module}]({key}) deleted")
 
                 # choose how to sync
                 if module in ["rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
@@ -142,8 +145,14 @@ class Admin(commands.Cog):
                     # db is updated with bot config
                     # except for prefix
                     configuration[module]["prefix"] = configuration_db[module].get("prefix", {'!': '!'})
-                    configuration[module]["channels_admin"] = configuration_db[module].get("channels_admin", {'None': 0})
-                    pass
+
+                    # update admin channel
+                    for key in ["channels_admin", "message_welcome", "channels_welcome"]:
+                        if configuration_db[module].get(key, False):
+                            configuration[module][key] = configuration_db[module].get(key)
+                        elif key in configuration[module]:
+                            del configuration[module][key]
+
                 else:
                     updates.append(f"- {module} ignored")
 
@@ -512,9 +521,14 @@ class Admin(commands.Cog):
         await msg.delete()
         await ctx.message.delete()
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
+    # @commands.Cog.listener()
+    # async def on_member_join(self, member):
+    @commands.command()
+    async def test(self, ctx):
         """Welcome message"""
+
+        member = ctx.author
+
         # check if bot
         if member.bot:
             return
@@ -535,7 +549,7 @@ class Admin(commands.Cog):
             return
 
         # get system channel and send message
-        logging.debug(f'[admin/on_member_join] welcome channel {welcome_channel}')
+        logging.debug(f'[admin/on_member_join] welcome channel: #{welcome_channel}')
 
         msg = []
         for line in config["message_welcome"]:
@@ -544,21 +558,23 @@ class Admin(commands.Cog):
                 if not len(w):
                     pass
 
-                elif w[0] == "#":
-                    ch = get(member.guild.channels, name=w[1:])
-                    if ch is not None:
-                        discord_line.append(f'{ch.mention}')
+                elif w[0] in ["#", "@"]:
+                    # search for ponctuation
+                    search = re.search(r'([\,!?.;:]+)$', w)
+                    if search:
+                        ponc = w[search.span()[0]:]
+                        word = w[1:search.span()[0]]
                     else:
-                        discord_line.append(f'`{w}`')
-                elif w[0] == "@":
-                    if w in ["@new_member"]:
-                        discord_line.append(f'{member.mention}')
+                        ponc = ''
+                        word = w[1:]
+
+                    lookup = member.guild.channels if w[0] == '#' else member.guild.roles
+                    obj = member if word == "new_member" else get(lookup, name=word.replace("_", " "))
+                    if obj is not None:
+                        discord_line.append(f'{obj.mention}{ponc}')
                     else:
-                        ro = get(member.guild.roles, name=w[1:])
-                        if ro is not None:
-                            discord_line.append(f'{ro.mention}')
-                        else:
-                            discord_line.append(f'`{w}`')
+                        discord_line.append(f'`{w[0]}{word.replace("_", " ")}`{ponc}')
+
                 else:
                     discord_line.append(w)
 
