@@ -521,13 +521,9 @@ class Admin(commands.Cog):
         await msg.delete()
         await ctx.message.delete()
 
-    # @commands.Cog.listener()
-    # async def on_member_join(self, member):
-    @commands.command()
-    async def test(self, ctx):
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
         """Welcome message"""
-
-        member = ctx.author
 
         # check if bot
         if member.bot:
