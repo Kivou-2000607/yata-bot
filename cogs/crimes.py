@@ -73,6 +73,9 @@ class Crimes(commands.Cog):
             async with session.get(url) as r:
                 req = await r.json()
 
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
         # handle API error
         if "error" in req:
             await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
@@ -195,6 +198,9 @@ class Crimes(commands.Cog):
             async with session.get(url) as r:
                 req = await r.json()
 
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
         # handle API error
         if 'error' in req:
             lst = [f'```md', f'# Tracking organized crimes\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
@@ -255,6 +261,7 @@ class Crimes(commands.Cog):
             if completed and mentionned:
                 initId = str(v["initiated_by"])
                 lst = [
+                    f'{v["crime_name"]} ready',
                     '```md',
                     f'# Organized crime completed',
                     f'< Faction > {fName}',

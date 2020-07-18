@@ -93,6 +93,9 @@ class Chain(commands.Cog):
             async with session.get(url) as r:
                 req = await r.json()
 
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
         # handle API error
         if 'error' in req:
             await ctx.send(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
@@ -142,6 +145,9 @@ class Chain(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
+
+            if not isinstance(req, dict):
+                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             # handle API error
             if 'error' in req:
@@ -440,6 +446,9 @@ class Chain(commands.Cog):
             async with session.get(url) as r:
                 req = await r.json()
 
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
         if 'error' in req:
             await ctx.send(f':x: Error code {req["error"]["code"]}: {req["error"]["error"]}')
             return
@@ -566,6 +575,9 @@ class Chain(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
+
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         # handle API error
         if 'error' in req:
