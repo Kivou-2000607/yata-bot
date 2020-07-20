@@ -73,7 +73,10 @@ class Loot(commands.Cog):
         url = "https://yata.alwaysdata.net/loot/timings/"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except:
+                    req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
 
         if 'error' in req:
             await ctx.send("```ARM\nError code {}\n{}```Have a look a the timings here: https://yata.alwaysdata.net/loot/".format(req['error']['code'], req['error']['error']))

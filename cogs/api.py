@@ -41,7 +41,8 @@ from inc.handy import *
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.notify.start()
+        if self.bot.bot_id == 3:
+            self.notify.start()
 
     def cog_unload(self):
         self.notify.cancel()

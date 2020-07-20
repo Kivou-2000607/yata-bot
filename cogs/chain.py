@@ -91,7 +91,10 @@ class Chain(commands.Cog):
         url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except:
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
@@ -144,7 +147,10 @@ class Chain(commands.Cog):
             url = f'https://api.torn.com/faction/{fId}?selections=chain,timestamp&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
-                    req = await r.json()
+                    try:
+                        req = await r.json()
+                    except:
+                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             if not isinstance(req, dict):
                 req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
@@ -435,7 +441,7 @@ class Chain(commands.Cog):
             await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id>```")
             return
 
-        checkVaultId = int(args[0])
+        checkVaultId = args[0]
         status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
 
         if status != 0:
@@ -444,7 +450,10 @@ class Chain(commands.Cog):
         url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except:
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
@@ -679,7 +688,7 @@ class Chain(commands.Cog):
                 # iteration over all members asking for retal watch
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
-                changes = False
+                tochange = {}
                 for discord_user_id, retal in config["currents"].items():
                     # logging.debug(f"[chain/retal-notifications] {guild}: {retal}")
 
@@ -687,15 +696,18 @@ class Chain(commands.Cog):
                     status = await self._retal(guild, retal)
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
-                    if status:
-                        if self.bot.configurations[guild.id]["chain"]["currents"][discord_user_id] != retal:
-                            self.bot.configurations[guild.id]["chain"]["currents"][discord_user_id] = retal
-                            changes = True
-                    else:
+                    if status and self.bot.configurations[guild.id]["chain"]["currents"][discord_user_id] != retal:
+                        tochange[discord_user_id] = retal
+                    elif not status:
                         todel.append(discord_user_id)
 
+                changes = False
                 for d in todel:
                     del self.bot.configurations[guild.id]["chain"]["currents"][d]
+                    changes = True
+
+                for discord_user_id, retal in tochange.items():
+                    self.bot.configurations[guild.id]["chain"]["currents"][discord_user_id] = retal
                     changes = True
 
                 if changes:

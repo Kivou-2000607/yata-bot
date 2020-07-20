@@ -58,9 +58,11 @@ class Racket(commands.Cog):
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except BaseException as e:
-                    logging.error(f"[racket/notifications] error json: {hide_key(e)}")
-                    req = {"error": hide_key(e)}
+                except:
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+        if not isinstance(req, dict):
+            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if "error" in req:
             return
@@ -158,6 +160,7 @@ class Racket(commands.Cog):
         # mentions.append(embed)
 
         if not len(mentions):
+            logging.debug(f"[racket/notifications] no notifications")
             return
 
         # iteration over all guilds

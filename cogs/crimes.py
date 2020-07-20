@@ -71,7 +71,10 @@ class Crimes(commands.Cog):
         url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except:
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
@@ -196,7 +199,10 @@ class Crimes(commands.Cog):
         url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except:
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
@@ -261,7 +267,7 @@ class Crimes(commands.Cog):
             if completed and mentionned:
                 initId = str(v["initiated_by"])
                 lst = [
-                    f'{v["crime_name"]} ready',
+                    f'{v["crime_name"]} completed',
                     '```md',
                     f'# Organized crime completed',
                     f'< Faction > {fName}',
@@ -290,7 +296,7 @@ class Crimes(commands.Cog):
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
             if not ready and mentionned:
-                await channel.send(f'{v["crime_name"]} ready\n```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
+                await channel.send(f'{v["crime_name"]} not ready\n```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
                 oc["mentions"].remove(str(k))
 
         # clean mentions
@@ -327,22 +333,25 @@ class Crimes(commands.Cog):
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
                 todel = []
-                changes = False
+                tochange = {}
                 for discord_user_id, oc in config["currents"].items():
                     # logging.debug(f"[oc/notifications] {guild}: {oc}")
 
                     # call oc faction
                     status = await self._oc(guild, oc)
 
-                    if status:
-                        if self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] != oc:
-                            self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
-                            changes = True
+                    if status and self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] != oc:
+                        tochange[discord_user_id] = oc
                     else:
                         todel.append(discord_user_id)
 
+                changes = False
                 for d in todel:
                     del self.bot.configurations[guild.id]["oc"]["currents"][d]
+                    changes = True
+
+                for discord_user_id, oc in tochange.items():
+                    self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
                     changes = True
 
                 if changes:

@@ -80,7 +80,13 @@ class Stocks(commands.Cog):
             url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord,timestamp&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
-                    req = await r.json()
+                    try:
+                        req = await r.json()
+                    except:
+                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+            if not isinstance(req, dict):
+                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             # deal with api error
             if "error" in req:
@@ -123,34 +129,38 @@ class Stocks(commands.Cog):
     @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        logging.info(f'[stck/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[stock/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
+        lst = ["# List of education time left and WSSB owners", ""]
         if len(timeLeft):
-            lst = "{: <15} | {} | {} \n".format("NAME", "EDU TIME LEFT", "WSSB")
-            lst += "-" * (len(lst) - 1) + "\n"
+            tmp = "{: <15} | {} | {}".format("NAME", "EDU TIME LEFT", "WSSB")
+            lst.append(tmp)
+            lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst += "{: <15} | {} |  {}  \n".format(k, s_to_dhm(v), "x" if k in stockOwners else " ")
+                lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
 
-            await ctx.send(f"List of education time left and WSSB owners:\n```md\n{lst}```")
+            await send_tt(ctx, lst)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        logging.info(f'[stck/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[stock/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
+        lst = ["# List of investment time left and TCB owners", ""]
         if len(timeLeft):
-            lst = "{: <15} | {} | {} \n".format("NAME", "INV TIME LEFT", "TCB")
-            lst += "-" * (len(lst) - 1) + "\n"
+            tmp = "{: <15} | {} | {}".format("NAME", "INV TIME LEFT", "TCB")
+            lst.append(tmp)
+            lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst += "{: <15} | {} |  {}  \n".format(k, s_to_dhm(v), "x" if k in stockOwners else " ")
+                lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
 
-            await ctx.send(f"List of investment time left and TCB owners:\n```md\n{lst}```")
+            await send_tt(ctx, lst)
 
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)

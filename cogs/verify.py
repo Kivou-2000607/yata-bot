@@ -331,7 +331,13 @@ class Verify(commands.Cog):
                 url = f"https://api.torn.com/user/{author.id}?selections=discord&key={API_KEY}"
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:
-                        req = await r.json()
+                        try:
+                            req = await r.json()
+                        except:
+                            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+                if not isinstance(req, dict):
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if 'error' in req:
                     return ":x: There is an API key problem ({}).".format(req['error']['error']), False
@@ -345,7 +351,13 @@ class Verify(commands.Cog):
                 url = f"https://api.torn.com/user/{discordID}?selections=discord&key={API_KEY}"
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:
-                        req = await r.json()
+                        try:
+                            req = await r.json()
+                        except:
+                            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+                if not isinstance(req, dict):
+                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if 'error' in req:
                     return ":x: There is an API key problem ({}).".format(req['error']['error']), False
@@ -360,7 +372,13 @@ class Verify(commands.Cog):
             url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
-                    req = await r.json()
+                    try:
+                        req = await r.json()
+                    except:
+                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+            if not isinstance(req, dict):
+                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             # check api error
             if 'error' in req:
@@ -532,7 +550,13 @@ class Verify(commands.Cog):
             url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
-                    req = await r.json()
+                    try:
+                        req = await r.json()
+                    except:
+                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+
+            if not isinstance(req, dict):
+                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             # deal with api error
             if "error" in req:
