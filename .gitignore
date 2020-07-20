@@ -106,3 +106,4 @@ venv.bak/
 # Perso
 export.sh
 source.bash
+*.pid
