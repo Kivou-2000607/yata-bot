@@ -206,81 +206,59 @@ class Admin(commands.Cog):
     #         if k not in guildIds:
     #             await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
     #
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def info(self, ctx, *args):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     config = self.bot.configs.get(args[0], dict({}))
-    #     guild = get(self.bot.guilds, id=int(args[0]))
-    #     if len(config):
-    #         contact_torn = f'[{config["admin"]["contact_torn"]} [{config["admin"]["contact_torn_id"]}]](https://www.torn.com/profiles.php?XID={config["admin"]["contact_torn_id"]})'
-    #         contact_disc = f'{config["admin"]["contact_discord"]} [{config["admin"]["contact_discord_id"]}]'
-    #         description = [contact_torn, contact_disc]
-    #         embed = Embed(title=f'{guild}', description='\n'.join(description), color=550000)
-    #
-    #         for module in ["verify", "loot", "revive", "stocks", "rackets", "chain", "crimes", "api", "factions"]:
-    #             if module in config:
-    #                 value = []
-    #
-    #                 # get channels
-    #                 for txt in [_ for _ in config[module].get("channels", [])]:
-    #                     if txt in ["*"]:
-    #                         value.append("all channels")
-    #                     else:
-    #                         gui = get(guild.channels, name=txt)
-    #                         value.append(f':x: `#{txt}`' if gui is None else f':white_check_mark: `#{txt}`')
-    #
-    #                 # get basic roles
-    #                 if module == "factions":
-    #                     if config.get("verify", dict({})).get("id", False):
-    #                         role_list = [f'{html.unescape(name)} [{id}]' for id, name in config[module].items()]
-    #                     else:
-    #                         role_list = [f'{html.unescape(name)}' for id, name in config[module].items()]
-    #                 else:
-    #                     role_list = [_ for _ in config[module].get("roles", [])] + [_ for _ in [config[module].get("common")] if _ is not None]
-    #
-    #                 for txt in role_list:
-    #                     if txt in ["*"]:
-    #                         value.append("all roles")
-    #                     else:
-    #                         gui = get(guild.roles, name=txt)
-    #                         value.append(f':x: `@{txt}`' if gui is None else f':white_check_mark: `@{txt}`')
-    #
-    #                 if len(value):
-    #                     embed.add_field(name=f'{module.title()}', value="\n".join(value))
-    #             else:
-    #                 embed.add_field(name=f'{module.title()}', value=f'Disabled')
-    #
-    #             embed.set_thumbnail(url=guild.icon_url)
-    #             embed.set_footer(text=f'Server id {args[0]}')
-    #         await ctx.send("", embed=embed)
-    #     else:
-    #         await ctx.send(f':x: no config corresponding to guild id `{args[0]}`')
-    #
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def contact(self, ctx, *args):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/contact] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     contact_discord_id = int(args[0])
-    #     contact_discord = self.bot.get_user(int(args[0]))
-    #     if contact_discord is None:
-    #         await ctx.send(f':x: User id {contact_discord_id} not found.')
-    #         return
-    #
-    #     guild_found = []
-    #     for guild, config in self.bot.configs.items():
-    #         if config["admin"].get("contact_discord_id") == contact_discord_id:
-    #             guild_found.append([guild, get(self.bot.guilds, id=int(guild))])
-    #
-    #     if len(guild_found):
-    #         await ctx.send(f"List of guild found for user {contact_discord}".format())
-    #         await ctx.send("\n".join([f'{b} [{a}]' for a, b in guild_found]))
-    #     else:
-    #         await ctx.send(f':x: no guild found for user {contact_discord}')
+    @commands.command()
+    @commands.has_any_role(679669933680230430, 669682126203125760)
+    async def info(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        if not (len(args) and args[0].isdigit()):
+            await ctx.send('```md\n< error > !info < server id > or !info < member id >```')
+            return
+
+        configurations = self.bot.configurations
+
+        id = int(args[0])
+        if id in configurations:
+            guild = get(self.bot.guilds, id=id)
+            server_admins = configurations[id].get("admin", {}).get("server_admins")
+
+            lst = [f"```md\n# Admins of server {guild} [{guild.id}]", ""]
+            for i, (k, v) in enumerate(server_admins.items()):
+                lst.append(f'<Admin #{i + 1}>')
+                member = get(guild.members, id=int(k))
+                lst.append(f'< discord > {member} [{member.id}] aka {member.display_name}')
+                lst.append(f'< torn > {v["name"]} [{v["torn_id"]}]')
+
+            lst.append("```")
+            await ctx.send("\n".join(lst))
+            return
+
+        # get all contacts
+        contacts = []
+        for k, v in configurations.items():
+            admins = [discord_id for discord_id in v.get("admin", {}).get("server_admins", {})]
+            contacts += admins
+
+        if str(id) in contacts:
+            member = get(ctx.guild.members, id=id)
+            guild_ids = [k for k, v in configurations.items() if str(id) in v.get("admin", {}).get("server_admins", {})]
+
+            print(guild_ids)
+            if member is None:
+                lst = [f"```md\n# Discord member id {member.id} not found in this server", ""]
+            else:
+                lst = [f"```md\n# Discord member {member} [{member.id}] aka {member.display_name}", ""]
+
+            for i, k in enumerate(guild_ids):
+                guild = get(self.bot.guilds, id=int(k))
+                lst.append(f'<Server #{i + 1}> {guild} [{guild.id}]')
+
+            lst.append("```")
+            await ctx.send("\n".join(lst))
+            return
+
+        await ctx.send(f'```md\n< error > server or member id {args[0]} not found in the configuration```')
 
     @commands.command()
     @commands.has_any_role(669682126203125760)
