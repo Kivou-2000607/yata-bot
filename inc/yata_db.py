@@ -50,8 +50,8 @@ def load_configurations(bot_id):
 
     # get bot
     cur = con.cursor()
-    cur.execute(f"SELECT token, administrators FROM bot_bot WHERE id = {bot_id};")
-    token, administrators_raw = cur.fetchone()
+    cur.execute(f"SELECT token, name FROM bot_bot WHERE id = {bot_id};")
+    token, name = cur.fetchone()
     cur.close()
 
     # get servers configuration linked with the bot
@@ -60,14 +60,13 @@ def load_configurations(bot_id):
     configurations_raw = cur.fetchall()
     cur.close()
 
-    # format configrations and administrators to a dict
+    # format configrations to a dict
     configurations = dict({})
     for id, discord_id, name, configuration in configurations_raw:
         configurations[discord_id] = json.loads(configuration)
-    administrators = json.loads(administrators_raw)
 
     con.close()
-    return token, administrators, configurations
+    return token, configurations
 
 
 async def get_configuration(bot_id, discord_id):

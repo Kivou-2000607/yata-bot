@@ -49,7 +49,8 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
-        # self.assignRoles.start()
+        if self.bot.bot_id == 3:
+            self.assignRoles.start()
 
     def cog_unload(self):
         self.assignRoles.cancel()
@@ -294,7 +295,6 @@ class Admin(commands.Cog):
             await ctx.send(":x: You need to enter a channel and a message```!talk < #channel > < message_id >```Error: number of arguments = {}".format(len(args)))
             return
 
-
         msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[1])]
         if len(msg) < 1:
             await ctx.send(f':x: Message id `{args[1]}` not found in the channel recent history')
@@ -491,13 +491,13 @@ class Admin(commands.Cog):
         if len(args) and args[0] in modules:
             module = args[0]
         else:
-            await ctx.send(f':x: Modules with self assignement roles: {", ".join(modules)}.')
+            await ctx.send(f'```md\n< error > Modules with self assignement roles: {", ".join(modules)}.```')
             return
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, module)
         if not config:
-            await ctx.send(f":x: {module} module not activated")
+            await ctx.send(f"```md\n< error > {module} module not activated```")
             return
 
         # get role
@@ -505,21 +505,25 @@ class Admin(commands.Cog):
 
         if role is None:
             # not role
-            msg = await ctx.send(f":x: No roles has been attributed to the {modules} module")
+            msg = await ctx.send(f"```md\n< error > No roles has been attributed to the {module} module```")
+            return
 
         elif role in ctx.author.roles:
             # remove
+            add_remove = "<removed> from"
             await ctx.author.remove_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **stop** receiving notifications for {module} (role @{html.unescape(role.name)}).")
         else:
             # assign
+            add_remove = "<added> to"
             await ctx.author.add_roles(role)
-            msg = await ctx.send(f"**{ctx.author.display_name}**, you'll **start** receiving notifications for {module} (role @{html.unescape(role.name)}).")
+
+        lst = ['```md', f'# self assign role ', f'Role < @{html.unescape(role.name)} > {add_remove} {ctx.author.display_name} for module < {module} >', '```']
+        msg = await ctx.send("\n".join(lst))
 
         # clean messages
-        await asyncio.sleep(5)
-        await msg.delete()
-        await ctx.message.delete()
+        # await asyncio.sleep(5)
+        # await msg.delete()
+        # await ctx.message.delete()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -647,7 +651,6 @@ class Admin(commands.Cog):
         logging.error(f'[admin/on_command_error] {hide_key(error)}')
         await self.bot.send_log_main(error, headers=headers, full=True)
 
-
     @tasks.loop(hours=24)
     async def assignRoles(self):
         logging.debug("[admin/assignRoles] start task")
@@ -684,7 +687,6 @@ class Admin(commands.Cog):
             elif not len(is_yata) and yata in member.roles:
                 logging.info(f"[admin/assignRoles] {member.display_name} remove {yata}")
                 await member.remove_roles(yata)
-
 
     @assignRoles.before_loop
     async def before_assignRoles(self):

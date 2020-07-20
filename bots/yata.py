@@ -41,10 +41,9 @@ from inc.handy import *
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, configurations=None, administrators=None, main_server_id=0, bot_id=0, github_token=None, **args):
+    def __init__(self, configurations=None, main_server_id=0, bot_id=0, github_token=None, **args):
         Bot.__init__(self, **args)
         self.configurations = configurations
-        self.administrators = administrators
         self.bot_id = int(bot_id)
         self.github_token = github_token
         self.main_server_id = int(main_server_id)
@@ -54,25 +53,11 @@ class YataBot(Bot):
         self.configurations[guild.id] = {}
         await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
 
-        user_to_send = [self.get_user(administrator_did) for administrator_did in self.administrators]
-        owner = self.get_user(guild.owner_id)
-        if owner not in user_to_send:
-            user_to_send.append(owner)
-        for user in user_to_send:
-            await user.send(f"I **joined** the server **{guild} [{guild.id}]**")
-
     async def on_guild_remove(self, guild):
 
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
         await set_configuration(self.bot_id, guild.id, guild.name, {})
-
-        user_to_send = [self.get_user(administrator_did) for administrator_did in self.administrators]
-        owner = self.get_user(guild.owner_id)
-        if owner not in user_to_send:
-            user_to_send.append(owner)
-        for user in user_to_send:
-            await user.send(f"I **left** the server **{guild} [{guild.id}]**")
 
     async def discord_to_torn(self, member, key):
         """ get a torn id form discord id
