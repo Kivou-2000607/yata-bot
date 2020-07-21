@@ -5,7 +5,7 @@ pip install -U cloudscraper
 
 cd ~/yata-bot/
 
-export DB_CREDENTIALS='{"dbname": "x", "user": "x", "password": "x", "host": "x", "port": "x"}'
+source source.bash
 
 kill -9 $(cat chat-faction.pid)
 nohup python chat-faction.py > chat-faction.log 2>&1 &

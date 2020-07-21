@@ -182,8 +182,8 @@ class YataBot(Bot):
 
     async def on_ready(self):
         # change activity
-        activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
-        await self.change_presence(activity=activity)
+        # activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
+        # await self.change_presence(activity=activity)
 
         logging.info("[SETUP] Ready...")
 

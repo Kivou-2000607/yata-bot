@@ -627,6 +627,11 @@ class Verify(commands.Cog):
                 if ts_now() - last_update < 24 * 3600:
                     continue
 
+                # update time
+                config["other"]["daily_verify"] = ts_now()
+                self.bot.configurations[guild.id]["verify"] = config
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[verify/dailyVerify] verifying all {guild}: start")
@@ -638,9 +643,6 @@ class Verify(commands.Cog):
                 await channel.send("```md\nDaily verification of your members < START >```")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("```md\nDaily verification of your members < DONE >```")
-                config["other"]["daily_verify"] = ts_now()
-                self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
                 logging.debug(f"[verify/dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -675,6 +677,11 @@ class Verify(commands.Cog):
                 if ts_now() - last_update < 7 * 24 * 3600:
                     continue
 
+                # update time
+                config["other"]["weekly_verify"] = ts_now()
+                self.bot.configurations[guild.id]["verify"] = config
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[verify/weeklyVerify] verifying all {guild}: start")
@@ -685,9 +692,6 @@ class Verify(commands.Cog):
                 await channel.send("```md\nWeekly verification of your members < START >```")
                 await self._loop_verify(guild, channel, force=True)
                 await channel.send("```md\nWeekly verification of your members < DONE >```")
-                config["other"]["weekly_verify"] = ts_now()
-                self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
                 logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -722,6 +726,11 @@ class Verify(commands.Cog):
                 if ts_now() - last_update < 24 * 3600:
                     continue
 
+                # update time
+                config["other"]["daily_check"] = ts_now()
+                self.bot.configurations[guild.id]["verify"] = config
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[check/dailyCheck] checking all {guild}: start")
@@ -732,9 +741,6 @@ class Verify(commands.Cog):
                 await channel.send("```md\nDaily check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("```md\nDaily check of your factions members < DONE >```")
-                config["other"]["daily_check"] = ts_now()
-                self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
                 logging.debug(f"[check/dailyCheck] checking all {guild}: end")
 
             except BaseException as e:
@@ -769,6 +775,11 @@ class Verify(commands.Cog):
                 if ts_now() - last_update < 7 * 24 * 3600:
                     continue
 
+                # update time
+                config["other"]["weekly_check"] = ts_now()
+                self.bot.configurations[guild.id]["verify"] = config
+                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: start")
@@ -779,9 +790,6 @@ class Verify(commands.Cog):
                 await channel.send("```md\nWeekly check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
                 await channel.send("```md\nWeekly check of your factions members < DONE >```")
-                config["other"]["weekly_check"] = ts_now()
-                self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: end")
 
             except BaseException as e:
