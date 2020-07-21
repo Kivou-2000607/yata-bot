@@ -59,17 +59,16 @@ class Marvin(commands.Cog):
             splt = message.content.split(" ")
             if "<@&679669933680230430>" in splt:
                 lst = [f"Hello {message.author.mention}, if you asked for a bot setup you're in the good place (otherwise checkout <#623906124428476427>).",
-                       f"Wait just a moment for an @Helper to help you out. In the meantime",
+                       f"Wait just a moment for an @Helper to help you out. In the meantime you can",
                        f"- check that you gave us the server name",
-                       f"- do an initial `!sync` on you server",
+                       f"- do an initial `!sync` on your server",
                        f"- read the documentation on the website if that doesn't make any sense to you"]
                 await message.channel.send("\n".join(lst))
             return
 
         # if nothing else
         splt = message.content.split()
-
-        if self.bot.user.mention in splt:
+        if '<@!708796850978684968>' in splt:
             await message.channel.send("*sigh*")
             return
 
