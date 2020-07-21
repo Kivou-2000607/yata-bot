@@ -363,7 +363,7 @@ class Admin(commands.Cog):
         """help command"""
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        embed = Embed(title="YATA bot help", description="If you need more information, ping an @helper in the YATA server", color=550000)
+        embed = Embed(title="YATA bot help", description="If you need more information, ping an @Helper in the YATA server", color=550000)
 
         lst = ["[General information](https://yata.alwaysdata.net/bot/)",
                "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",

@@ -41,6 +41,7 @@ from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
 from cogs.repository import Repository
+from cogs.moderation import Moderation
 
 # import includes
 from inc.yata_db import load_configurations
@@ -81,16 +82,21 @@ bot.remove_command('help')
 
 # load classes
 bot.add_cog(Admin(bot))
-bot.add_cog(Verify(bot))
-bot.add_cog(Loot(bot))
-bot.add_cog(Stocks(bot))
-bot.add_cog(Racket(bot))
-bot.add_cog(Revive(bot))
-bot.add_cog(Crimes(bot))
-bot.add_cog(API(bot))
-bot.add_cog(Chain(bot))
-bot.add_cog(Misc(bot))
-bot.add_cog(Repository(bot))
+
+if int(bot_id) in [1, 3]:
+    bot.add_cog(Verify(bot))
+    bot.add_cog(Loot(bot))
+    bot.add_cog(Stocks(bot))
+    bot.add_cog(Racket(bot))
+    bot.add_cog(Revive(bot))
+    bot.add_cog(Crimes(bot))
+    bot.add_cog(API(bot))
+    bot.add_cog(Chain(bot))
+    bot.add_cog(Misc(bot))
+    bot.add_cog(Repository(bot))
+
+elif int(bot_id) in [2]:
+    bot.add_cog(Moderation(bot))
 
 # run bot
 bot.run(token)
