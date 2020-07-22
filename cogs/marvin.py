@@ -45,7 +45,7 @@ class Marvin(commands.Cog):
             "The first ten million years were the worst. And the second ten million: they were the worst, too. The third ten million I didn’t enjoy at all. After that, I went into a bit of a decline.",
             "I ache, therefore I am.",
             "Life. Loathe it or ignore it. You can’t like it.",
-            "*Now the world has gone to bed,*\n*arkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
+            "*Now the world has gone to bed,*\n*Darkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -54,24 +54,25 @@ class Marvin(commands.Cog):
         if message.author.bot:
             return
 
+
         # if it's pinged
         splt = message.content.split()
-        if '<@!708796850978684968>' in splt:
+        if '<@!708796850978684968>' in splt or '<@708796850978684968>' in splt:
             await message.channel.send("*sigh*")
 
         # in #yata-bot-setup
-        if message.channel.id in [703587583862505483]:
+        if message.channel.id in [703587583862505483, 735501315312189501] and 679669933680230430 not in message.author.roles:
             splt = message.content.split(" ")
             if "<@&679669933680230430>" in splt:
-                lst = [f"Hello {message.author.mention}, if you asked for a bt setup you're in the good place, otherwise checkout <#623906124428476427>.",
-                       f"Please wait just a moment for an @Helper to help you out.",
-                       f"In the meantime you can check that you're verified and logged into YATA, make sure you gave us the server name and do an initial `!sync` on your server.",
-                       f"Or just read the documentation on the website if what I just said doesn't make any sense to you.",
+                lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume. Please wait a moment for an @Helper. They like to pretend they are busy...",
+                       "In the meantime they asked me to tell you to:"
+                       "- give us the server name",
+                       "- do an initial `!sync` on your server",
+                       "- be logged into the YATA website",
+                       "Or just read the documentation if this doesn't make any sense to you.",
                        "",
                        "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]
                 await message.channel.send("\n".join(lst))
-            return
-
             return
 
         speak = random.random() > 0.5 if "<@&679669933680230430>" in splt else random.random() > 0.9
