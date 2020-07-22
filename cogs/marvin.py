@@ -29,12 +29,12 @@ class Marvin(commands.Cog):
         self.bot = bot
         self.bot_id = self.bot.bot_id
 
-        self.quotes = [
+        self.quotes_lib = [
             "Life? Don't talk to me about life.",
             "I think you ought to know I'm feeling very depressed.",
             "Pardon me for breathing, which I never do anyway so I don't know why I bother to say it, Oh God, I'm so depressed.",
             "I won't enjoy it.",
-            "You think you've got problems? What are you supposed to do if you are a manically depressed robot? No, don't try to answer that. I'm fifty thousand times more intelligent than you and even I don't know the answer. It gives me a headache just trying to think down to your level.",
+            "You think you've got problems? What are you supposed to do if you are a manically depressed robot? No, don't try to answer that. I'm fifty thousand times more intelligent than you and even I don't know the answer.",
             "There's only one life-form as intelligent as me within thirty parsecs of here and that's me.",
             "I wish you'd just tell me rather trying to engage my enthusiasm because I haven't got one.",
             "And then, of course, I've got this terrible pain in all the diodes down my left side.",
@@ -46,6 +46,8 @@ class Marvin(commands.Cog):
             "I ache, therefore I am.",
             "Life. Loathe it or ignore it. You can’t like it.",
             "*Now the world has gone to bed,*\n*Darkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
+
+        self.quotes = []
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -61,7 +63,7 @@ class Marvin(commands.Cog):
             await message.channel.send("*sigh*")
 
         # in #yata-bot-setup
-        if message.channel.id in [703587583862505483, 735501315312189501] and 679669933680230430 not in message.author.roles:
+        if message.channel.id in [703587583862505483] and 679669933680230430 not in message.author.roles:
             splt = message.content.split(" ")
             if "<@&679669933680230430>" in splt:
                 lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume. Please wait a moment for an @Helper. They like to pretend they are busy...",
@@ -75,7 +77,12 @@ class Marvin(commands.Cog):
                 await message.channel.send("\n".join(lst))
             return
 
-        speak = random.random() > 0.5 if "<@&679669933680230430>" in splt else random.random() > 0.9
-        if speak:
-            await message.channel.send(random.choice(self.quotes))
+        if random.random() > 0.9:
+            if not len(self.quotes):
+                self.quotes = list(self.quotes_lib)
+
+            quote = random.choice(self.quotes)
+            self.quotes.remove(quote)
+
+            await message.channel.send(quote)
             return
