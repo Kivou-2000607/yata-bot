@@ -58,16 +58,17 @@ class Marvin(commands.Cog):
         splt = message.content.split()
         if '<@!708796850978684968>' in splt:
             await message.channel.send("*sigh*")
-        
+
         # in #yata-bot-setup
         if message.channel.id in [703587583862505483]:
             splt = message.content.split(" ")
             if "<@&679669933680230430>" in splt:
-                lst = [f"Hello {message.author.mention}, if you asked for a bot setup you're in the good place (otherwise checkout <#623906124428476427>).",
-                       f"Wait just a moment for an @Helper to help you out. In the meantime you can",
-                       f"- check that you gave us the server name",
-                       f"- do an initial `!sync` on your server",
-                       f"- read the documentation on the website if that doesn't make any sense to you"]
+                lst = [f"Hello {message.author.mention}, if you asked for a bt setup you're in the good place, otherwise checkout <#623906124428476427>.",
+                       f"Please wait just a moment for an @Helper to help you out.",
+                       f"In the meantime you can check that you're verified and logged into YATA, make sure you gave us the server name and do an initial `!sync` on your server.",
+                       f"Or just read the documentation on the website if what I just said doesn't make any sense to you.",
+                       "",
+                       "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]
                 await message.channel.send("\n".join(lst))
             return
 
