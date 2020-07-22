@@ -54,6 +54,11 @@ class Marvin(commands.Cog):
         if message.author.bot:
             return
 
+        # if it's pinged
+        splt = message.content.split()
+        if '<@!708796850978684968>' in splt:
+            await message.channel.send("*sigh*")
+        
         # in #yata-bot-setup
         if message.channel.id in [703587583862505483]:
             splt = message.content.split(" ")
@@ -66,10 +71,6 @@ class Marvin(commands.Cog):
                 await message.channel.send("\n".join(lst))
             return
 
-        # if nothing else
-        splt = message.content.split()
-        if '<@!708796850978684968>' in splt:
-            await message.channel.send("*sigh*")
             return
 
         speak = random.random() > 0.5 if "<@&679669933680230430>" in splt else random.random() > 0.9
