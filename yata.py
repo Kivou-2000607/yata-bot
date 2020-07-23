@@ -67,7 +67,7 @@ logging.info(f'Starting bot: bot id = {bot_id}')
 def get_prefix(client, message):
     if message.guild:
         prefix = client.configurations.get(message.guild.id, {}).get("admin", {}).get("prefix", "!")
-        logging.debug(f'[get_prefix] {message.guild}: {prefix}')
+        # logging.debug(f'[get_prefix] {message.guild}: {prefix}')
         return prefix
     else:
         return "!"

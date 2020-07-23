@@ -73,7 +73,7 @@ class Crimes(commands.Cog):
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except:
+                except BaseException:
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
@@ -194,14 +194,14 @@ class Crimes(commands.Cog):
         key = oc.get("torn_user")[3]
 
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
-        notified = " " if roleId is None else f" <@&{roleId}> "
+        notified = "**OC Tracking**\n" if roleId is None else f"<@&{roleId}>\n"
 
         url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except:
+                except BaseException:
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
@@ -291,7 +291,7 @@ class Crimes(commands.Cog):
 
             # if ready and not already mentionned -> mention
             if ready and not mentionned:
-                await channel.send(f'{notified} {v["crime_name"]} ready\n```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
+                await channel.send(f'{notified}{v["crime_name"]} ready\n```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
@@ -315,7 +315,6 @@ class Crimes(commands.Cog):
 
         return True
 
-    # @tasks.loop(seconds=3)
     @tasks.loop(seconds=300)
     async def ocTask(self):
         logging.debug(f"[oc/notifications] start task")
@@ -326,9 +325,9 @@ class Crimes(commands.Cog):
 
                 config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
                 if not config:
-                    logging.debug(f"[oc/notifications] No oc for {guild}")
+                    logging.debug(f"[oc/notifications] <{guild}> No OC tracking")
                     continue
-                logging.debug(f"[oc/notifications] OC for {guild}")
+                logging.debug(f"[oc/notifications] <{guild}>  OC tracking")
 
                 # iteration over all members asking for oc watch
                 # guild = self.bot.get_guild(guild.id)
@@ -338,28 +337,30 @@ class Crimes(commands.Cog):
                     # logging.debug(f"[oc/notifications] {guild}: {oc}")
 
                     # call oc faction
+                    previous_mentions = list(oc.get("mentions", []))
                     status = await self._oc(guild, oc)
 
-                    if status and self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] != oc:
+                    if status and previous_mentions != oc.get("mentions", []):
                         tochange[discord_user_id] = oc
-                    else:
+                    elif not status:
                         todel.append(discord_user_id)
 
                 changes = False
                 for d in todel:
+                    logging.debug(f"[oc/notifications] <{guild}> delete current {d}")
                     del self.bot.configurations[guild.id]["oc"]["currents"][d]
                     changes = True
 
                 for discord_user_id, oc in tochange.items():
+                    logging.debug(f"[oc/notifications] <{guild}> change current {discord_user_id}")
                     self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
                     changes = True
 
                 if changes:
                     await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-                    logging.debug(f"[chain/oc-notifications] push notifications for {guild}")
+                    logging.debug(f"[oc/notifications] <{guild}> push notifications")
                 else:
-                    logging.debug(f"[chain/oc-notifications] don't push notifications for {guild}")
-
+                    logging.debug(f"[oc/notifications] <{guild}> don't push notifications")
 
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
