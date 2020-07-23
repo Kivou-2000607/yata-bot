@@ -69,7 +69,7 @@ class Marvin(commands.Cog):
                        "Please wait a moment for an helper. They like to pretend they are busy...",
                        "In the meantime they asked me to tell you to:",
                        "- make sure you followed these steps https://yata.alwaysdata.net/bot/host/",
-                       "- **tell us which server** you want to setup",
+                       "- give us the **name of the server**",
                        "",
                        "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]
                 await message.channel.send("\n".join(lst))
