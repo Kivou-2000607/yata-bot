@@ -333,7 +333,7 @@ class Verify(commands.Cog):
                     async with session.get(url) as r:
                         try:
                             req = await r.json()
-                        except:
+                        except BaseException:
                             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if not isinstance(req, dict):
@@ -353,7 +353,7 @@ class Verify(commands.Cog):
                     async with session.get(url) as r:
                         try:
                             req = await r.json()
-                        except:
+                        except BaseException:
                             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if not isinstance(req, dict):
@@ -374,7 +374,7 @@ class Verify(commands.Cog):
                 async with session.get(url) as r:
                     try:
                         req = await r.json()
-                    except:
+                    except BaseException:
                         req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             if not isinstance(req, dict):
@@ -424,6 +424,20 @@ class Verify(commands.Cog):
                     await author.add_roles(faction_role)
                     roles_list.append(f'@{html.unescape(faction_role.name)}')
 
+                if fId in config.get("factions", {}) and fId in config.get("positions", {}):
+                    try:
+                        position_name = f'{req.get("faction", {}).get("position")} position'
+                        position_role = get(ctx.guild.roles, name=position_name)
+                        if position_role is None:
+                            position_role = await ctx.guild.create_role(name=position_name)
+                            position_role = get(ctx.guild.roles, name=position_name)
+                        for r in [r for r in author.roles if r.name.split()[-1] == "position"]:
+                            await author.remove_roles(r)
+                        await author.add_roles(position_role)
+                        roles_list.append(f'@{html.unescape(position_role.name)}')
+                    except BaseException as e:
+                        logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
+
                 nl = '\n- '
                 return f'< {author} >\nYou have been verified and are now known as < {author.nick} >. You have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
@@ -450,6 +464,20 @@ class Verify(commands.Cog):
                             # add faction role if role exists
                             await member.add_roles(faction_role)
                             roles_list.append(f'@{faction_role}')
+
+                        if fId in config.get("factions", {}) and fId in config.get("positions", {}):
+                            try:
+                                position_name = f'{req.get("faction", {}).get("position")} position'
+                                position_role = get(ctx.guild.roles, name=position_name)
+                                if position_role is None:
+                                    position_role = await ctx.guild.create_role(name=position_name)
+                                    position_role = get(ctx.guild.roles, name=position_name)
+                                for r in [r for r in member.roles if r.name.split()[-1] == "position"]:
+                                    await member.remove_roles(r)
+                                await member.add_roles(position_role)
+                                roles_list.append(f'@{html.unescape(position_role.name)}')
+                            except BaseException as e:
+                                logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                         nl = '\n- '
                         return f'< {member} >\nThey have been verified and are now known as < {member.nick} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
@@ -552,7 +580,7 @@ class Verify(commands.Cog):
                 async with session.get(url) as r:
                     try:
                         req = await r.json()
-                    except:
+                    except BaseException:
                         req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             if not isinstance(req, dict):
@@ -631,7 +659,7 @@ class Verify(commands.Cog):
                 config["other"]["daily_verify"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-                
+
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[verify/dailyVerify] verifying all {guild}: start")
@@ -779,7 +807,7 @@ class Verify(commands.Cog):
                 config["other"]["weekly_check"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
                 await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
-                
+
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: start")
