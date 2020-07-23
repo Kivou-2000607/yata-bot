@@ -366,7 +366,7 @@ class Verify(commands.Cog):
                 else:
                     userID = int(req['discord'].get("userID"))
 
-            logging.debug(f"[verify/_member] verifying userID = {userID}")
+            logging.info(f"[verify/_member] verifying userID = {userID}")
 
             # api call request
             url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
@@ -415,6 +415,7 @@ class Verify(commands.Cog):
 
                 # Get faction roles
                 fId = str(req['faction']['faction_id'])
+                fNa = str(req['faction']['faction_name'])
                 faction_roles_id = config.get("factions", {}).get(fId, {})
                 faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
@@ -426,12 +427,12 @@ class Verify(commands.Cog):
 
                 if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                     try:
-                        position_name = f'{req.get("faction", {}).get("position")} position'
+                        position_name = f'{html.unescape(req.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
                         position_role = get(ctx.guild.roles, name=position_name)
                         if position_role is None:
                             position_role = await ctx.guild.create_role(name=position_name)
                             position_role = get(ctx.guild.roles, name=position_name)
-                        for r in [r for r in author.roles if r.name.split()[-1] == "position"]:
+                        for r in [r for r in author.roles if r.name.split(" of ")[-1] == html.unescape(fNa)]:
                             await author.remove_roles(r)
                         await author.add_roles(position_role)
                         roles_list.append(f'@{html.unescape(position_role.name)}')
@@ -456,6 +457,7 @@ class Verify(commands.Cog):
 
                         # Get faction roles
                         fId = str(req['faction']['faction_id'])
+                        fNa = str(req['faction']['faction_name'])
                         faction_roles_id = config.get("factions", {}).get(fId, {})
                         faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
@@ -467,12 +469,12 @@ class Verify(commands.Cog):
 
                         if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                             try:
-                                position_name = f'{req.get("faction", {}).get("position")} position'
+                                position_name = f'{html.unescape(req.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
                                 position_role = get(ctx.guild.roles, name=position_name)
                                 if position_role is None:
                                     position_role = await ctx.guild.create_role(name=position_name)
                                     position_role = get(ctx.guild.roles, name=position_name)
-                                for r in [r for r in member.roles if r.name.split()[-1] == "position"]:
+                                for r in [r for r in member.roles if r.name.split(" of ")[-1] == html.unescape(fNa)]:
                                     await member.remove_roles(r)
                                 await member.add_roles(position_role)
                                 roles_list.append(f'@{html.unescape(position_role.name)}')
