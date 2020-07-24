@@ -75,7 +75,7 @@ class Loot(commands.Cog):
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except:
+                except BaseException:
                     req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
 
         if 'error' in req:

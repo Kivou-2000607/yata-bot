@@ -93,7 +93,7 @@ class Chain(commands.Cog):
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except:
+                except BaseException:
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
@@ -149,7 +149,7 @@ class Chain(commands.Cog):
                 async with session.get(url) as r:
                     try:
                         req = await r.json()
-                    except:
+                    except BaseException:
                         req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             if not isinstance(req, dict):
@@ -452,7 +452,7 @@ class Chain(commands.Cog):
             async with session.get(url) as r:
                 try:
                     req = await r.json()
-                except:
+                except BaseException:
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if not isinstance(req, dict):
@@ -624,6 +624,7 @@ class Chain(commands.Cog):
         for k, v in req["attacks"].items():
             delay = int(nowts - v["timestamp_ended"]) / float(60)
             if str(k) in retal["mentions"]:
+                # logging.debug(f"[chain/_retalTask] ignore mention #{k}")
                 continue
 
             if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
@@ -693,10 +694,11 @@ class Chain(commands.Cog):
                     # logging.debug(f"[chain/retal-notifications] {guild}: {retal}")
 
                     # call retal faction
+                    previous_mentions = list(retal.get("mentions", []))
                     status = await self._retal(guild, retal)
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
-                    if status and self.bot.configurations[guild.id]["chain"]["currents"][discord_user_id] != retal:
+                    if status and previous_mentions != retal.get("mentions", []):
                         tochange[discord_user_id] = retal
                     elif not status:
                         todel.append(discord_user_id)

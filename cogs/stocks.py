@@ -82,7 +82,7 @@ class Stocks(commands.Cog):
                 async with session.get(url) as r:
                     try:
                         req = await r.json()
-                    except:
+                    except BaseException:
                         req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
             if not isinstance(req, dict):

@@ -40,7 +40,6 @@ async def chat(uid, secret, hooks, room):
     token, agent = cloudscraper.get_cookie_string("https://www.torn.com")
     headers = {"User-Agent": agent, "Cookie": token}
 
-
     async with websockets.connect(uri, origin="https://www.torn.com", extra_headers=headers) as websocket:
         async with aiohttp.ClientSession() as session:
             webhooks = dict({})
@@ -57,7 +56,6 @@ async def chat(uid, secret, hooks, room):
 
                     for keyword in [k for k in webhooks if k != "full"]:
                         if re.search(f"\W*({keyword})\W*", txt.lower()) is not None:
-                            #msg += " <@&546769358744191006>"
                             await webhooks[keyword].send(msg)
 
 asyncio.get_event_loop().run_until_complete(chat(iud, secret, json.loads(hooks), room))

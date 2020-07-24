@@ -32,6 +32,7 @@ from inc.yata_db import get_secret
 room = "Trade"
 iud, secret, hooks = get_secret(room)
 
+
 async def chat(uid, secret, hooks, room):
 
     uri = f"wss://ws-chat.torn.com/chat/ws?uid={iud}&secret={secret}"

@@ -58,11 +58,11 @@ logging.error("error")
 bot_id = os.environ.get("YATA_ID", 1)
 github_token = os.environ.get("GITHUB_TOKEN", "")
 main_server_id = os.environ.get("MAIN_SERVER_ID", 581227228537421825)
+logging.info(f'Starting bot: bot id = {bot_id}')
 
 # get configurations from YATA's database
 token, configurations = load_configurations(bot_id)
 
-logging.info(f'Starting bot: bot id = {bot_id}')
 
 def get_prefix(client, message):
     if message.guild:
@@ -71,6 +71,7 @@ def get_prefix(client, message):
         return prefix
     else:
         return "!"
+
 
 # init yata bot
 bot = YataBot(configurations=configurations,
