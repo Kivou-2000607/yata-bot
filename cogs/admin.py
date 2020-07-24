@@ -37,9 +37,10 @@ from discord import Embed
 from discord.ext import tasks
 
 # import bot functions and classes
-from inc.yata_db import set_configuration
 from inc.yata_db import get_server_admins
+from inc.yata_db import set_configuration
 from inc.yata_db import get_configuration
+from inc.yata_db import set_n_servers
 from inc.yata_db import get_yata_user
 
 from inc.handy import *
@@ -114,9 +115,9 @@ class Admin(commands.Cog):
             configuration["admin"] = {}
         bot = get(ctx.guild.members, id=self.bot.user.id)
         configuration["admin"]["joined_at"] = int(datetime.datetime.timestamp(bot.joined_at))
-        configuration["admin"]["guild_id"] = ctx.guild.id
+        configuration["admin"]["guild_id"] = str(ctx.guild.id)
         configuration["admin"]["guild_name"] = ctx.guild.name
-        configuration["admin"]["owner_did"] = ctx.guild.owner.id
+        configuration["admin"]["owner_did"] = str(ctx.guild.owner.id)
         configuration["admin"]["owner_dname"] = f'{ctx.guild.owner}'
         configuration["admin"]["channels"] = channels
         configuration["admin"]["roles"] = roles
@@ -172,40 +173,32 @@ class Admin(commands.Cog):
         updates.append("```Check out your dashboard: https://yata.alwaysdata.net/bot/dashboard/")
         await ctx.send("\n".join(updates))
 
-        # print current configurations
-        # for module, variables in configuration.items():
-        #     for k, v in variables.items():
-        #         if isinstance(v, dict):
-        #             for a, b in v.items():
-        #                 await ctx.send(f'**{module}** {k}: `{html.unescape(b)} [{a}]`')
-        #         else:
-        #             await ctx.send(f"**{module}**: `{k} = {v}`")
+    @commands.command()
+    async def servers(self, ctx, *args):
+        """Admin tool for the bot owner"""
+        logging.info(f'[admin/servers] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # await ctx.send(":white_check_mark: configuration updated")
+        if ctx.author.id != 227470975317311488:
+            logging.info(f'[admin/servers] not authorized')
+            return
 
-    # @commands.command()
-    # @commands.has_any_role(679669933680230430, 669682126203125760)
-    # async def check(self, ctx):
-    #     """Admin tool for the bot owner"""
-    #     logging.info(f'[admin/check] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-    #
-    #     if ctx.channel.name != "yata-admin":
-    #         await ctx.send(":x: Use this command in `#yata-admin`")
-    #         return
-    #
-    #     # loop over guilds
-    #     guildIds = []
-    #     for guild in self.bot.guilds:
-    #         if str(guild.id) in self.bot.configs:
-    #             guildIds.append(str(guild.id))
-    #             # await ctx.send(f"```Guild {guild} owned by {guild.owner}: ok```")
-    #         else:
-    #             await ctx.send(f"```Guild {guild} owned by {guild.owner}: no config in the db```")
-    #
-    #     for k, v in self.bot.configs.items():
-    #         if k not in guildIds:
-    #             await ctx.send(f'```Guild {v["admin"]["name"]} owned by {v["admin"]["owner"]}: no bot in the guild```')
-    #
+        await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
+        for server in self.bot.guilds:
+            config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
+
+            # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')
+            if config:
+                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: ok')
+            else:
+                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration')
+                if server.id in self.bot.configurations:
+                    await ctx.send(f'Server {server} [{server.id}] with no admin')
+                else:
+                    await ctx.send(f'Server {server} [{server.id}] with no configuration')
+
+        for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
+            await ctx.send(f'```No bot in configuration id {server_id}```')
+
     @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
     async def info(self, ctx, *args):

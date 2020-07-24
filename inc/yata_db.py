@@ -78,6 +78,18 @@ async def get_configuration(bot_id, discord_id):
     return False if server is None else json.loads(server.get("configuration"))
 
 
+async def set_n_servers(bot_id, n):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+
+    await con.execute('''
+        UPDATE bot_bot SET number_of_servers = $2 WHERE id = $1
+        ''', bot_id, n)
+    await con.close()
+
+
 async def set_configuration(bot_id, discord_id, server_name, configuration):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]
@@ -138,48 +150,6 @@ async def get_yata_user(user_id, type="T"):
     await con.close()
 
     return user
-
-# async def get_yata_user_by_discord(discordID):
-#     # get YATA user
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     dbname = db_cred["dbname"]
-#     del db_cred["dbname"]
-#     con = await asyncpg.connect(database=dbname, **db_cred)
-#     user = await con.fetch(f'SELECT "tId" FROM player_player WHERE "dId" = {discordID};')
-#     await con.close()
-#
-#     return user
-#
-#
-# async def push_guild_info(guild, member, contact, bot_pk):
-#     """Writes the actual guild name in YATA database"""
-#     # get YATA user
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     dbname = db_cred["dbname"]
-#     del db_cred["dbname"]
-#     con = await asyncpg.connect(database=dbname, **db_cred)
-#     await con.execute('UPDATE bot_guild SET "guildName"=$1, "guildOwnerId"=$2, "guildOwnerName"=$3, "guildJoinedTime"=$4, "guildContactDiscordName"=$5, "guildContactDiscordId"=$6 WHERE "guildId"=$7 AND "configuration_id"=$8', guild.name, guild.owner_id, guild.owner.name, datetime.timestamp(member.joined_at), contact.name, contact.id, guild.id, int(bot_pk))
-#     await con.close()
-#
-#
-# def load_configurations(bot_id, verbose=False):
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     con = psycopg2.connect(**db_cred)
-#     cur = con.cursor()
-#     cur.execute(f"SELECT token, variables, administrators FROM bot_discordapp WHERE id = {bot_id};")
-#     token, configs, administrators = cur.fetchone()
-#     cur.close()
-#     con.close()
-#     return token, configs, administrators
-#
-#
-# async def push_configurations(bot_id, configs):
-#     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
-#     dbname = db_cred["dbname"]
-#     del db_cred["dbname"]
-#     con = await asyncpg.connect(database=dbname, **db_cred)
-#     await con.execute('UPDATE bot_discordapp SET variables = $1 WHERE id = $2', json.dumps(configs), int(bot_id))
-#     await con.close()
 
 
 def get_secret(name):

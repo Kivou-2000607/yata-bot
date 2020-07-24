@@ -48,17 +48,6 @@ class YataBot(Bot):
         self.github_token = github_token
         self.main_server_id = int(main_server_id)
 
-    async def on_guild_join(self, guild):
-
-        self.configurations[guild.id] = {}
-        await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
-
-    async def on_guild_remove(self, guild):
-
-        if guild.id in self.configurations:
-            self.configurations.pop(guild.id)
-        await set_configuration(self.bot_id, guild.id, guild.name, {})
-
     async def discord_to_torn(self, member, key):
         """ get a torn id form discord id
             return tornId, None: okay
@@ -351,3 +340,18 @@ class YataBot(Bot):
                 return [None]
             else:
                 return None
+
+    async def on_guild_join(self, guild):
+
+        await self.send_log_main(f'I **joined** server {guild} [`{guild.id}`] owned by {guild.owner} ')
+
+        self.configurations[guild.id] = {}
+        await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
+
+    async def on_guild_remove(self, guild):
+
+        await self.send_log_main(f'I **left** server {guild} [`{guild.id}`] owned by {guild.owner}')
+
+        if guild.id in self.configurations:
+            self.configurations.pop(guild.id)
+        await set_configuration(self.bot_id, guild.id, guild.name, {})
