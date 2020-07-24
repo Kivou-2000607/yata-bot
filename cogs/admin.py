@@ -363,22 +363,28 @@ class Admin(commands.Cog):
         """help command"""
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        embed = Embed(title="YATA bot help", description="If you need more information, ping an @Helper in the YATA server", color=550000)
+        lst = [
+            "Have a look at the [online documentation](https://yata.alwaysdata.net/bot/documentation/) or browse the links.",
+            "If you need more information ping an @Helper in the [YATA server](https://yata.alwaysdata.net/discord).", ]
+        embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
 
         lst = ["[General information](https://yata.alwaysdata.net/bot/)",
-               "[List of commands](https://yata.alwaysdata.net/bot/documentation/)",
-               f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))})"]
+               f"[Host the bot](https://yata.alwaysdata.net/bot/host/)",
+               # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.alwaysdata.net/bot/dashboard/)"
+               # "[FAQ]() soon...",
+               ]
         embed.add_field(name='About the bot', value='\n'.join(lst))
 
         lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
-               "[YATA discord](https://yata.alwaysdata.net/discord)",
-               "[YATA website](https://yata.alwaysdata.net/)"]
+               "[Permissions](https://discord.com/developers/docs/topics/permissions) / [hierarchy](https://discord.com/developers/docs/topics/permissions#permission-hierarchy)", ]
         embed.add_field(name='Links', value='\n'.join(lst))
 
         lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
-               "[Loot level timers](https://yata.alwaysdata.net/loot/)",
-               "[Loot bot](https://discordapp.com/channels/581227228537421825/623906124428476427/629065571207479308)"]
-        embed.add_field(name='How to loot', value='\n'.join(lst))
+               "[Loot level timers](https://yata.alwaysdata.net/loot/)", ]
+        embed.add_field(name='Loot', value='\n'.join(lst))
+
+        embed.set_thumbnail(url="https://yata.alwaysdata.net/static/images/logo.png")
+
         await ctx.send("", embed=embed)
 
     @commands.command()
