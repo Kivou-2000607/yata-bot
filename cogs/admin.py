@@ -318,6 +318,12 @@ class Admin(commands.Cog):
             await ctx.send(f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
+    async def rtfm(self, ctx, *args):
+        modules = ["admin", "verify", "loot", "chain", "rackets", "stocks", "revive", "crimes", "api"]
+        hash = f"#{args[0]}" if len(args) and args[0] in modules else ""
+        await ctx.send(f"https://yata.alwaysdata.net/bot/documentation/{hash}")
+
+    @commands.command()
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()

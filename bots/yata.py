@@ -158,7 +158,7 @@ class YataBot(Bot):
         if not len(user):
             # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             if ctx:
-                m = await ctx.send(f':x: **{member}** is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net')
+                m = await ctx.send(f'```md\n# Get torn ID\n< error > {member} is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net```')
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -199,7 +199,12 @@ class YataBot(Bot):
 
         if str(ctx.channel.id) not in config.get(channel_key, []):
             channels = [get(ctx.guild.channels, id=int(k)) for k in config.get(channel_key, {}) if str(k).isdigit()]
-            msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join([c.mention for c in channels if c is not None])}.')
+            allowed_channels = [c.mention for c in channels if c is not None]
+            if len(allowed_channels):
+                msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join(allowed_channels)}.')
+            else:
+                msg = await ctx.send(f':no_entry: Command not allowed in this channel. No channels have been setup.\nCheckout your dashboard: https://yata.alwaysdata.net/bot/dashboard/')
+
             await asyncio.sleep(5)
             await msg.delete()
             await ctx.message.delete()

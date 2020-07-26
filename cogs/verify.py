@@ -114,13 +114,13 @@ class Verify(commands.Cog):
         # get key
         status, tornId, key = await self.bot.get_master_key(ctx.guild)
         if status == -1:
-            await ctx.send(":x: No master key given")
+            await ctx.send('```md\n# verify\n< error > No master key given```')
             return
 
         # Get Verified role
         role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_verified", {}))
         if role is None:
-            await ctx.send(":x: No verified role given")
+            await ctx.send('```md\n# verify\n< error > No verified role given```')
             return
 
         if len(args) == 1:  # with one arg (torn id or discord mention)
@@ -141,10 +141,10 @@ class Verify(commands.Cog):
                     message, _ = await self._member(ctx, role, discordID=discordID[0], API_KEY=key)
                 else:
                     logging.debug(f'[verify/verify] {ctx.guild}: discord ID unreadable {discordID}')
-                    message = f":x: could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
+                    message = f"< error > Could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
 
             else:
-                message = ":x: use `!verify tornId` or `!verify @Kivou [2000607]`"
+                message = "< error > Use !verify tornId or !verify @Kivou [2000607]"
 
         else:  # no args
             message, _ = await self._member(ctx, role, API_KEY=key)
@@ -340,7 +340,7 @@ class Verify(commands.Cog):
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if 'error' in req:
-                    return ":x: There is an API key problem ({}).".format(req['error']['error']), False
+                    return "< error > There is an API key problem ({}).".format(req['error']['error']), False
                 userID = req['discord'].get("userID")
                 if userID == '':
                     return f"{author}, you are not officially verified by Torn", False
@@ -383,14 +383,14 @@ class Verify(commands.Cog):
             # check api error
             if 'error' in req:
                 if int(req['error']['code']) == 6:
-                    return f"Torn ID `{userID}` is not known. Please check again.", False
+                    return f"< error > Torn ID {userID} is not known. Please check again.", False
                 else:
-                    return "There is a API key problem ({}).".format(req['error']['error']), False
+                    return "< error > There is a API key problem ({}).".format(req['error']['error']), False
 
             # check != id shouldn't append or problem in torn API
             dis = req.get("discord")
             if int(dis.get("userID")) != userID:
-                return ":x: That's odd... {} != {}.".format(userID, dis.get("userID")), False
+                return "< error >  That's odd... {} != {}.".format(userID, dis.get("userID")), False
 
             # check if registered in torn discord
             discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
