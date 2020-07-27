@@ -1,0 +1,29 @@
+{
+    "factions": {
+        "faction_id": {
+            "members": {}
+        }
+    },
+    "keys": {
+        "user_id": {
+            "key": "xxx",
+            "last_used": 0
+        }
+    },
+    "last_action": 120,
+    "records": {
+        "attacksassisted": "attacks assisted",
+        "bountiescollected": "bounties collected",
+        "bountiesplaced": "bounties placed",
+        "bountiesreceived": "bounties received",
+        "energydrinkused": "energy drink used",
+        "lsdtaken": "lsd taken",
+        "medicalitemsused": "medicalitems used",
+        "refills": "energy refill",
+        "revives": "revives made",
+        "revivesreceived": "revives received",
+        "xantaken": "xanax taken"
+    },
+    "wh_id": "x",
+    "wh_token": "x"
+}
