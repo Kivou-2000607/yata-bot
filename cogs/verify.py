@@ -432,7 +432,7 @@ class Verify(commands.Cog):
                         if position_role is None:
                             position_role = await ctx.guild.create_role(name=position_name)
                             position_role = get(ctx.guild.roles, name=position_name)
-                        for r in [r for r in author.roles if r.name.split(" of ")[-1] == html.unescape(fNa)]:
+                        for r in [r for r in author.roles if " of " in r.name and r.name.split(" of ")[-1] == html.unescape(fNa)]:
                             await author.remove_roles(r)
                         await author.add_roles(position_role)
                         roles_list.append(f'@{html.unescape(position_role.name)}')
@@ -474,7 +474,7 @@ class Verify(commands.Cog):
                                 if position_role is None:
                                     position_role = await ctx.guild.create_role(name=position_name)
                                     position_role = get(ctx.guild.roles, name=position_name)
-                                for r in [r for r in member.roles if r.name.split(" of ")[-1] == html.unescape(fNa)]:
+                                for r in [r for r in member.roles if " of " in r.name and r.name.split(" of ")[-1] == html.unescape(fNa)]:
                                     await member.remove_roles(r)
                                 await member.add_roles(position_role)
                                 roles_list.append(f'@{html.unescape(position_role.name)}')
