@@ -157,7 +157,7 @@ class Verify(commands.Cog):
     #     if ctx.guild is None:
     #         logging.info(f'[verify/verifyKey] DM: {ctx.author}')
     #     else:
-    #         logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+    #         logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.display_name} / {ctx.author}')
     #
     #     if not isinstance(ctx.channel, PrivateChannel):
     #         await ctx.message.delete()
@@ -276,7 +276,7 @@ class Verify(commands.Cog):
     @commands.guild_only()
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members"""
-        logging.info(f'[verify/checkFactions] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[verify/checkFactions] {ctx.guild}: {ctx.author.display_name} / {ctx.author}')
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "verify")
@@ -440,7 +440,7 @@ class Verify(commands.Cog):
                         logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                 nl = '\n- '
-                return f'< {author} >\nYou have been verified and are now known as < {author.nick} >. You have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                return f'< {author} >\nYou have been verified and are now known as < {author.display_name} >. You have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
             else:
                 # loop over all members to check if the id exists
@@ -451,7 +451,7 @@ class Verify(commands.Cog):
                         except BaseException:
                             if context:
                                 # only send this message if ctx is a context (context=True)
-                                # await ctx.send(f":no_entry: I don't have the permission to change {member.nick}'s nickname.")
+                                # await ctx.send(f":no_entry: I don't have the permission to change {member.display_name}'s nickname.")
                                 pass
                         await member.add_roles(verified_role)
 
@@ -482,7 +482,7 @@ class Verify(commands.Cog):
                                 logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                         nl = '\n- '
-                        return f'< {member} >\nThey have been verified and are now known as < {member.nick} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                        return f'< {member} >\nThey have been verified and are now known as < {member.display_name} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
                 # if no match in this loop it means that the member is not in this server
                 return f"You are trying to verify < {nickname} > but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
@@ -527,7 +527,7 @@ class Verify(commands.Cog):
                     message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
                 if not _:
-                    await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {member.nick}: {message}```")
+                    await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {member.display_name}: {message}```")
                 continue
 
             elif role in member.roles:
