@@ -501,7 +501,7 @@ class Chain(commands.Cog):
             lst.append(f'Money: No vault records')
             lst.append(f'Points: No vault records')
 
-        await send_tt(ctx, lst)
+        await ctx.author.send('```md\n#vault\n{}```'.format("\n".join(lst)))
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
