@@ -437,14 +437,32 @@ class Chain(commands.Cog):
         if not allowed:
             return
 
-        if not len(args) or not args[0].isdigit():
-            await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id>```")
+        if not len(args):
+            await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id> or mention a member !vault @Mention```")
             return
 
-        checkVaultId = args[0]
+        # get author key
         status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-
         if status != 0:
+            return
+
+        # get user id based on torn id or mention
+        if args[0].isdigit():
+            checkVaultId = args[0]
+
+        elif re.match(r'<@!?\d+>', args[0]):
+            discordID = re.findall(r'\d+', args[0])
+            member = ctx.guild.get_member(int(discordID[0]))
+            checkVaultId, err = await self.bot.discord_to_torn(member, key)
+            if checkVaultId == -1:
+                await ctx.send(f'```md\n# Vault\n< API error {err["code"]} > {err["error"]}```')
+                return
+            elif checkVaultId == -2:
+                await ctx.send(f'```md\n# Vault\n< error > discord member {discordID[0]} is not verified.```')
+                return
+
+        else:
+            await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id> or mention a member !vault @Mention```")
             return
 
         url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
@@ -459,12 +477,13 @@ class Chain(commands.Cog):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if 'error' in req:
-            await ctx.send(f':x: Error code {req["error"]["code"]}: {req["error"]["error"]}')
+            await ctx.send(f'```md\n# Vault\n< API error {req["error"]["code"]} > {req["error"]["error"]}```')
             return
 
         factionName = f'{req["name"]} [{req["ID"]}]'
         members = req["members"]
         donations = req["donations"]
+        checkVaultId = str(checkVaultId)
         lst = [f'Faction: {factionName}']
         if checkVaultId in members:
             member = members[checkVaultId]

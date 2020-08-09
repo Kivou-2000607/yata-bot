@@ -103,6 +103,8 @@ class Revive(commands.Cog):
                 else:
                     errors.append(f':x: Problem with API key (status = {status}): *{req["error"]["error"]}*')
                 errors.append(":x: I cannot specify faction or hospitalization time")
+        else:
+            return
 
         # create call message
         name = req.get("name", "Player")
