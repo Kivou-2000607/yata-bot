@@ -85,17 +85,33 @@ class API(commands.Cog):
             elif w["exp"] > 4:
                 tomax.append(w)
 
-        lst = [f"# {name} [{id}]: weapon experience\n"]
+        lst = [f"# {name} [{id}]: weapon experience and remaining hits\n"]
 
         if len(maxed):
             lst.append("# weapon maxed")
-        for i, w in enumerate(maxed):
-            lst.append(f'< {i+1: >2} > {w["name"]} ({w["exp"]}%)')
+
+        # convert exp to hits remainings
+        def exp_to_hits(exp):
+            if exp < 25:
+                return (25 - exp) * 8 + 1800
+            elif exp < 50:
+                return (50 - exp) * 12 + 1500
+            elif exp < 75:
+                return (75 - exp) * 20 + 1000
+            else:
+                return (100 - exp) * 40
+
+        n = 1
+        for w in maxed:
+            lst.append(f'< {n: >2} > {w["name"]}: {w["exp"]}%')
+            n += 1
 
         if len(tomax):
             lst.append("# experience > 5%")
-        for i, w in enumerate(tomax):
-            lst.append(f'< {i+1: >2} > {w["name"]} ({w["exp"]}%)')
+
+        for w in tomax:
+            lst.append(f'< {n: >2} > {w["name"]}: {w["exp"]}% ({exp_to_hits(int(w["exp"]))} hits)')
+            n += 1
 
         await send_tt(ctx.author, lst)
         return
