@@ -84,7 +84,7 @@ bot.remove_command('help')
 # load classes
 bot.add_cog(Admin(bot))
 
-if int(bot_id) in [1, 3]:
+if int(bot_id) in [1, 3, 4]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))
