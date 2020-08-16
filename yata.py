@@ -84,7 +84,7 @@ bot.remove_command('help')
 # load classes
 bot.add_cog(Admin(bot))
 
-if int(bot_id) in [1, 3, 4]:
+if int(bot_id) in [1, 3]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))
@@ -98,6 +98,9 @@ if int(bot_id) in [1, 3, 4]:
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
+
+elif int(bot_id) in [4]:
+    bot.add_cog(Stocks(bot))
 
 # run bot
 bot.run(token)
