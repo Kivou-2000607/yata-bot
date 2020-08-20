@@ -331,6 +331,9 @@ class Admin(commands.Cog):
         """Clear not pinned messages"""
         logging.info(f'[admin/clear] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
+        if self.bot.bot_id in [2]:
+            return
+
         limit = (int(args[0]) + 1) if (len(args) and args[0].isdigit()) else 100
         async for m in ctx.channel.history(limit=limit):
             if not m.pinned:

@@ -22,6 +22,7 @@ import random
 
 # import discord modules
 from discord.ext import commands
+from discord.utils import get
 
 
 class Marvin(commands.Cog):
@@ -60,6 +61,19 @@ class Marvin(commands.Cog):
         splt = message.content.split()
         if '<@!708796850978684968>' in splt or '<@708796850978684968>' in splt:
             await message.channel.send("*sigh*")
+
+        # in #lobby
+        if message.channel.id in [581227228537421829]:
+            splt = message.content.split(" ")
+            readme = get(message.guild.channels, id=623906124428476427)
+            if "<@&679669933680230430>" in splt:
+                await message.channel.send(f"It's not a good channel to ask for help. Please read {readme.mention}.")
+                return
+
+        # only ping
+        if message.content == "<@&679669933680230430>":
+            await message.channel.send(f"Don't just ping. Say what you want.")
+            return
 
         # in #yata-bot-setup
         if message.channel.id in [703587583862505483] and 679669933680230430 not in message.author.roles:
