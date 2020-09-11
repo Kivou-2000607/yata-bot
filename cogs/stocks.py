@@ -126,7 +126,6 @@ class Stocks(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
-    @commands.has_role('wssb')
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
         logging.info(f'[stock/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
@@ -145,7 +144,6 @@ class Stocks(commands.Cog):
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
-    @commands.has_role('tcb')
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
         logging.info(f'[stock/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')

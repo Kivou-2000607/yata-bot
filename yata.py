@@ -41,6 +41,7 @@ from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
 from cogs.repository import Repository
+from cogs.elimination import Elimination
 from cogs.marvin import Marvin
 
 # import includes
@@ -95,6 +96,7 @@ if int(bot_id) in [1, 3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
+    bot.add_cog(Elimination(bot))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
