@@ -160,10 +160,12 @@ class Revive(commands.Cog):
             except BaseException as e:
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
 
-        # wait for 5 minutes
-        await asyncio.sleep(60 * 5)
-        for [msg, cha] in msgList:
-            try:
-                await msg.delete()
-            except BaseException:
-                await cha.send(":x: There is no need to delete the calls. They are automatically deleted after 5 minutes. *You can delete this message thought* ^^")
+        # delete messages
+        if config.get("other", {}).get("delete"):
+            # wait for 5 minutes
+            await asyncio.sleep(5)
+            for [msg, cha] in msgList:
+                try:
+                    await msg.delete()
+                except BaseException as e:
+                    pass

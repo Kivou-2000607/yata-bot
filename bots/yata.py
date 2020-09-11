@@ -206,8 +206,11 @@ class YataBot(Bot):
                 msg = await ctx.send(f':no_entry: Command not allowed in this channel. No channels have been setup.\nCheckout your dashboard: https://yata.alwaysdata.net/bot/dashboard/')
 
             await asyncio.sleep(5)
-            await msg.delete()
-            await ctx.message.delete()
+            try:
+                await msg.delete()
+                await ctx.message.delete()
+            except BaseException:
+                pass
             return False
         else:
             return True
