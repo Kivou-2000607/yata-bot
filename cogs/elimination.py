@@ -81,6 +81,7 @@ class Elimination(commands.Cog):
         # m = 14 - datetime.datetime.now().time().minute % 15
         # s = 60 - datetime.datetime.now().time().second
         # await msg.edit(content=f"Next wave in **{m}:{s}** seconds", embed=eb)
+        await msg.edit(embed=eb)
 
 
     @tasks.loop(seconds=1)
