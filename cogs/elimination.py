@@ -46,7 +46,7 @@ class Elimination(commands.Cog):
     def cog_unload(self):
         self.score.cancel()
 
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=30)
     async def score(self):
         # get main guild
         guild = get(self.bot.guilds, id=self.bot.main_server_id)
