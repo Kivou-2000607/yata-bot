@@ -211,7 +211,7 @@ class API(commands.Cog):
         await ctx.author.send(embed=eb)
         return
 
-    @commands.command(aliases=['profile', 'p'])
+    @commands.command(aliases=['profile', 'p', 'id'])
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def who(self, ctx, *args):
@@ -266,6 +266,9 @@ class API(commands.Cog):
             return
 
         # at this point tornId should be a interger corresponding to a torn ID
+        if ctx.message.content[1:3] == "id":
+            await ctx.send(f"https://www.torn.com/profiles.php?XID={tornId}")
+            return
 
         # get configuration for guild
         # status, _, key = await self.bot.get_master_key(ctx.guild)
@@ -285,9 +288,6 @@ class API(commands.Cog):
             await ctx.send(f'Check the profile by yourself https://www.torn.com/profiles.php?XID={tornId}')
             return
 
-        lst = [
-
-        ]
         eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description=f'[Level {r["level"]} {r["rank"]} {r["age"]:,d} days old](https://www.torn.com/profiles.php?XID={tornId})', colour=my_blue)
 
         # status
