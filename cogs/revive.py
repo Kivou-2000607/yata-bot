@@ -120,11 +120,12 @@ class Revive(commands.Cog):
 
         # list of messages to delete them after
         msgList = []
+        delete = config.get("other", {}).get("delete", False)
         # send message to current channel
         if len(errors):
             msg = "\n".join(errors)
             m = await ctx.send(f'{msg}')
-            msgList.append([m, ctx.channel])
+            msgList.append([m, ctx.channel, delete])
         msg = "\n".join(lst)
         role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
         mention = '' if role is None else f'{role.mention} '
@@ -133,7 +134,7 @@ class Revive(commands.Cog):
             m = await ctx.send(f'{mention}{msg}')
         else:
             m = await alert_channel.send(f'{mention}{msg}')
-        msgList.append([m, ctx.channel])
+        msgList.append([m, ctx.channel, delete])
 
         # loop over all server to send the calls
         for id in config.get("sending", []):
@@ -145,15 +146,16 @@ class Revive(commands.Cog):
 
                 if str(ctx.guild.id) in remote_config.get("blacklist", {}):
                     m = await ctx.send(f'*Server {remote_guild.name} has blacklisted you*')
-                    msgList.append([m, ctx.channel])
+                    msgList.append([m, ctx.channel, delete])
                 else:
-                    # get guild, role and channel
+                    # get guild, role, channel and delete option
                     remote_role = self.bot.get_module_role(remote_guild.roles, remote_config.get("roles_alerts", {}))
                     remote_channel = self.bot.get_module_channel(remote_guild.channels, remote_config.get("channels_alerts", {}))
+                    remote_delete = remote_config.get("other", {}).get("delete", False)
                     mention = '' if remote_role is None else f'{remote_role.mention} '
                     if remote_channel is not None:
                         m = await remote_channel.send('{}{}\n*{}*'.format(mention, msg, sendFrom))
-                        msgList.append([m, remote_channel])
+                        msgList.append([m, remote_channel, remote_delete])
                     else:
                         await self.bot.send_log(f'Error sending revive call to server {remote_guild}: revive channel not found', guild_id=ctx.guild.id)
 
@@ -161,11 +163,10 @@ class Revive(commands.Cog):
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
 
         # delete messages
-        if config.get("other", {}).get("delete"):
-            # wait for 5 minutes
-            await asyncio.sleep(5)
-            for [msg, cha] in msgList:
-                try:
-                    await msg.delete()
-                except BaseException as e:
-                    pass
+        # wait for 5 minutes
+        await asyncio.sleep(5 * 60)
+        for [msg, cha] in [(m, c) for m, c, d in msgList if d]:
+            try:
+                await msg.delete()
+            except BaseException as e:
+                pass
