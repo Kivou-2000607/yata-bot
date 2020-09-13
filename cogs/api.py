@@ -29,6 +29,7 @@ import logging
 
 # import discord modules
 import discord
+from discord import Embed
 from discord.ext import commands
 from discord.ext import tasks
 from discord.utils import get
@@ -85,11 +86,6 @@ class API(commands.Cog):
             elif w["exp"] > 4:
                 tomax.append(w)
 
-        lst = [f"# {name} [{id}]: weapon experience and remaining hits\n"]
-
-        if len(maxed):
-            lst.append("# weapon maxed")
-
         # convert exp to hits remainings
         def exp_to_hits(exp):
             if exp < 25:
@@ -101,19 +97,26 @@ class API(commands.Cog):
             else:
                 return (100 - exp) * 40
 
+        lst = []
+        eb = Embed(title=f"Weapon experience and remaining hits", colour=my_blue)
         n = 1
         for w in maxed:
-            lst.append(f'< {n: >2} > {w["name"]}: {w["exp"]}%')
+            lst.append(f'{n: >2} {w["name"]}')
             n += 1
 
-        if len(tomax):
-            lst.append("# experience > 5%")
+        if len(lst):
+            eb.add_field(name="Weapon maxed", value="\n".join(lst))
 
+        lst = []
         for w in tomax:
-            lst.append(f'< {n: >2} > {w["name"]}: {w["exp"]}% ({exp_to_hits(int(w["exp"]))} hits)')
+            lst.append(f'{n: >2} {w["name"]}: {w["exp"]}% ({exp_to_hits(int(w["exp"]))} hits)')
             n += 1
 
-        await send_tt(ctx.author, lst)
+        if len(lst):
+            eb.add_field(name="Experience > 5%", value="\n".join(lst))
+
+        eb.set_image(url="https://awardimages.torn.com/615034470.png")
+        await ctx.author.send(embed=eb)
         return
 
     @commands.command(aliases=['fh'])
@@ -157,12 +160,15 @@ class API(commands.Cog):
         for k, v in bridge.items():
             finishingHits.append([v, req.get("personalstats", dict({})).get(k, 0)])
 
-        lst = [f"# {name} [{id}]: finishing hits\n"]
+        lst = []
         # send list
         for fh in sorted(finishingHits, key=lambda x: -x[1]):
-            lst.append(f"< {fh[0]: <17} > {fh[1]: >6,d}")
+            lst.append(f"{fh[0]: <17} {fh[1]: >6,d}")
 
-        await send_tt(ctx.author, lst)
+        eb = Embed(title=f"Finishing hits", description="\n".join(lst), colour=my_blue)
+        eb.set_image(url="https://awardimages.torn.com/433435448.png")
+
+        await ctx.author.send(embed=eb)
         return
 
     @commands.command(aliases=['net'])
@@ -190,16 +196,19 @@ class API(commands.Cog):
             return
 
         # send list
-        lst = [f"# {name} [{id}]: Networth breakdown\n"]
+        lst = []
+        eb = Embed(title=f"Networth breakdown", colour=my_blue)
         for k, v in req.get("networth", dict({})).items():
-            if k in ['total']:
-                lst += ['', '---', '']
             if int(v):
-                a = f"{k}"
-                b = f"${v:,.0f}"
-                lst.append(f'< {a: <13} > {b: >16}')
+                if k == "displaycase":
+                    name = "Display Case"
+                elif k == "stockmarket":
+                    name = "Stock Market"
+                else:
+                    name = k.title()
+                eb.add_field(name=name, value=f"${v:,.0f}")
 
-        await send_tt(ctx.author, lst)
+        await ctx.author.send(embed=eb)
         return
 
     @commands.command(aliases=['profile', 'p'])
@@ -266,78 +275,85 @@ class API(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats&key={key}'
+        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 r = await r.json()
 
         if 'error' in r:
-            await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            await ctx.send(f'```md\n# who\n< error > Error code {r["error"]["code"]}: {r["error"]["error"]}```')
             await ctx.send(f'Check the profile by yourself https://www.torn.com/profiles.php?XID={tornId}')
             return
 
-        links = {}
-        linki = 1
-        lst = []
+        lst = [
+
+        ]
+        eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description=f'[Level {r["level"]} {r["rank"]} {r["age"]:,d} days old](https://www.torn.com/profiles.php?XID={tornId})', colour=my_blue)
 
         # status
-        lst.append(f'< Name > {r["name"]} [{r["player_id"]}]    <{linki}>')
-        links[linki] = f'https://www.torn.com/profiles.php?XID={tornId}'
-        linki += 1
-        lst.append(f'< Action > {r["last_action"]["relative"]} ({r["last_action"]["status"]})')
         s = r["status"]
-        # lst.append(f'State: {s["state"]}')
-        lst.append(f'< Status > {s["description"]}')
+        lst = [
+                f'Last Action: {r["last_action"]["relative"]} ({r["last_action"]["status"]})',
+                f'Description: {s["description"]}',
+            ]
         if s["details"]:
-            lst.append(f'< Details > {cleanhtml(s["details"])}')
-        p = 100 * r['life']['current'] // r['life']['maximum']
-        i = int(p * 20 / 100)
-        lst.append(f'< Life > {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d} [{"+" * i}{"-" * (20 - i)}]')
-        lst += ['', '---', '']
+            lst.append(cleanhtml(s["details"]))
+        lst.append(f'Life: {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d}')
+        eb.add_field(name="Status", value="\n".join(lst))
 
-        # levels
-        lst.append(f'< Level > {r["level"]}')
-        lst.append(f'< Rank > {r["rank"]}')
-        lst.append(f'< Age > {r["age"]:,d} days old')
-        lst.append(f'< Networth > ${r["personalstats"].get("networth", 0):,d}')
-        lst.append(f'< X-R-SE > {r["personalstats"].get("xantaken", 0):,d} {r["personalstats"].get("refills", 0):,d} {r["personalstats"].get("statenhancersused", 0):,d}')
-        lst += ['', '---', '']
+        # items
+        lst = [f'Xanax: {r["personalstats"].get("xantaken", 0):,d}', f'Refills: {r["personalstats"].get("refills", 0):,d}', f'SE: {r["personalstats"].get("statenhancersused", 0):,d}']
+        eb.add_field(name="Energy", value="\n".join(lst))
 
         # faction
         if int(r["faction"]["faction_id"]):
             f = r["faction"]
-            lst.append(f'< Faction > {f["position"]} of {html.unescape(f["faction_name"])} [{f["faction_id"]}]    <{linki}>')
-            links[linki] = f'https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}'
-            linki += 1
-            lst.append(f'< Days > In faction since {f["days_in_faction"]} days')
-            lst += ['', '---', '']
+            lst = [
+                    f'Name: [{html.unescape(f["faction_name"])} [{f["faction_id"]}]](https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]})',
+                    f'Position: {f["position"]}',
+                    f'Days: since {f["days_in_faction"]} days'
+                    ]
+            eb.add_field(name="Faction", value="\n".join(lst))
 
         # company
         if int(r["job"]["company_id"]):
             j = r["job"]
-            lst.append(f'< Company > {html.unescape(j["company_name"])} [{j["company_id"]}]    <{linki}>')
-            lst.append(f'< Position > {j["position"]}')
-            links[linki] = f'https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]}'
-            linki += 1
-            lst += ['', '---', '']
+            lst = [
+                f'Name: [{html.unescape(j["company_name"])} [{j["company_id"]}]](https://www.torn.com/joblist.php?#!p=corpinfo&ID={j["company_id"]})',
+                f'Position: {j["position"]}',
+            ]
+            eb.add_field(name="Company", value="\n".join(lst))
 
         # social
-        lst.append(f'< Friends > {r["friends"]:,d}')
-        lst.append(f'< Enemies > {r["enemies"]:,d}')
+        lst = [f'Friends: {r["friends"]:,d}', f'Ennemies: {r["enemies"]:,d}']
         if r["forum_posts"]:
-            lst.append(f'< Karma > {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
+            lst.append(f'Karma: {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
         else:
-            lst.append(f'< Karma > No forum post')
+            lst.append(f'Karma: No forum post')
+        eb.add_field(name="Social", value='\n'.join(lst))
 
+
+        # Misc
+        lst = [
+                f'Networth: ${r["personalstats"].get("networth", 0):,d}',
+        ]
         s = r["married"]
         if s["spouse_id"]:
-            lst.append(f'< Married > {s["spouse_name"]} [{s["spouse_id"]}] for {s["duration"]:,d} days    <{linki}>')
-            links[linki] = f'https://www.torn.com/profiles.php?&XID={s["spouse_id"]}'
-            linki += 1
+            lst.append(f'Spouse: [{s["spouse_name"]} [{s["spouse_id"]}]](https://www.torn.com/profiles.php?&XID={s["spouse_id"]}) for {s["duration"]:,d} days')
+        eb.add_field(name="Misc", value="\n".join(lst))
 
-        await send_tt(ctx, lst)
-        for k, v in links.items():
-            await ctx.send(f'<{k}> {v}')
+
+        try:
+            dm = self.bot.get_user(int(r["discord"].get("discordID")))
+            eb.set_thumbnail(url=dm.avatar_url)
+        except BaseException:
+            pass
+
+        # if r.get("discord" {}).get("discordID", False):
+        eb.set_footer(text=f'Update: {ts_format(r["timestamp"], fmt="short")}')
+
+        await ctx.send(embed=eb)
+
 
     @tasks.loop(minutes=1)
     async def notify(self):

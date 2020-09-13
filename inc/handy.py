@@ -24,6 +24,7 @@ import datetime
 import re
 import traceback
 
+my_blue = 4488859
 
 def permissions_rsm(permissions):
     perm = []
