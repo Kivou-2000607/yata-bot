@@ -31,6 +31,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 from discord.utils import get
+from discord import Embed
 
 # import bot functions and classes
 # from includes.yata_db import get_member_key
@@ -363,3 +364,15 @@ class YataBot(Bot):
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
         await set_configuration(self.bot_id, guild.id, guild.name, {})
+
+    async def send_error_message(self, channel, description, fields={}):
+        eb = Embed(title="Error", description=description, color=my_red)
+        for k, v in fields.items():
+            eb.add_field(name=k, value=v)
+        return await channel.send(embed=eb)
+
+    async def send_help_message(self, channel, description, fields={}):
+        eb = Embed(title="Help", description=description, color=my_green)
+        for k, v in fields.items():
+            eb.add_field(name=k, value=v)
+        return await channel.send(embed=eb)

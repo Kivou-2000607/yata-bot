@@ -69,12 +69,12 @@ class API(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f'```md\n# {name} [{id}]: weapon experience\n< error > {req["error"]["error"]}```')
+            await self.bot.send_error_message(ctx.author, "Error calling weapon experience: " + req["error"]["error"])
             return
 
         # if no weapon exp
         if not len(req.get("weaponexp", [])):
-            await ctx.author.send(f"```md\n# {name} [{id}]: weapon experience\n< error > no weapon exp```")
+            await self.bot.send_error_message(ctx.author, "Error calling weapon experience: no weapon exp")
             return
 
         # send list
@@ -133,14 +133,14 @@ class API(commands.Cog):
             return
 
         # make api call
-        url = f"https://api.torn.com/user/?selections=discord,personalstats&key={key}"
+        url = f"https://api.torn.com/user/?selections=discord,personalstats&key=2{key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f'```md\n# {name} [{id}]: finishing hits\n< error > {req["error"]["error"]}```')
+            await self.bot.send_error_message(ctx.author, "Error calling finishing hits: " + req["error"]["error"])
             return
 
         bridge = {"heahits": "Heavy artillery",
@@ -192,7 +192,7 @@ class API(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.author.send(f'```md\n# {name} [{id}]: networth breakdown\n< error > {req["error"]["error"]}```')
+            await self.bot.send_error_message(ctx.author, "Error calling networth breakdown: " + req["error"]["error"])
             return
 
         # send list
@@ -219,14 +219,14 @@ class API(commands.Cog):
         logging.info(f'[api/who] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # init variables
-        helpMsg = f":x: You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
+        helpMsg = f"You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
 
         logging.debug(f'[api/who] args: {args}')
 
         # send error message if no arg (return)
         if not len(args):
             logging.debug(f'[api/who] no args given')
-            await ctx.send(helpMsg)
+            await self.bot.send_help_message(ctx.channel, helpMsg)
             return
 
         # check if arg is int
@@ -242,12 +242,12 @@ class API(commands.Cog):
             if len(discordId) and discordId[0].isdigit():
                 member = ctx.guild.get_member(int(discordId[0]))
             else:
-                await ctx.send(helpMsg)
+                await self.bot.send_help_message(ctx.channel, helpMsg)
                 return
 
             # check if member
             if member is None:
-                await ctx.send(f"```md\n# who\nCouldn't find discord member: {discordId}. Try !who < torn ID >```")
+                await self.bot.send_error_message(ctx.channel, f"Couldn't find discord member: {discordId}. Try !who < torn ID >")
                 return
 
             # try to parse Torn user ID
@@ -257,12 +257,12 @@ class API(commands.Cog):
             else:
                 status, tornId, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
                 if status in [-1, -2, -3]:
-                    await ctx.send(f"```md\n# who\nCould not find Torn ID within their display name and verification failed. Try !who < Torn ID >```")
+                    await self.bot.send_error_message(ctx.channel, "Could not find Torn ID within their display name and verification failed. Try !who < Torn ID >")
                     return
 
         # other cases I didn't think of
         else:
-            await ctx.send(helpMsg)
+            await self.bot.send_help_message(ctx.channel, helpMsg)
             return
 
         # at this point tornId should be a interger corresponding to a torn ID
@@ -274,18 +274,17 @@ class API(commands.Cog):
         # status, _, key = await self.bot.get_master_key(ctx.guild)
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            await ctx.send("```md\n# who\n< error > key not found```")
+            await self.bot.send_error_message(ctx.channel, "Key not found")
             return
 
         # Torn API call
-        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key={key}'
+        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key=2{key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 r = await r.json()
 
         if 'error' in r:
-            await ctx.send(f'```md\n# who\n< error > Error code {r["error"]["code"]}: {r["error"]["error"]}```')
-            await ctx.send(f'Check the profile by yourself https://www.torn.com/profiles.php?XID={tornId}')
+            await self.bot.send_error_message(ctx.channel, f'Error code {r["error"]["code"]}: {r["error"]["error"]}', fields={"Player's profile": f"https://www.torn.com/profiles.php?XID={tornId}"})
             return
 
         eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description=f'[Level {r["level"]} {r["rank"]} {r["age"]:,d} days old](https://www.torn.com/profiles.php?XID={tornId})', colour=my_blue)

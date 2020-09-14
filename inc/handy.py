@@ -25,6 +25,8 @@ import re
 import traceback
 
 my_blue = 4488859
+my_red = 15544372
+my_green = 4175668
 
 def permissions_rsm(permissions):
     perm = []

@@ -23,10 +23,12 @@ import aiohttp
 # import datetime
 # import json
 import logging
+import html
 
 # import discord modules
 from discord.ext import commands
 from discord.utils import get
+from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
@@ -55,7 +57,6 @@ class Revive(commands.Cog):
             return
 
         # Get user key
-        lst = []
         errors = []
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, returnMaster=True, delError=True)
         # return 0, id, Name, Key: All good
@@ -75,7 +76,7 @@ class Revive(commands.Cog):
                 tornId = int(args[0])
                 name = "Player"
             else:
-                msg = await ctx.send(":x: Impossible to send revive call because you're not verified on the official Torn discord server.\nYou can use `!revive <tornId>`.")
+                msg = await self.bot.send_error_message(ctx.channel, "Impossible to send revive call because you're not verified on the official Torn discord server.\nYou can use `!revive <tornId>`.")
                 await asyncio.sleep(30)
                 await msg.delete()
                 return
@@ -97,47 +98,53 @@ class Revive(commands.Cog):
             # handle API error
             if 'error' in req:
                 if status in [0]:
-                    errors.append(f':x: Problem using {name} [{id}]\'s key: *{req["error"]["error"]}*')
+                    errors.append(f'Problem using {name} [{id}]\'s key: *{req["error"]["error"]}*')
                 elif status in [-3, -4]:
-                    errors.append(f':x: Problem using server admin key: *{req["error"]["error"]}*')
+                    errors.append(f'Problem using server admin key: *{req["error"]["error"]}*')
                 else:
-                    errors.append(f':x: Problem with API key (status = {status}): *{req["error"]["error"]}*')
-                errors.append(":x: I cannot specify faction or hospitalization time")
+                    errors.append(f'Problem with API key (status = {status}): *{req["error"]["error"]}*')
+                errors.append("I cannot specify faction or hospitalization time")
         else:
             return
 
         # create call message
         name = req.get("name", "Player")
         url = f'https://www.torn.com/profiles.php?XID={tornId}'
+        lst = []
         if req.get('faction', False) and req["faction"]["faction_id"]:
-            lst.append(f'**{name} [{tornId}]** from **{req["faction"]["faction_name"]} [{req["faction"]["faction_id"]}]** needs a revive {url}')
+            f = req["faction"]
+            lst.append(f'[{name} [{tornId}]](https://www.torn.com/profiles.php?XID={tornId}) from [{html.unescape(f["faction_name"])} [{f["faction_id"]}]](https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}) needs a revive.')
         else:
-            lst.append(f'**{name} [{tornId}]** needs a revive {url}')
+            lst.append(f'[{name} [{tornId}]](https://www.torn.com/profiles.php?XID={tornId}) needs a revive.')
 
         # add status
         if req.get('status', False) and req["status"]["state"] == "Hospital":
-            lst.append(f'{req["status"]["description"]} ({cleanhtml(req["status"]["details"])})')
+            lst.append(f'{req["status"]["description"]} ({cleanhtml(req["status"]["details"])}).')
+
+        eb = Embed(title=f'Revive call', description='\n'.join(lst), color=my_blue)
 
         # list of messages to delete them after
-        msgList = []
         delete = config.get("other", {}).get("delete", False)
+        msgList = [[ctx.message, ctx.channel, delete]]
+        ts_init = ts_now()
         # send message to current channel
         if len(errors):
             msg = "\n".join(errors)
-            m = await ctx.send(f'{msg}')
+            m = await self.bot.send_error_message(ctx.channel, msg)
             msgList.append([m, ctx.channel, delete])
         msg = "\n".join(lst)
         role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_alerts", {}))
         mention = '' if role is None else f'{role.mention} '
         alert_channel = self.bot.get_module_channel(ctx.guild.channels, config.get("channels_alerts", {}))
         if alert_channel is None:
-            m = await ctx.send(f'{mention}{msg}')
+            m = await ctx.send(f'{mention}', embed=eb)
         else:
-            m = await alert_channel.send(f'{mention}{msg}')
+            m = await alert_channel.send(f'{mention}', embed=eb)
         msgList.append([m, ctx.channel, delete])
 
         # loop over all server to send the calls
         for id in config.get("sending", []):
+            eb_remote = eb
             try:
                 # get remote server coonfig
                 remote_guild = get(self.bot.guilds, id=int(id))
@@ -153,8 +160,10 @@ class Revive(commands.Cog):
                     remote_channel = self.bot.get_module_channel(remote_guild.channels, remote_config.get("channels_alerts", {}))
                     remote_delete = remote_config.get("other", {}).get("delete", False)
                     mention = '' if remote_role is None else f'{remote_role.mention} '
+                    delay = f'(delay: {ts_now() - ts_init}s)'
+                    eb_remote.set_footer(text=f'{sendFrom} {delay}.')
                     if remote_channel is not None:
-                        m = await remote_channel.send('{}{}\n*{}*'.format(mention, msg, sendFrom))
+                        m = await remote_channel.send(mention, embed=eb_remote)
                         msgList.append([m, remote_channel, remote_delete])
                     else:
                         await self.bot.send_log(f'Error sending revive call to server {remote_guild}: revive channel not found', guild_id=ctx.guild.id)
@@ -165,6 +174,7 @@ class Revive(commands.Cog):
         # delete messages
         # wait for 5 minutes
         await asyncio.sleep(5 * 60)
+        await ctx.message.delete()
         for [msg, cha] in [(m, c) for m, c, d in msgList if d]:
             try:
                 await msg.delete()
