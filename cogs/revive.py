@@ -174,7 +174,6 @@ class Revive(commands.Cog):
         # delete messages
         # wait for 5 minutes
         await asyncio.sleep(5 * 60)
-        await ctx.message.delete()
         for [msg, cha] in [(m, c) for m, c, d in msgList if d]:
             try:
                 await msg.delete()
