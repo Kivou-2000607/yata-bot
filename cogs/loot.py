@@ -79,31 +79,25 @@ class Loot(commands.Cog):
 
         if 'error' in req:
             await self.bot.send_error_message(ctx.channel, f'{req["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
-            return
+            # return
+            req = {"4": {'name': 'Duke', 'hospout': 1600179436, 'update': 1600204232, 'status': 'Loot level IV', 'timings': {'1': {'due': -25002, 'ts': 1600179436, 'pro': 100}, '2': {'due': -23202, 'ts': 1600181236, 'pro': 100}, '3': {'due': -19602, 'ts': 1600184836, 'pro': 100}, '4': {'due': -12402, 'ts': 1600192036, 'pro': 100}, '5': {'due': 1998, 'ts': 1600206436, 'pro': 92}}, 'levels': {'current': 4, 'next': 5}}}
 
         # get NPC from the database and loop
-        eb = Embed(title="NPC timings to loot level IV", description=f'{ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT', color=my_blue)
-        eb.set_thumbnail(url="https://yata.alwaysdata.net/static/images/loot/loot4.png")
         for id, npc in req.items():
-            print(npc)
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
             advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
-            n = 20
+            n = 10
             i = int(advance * n / 100)
 
-            line = []
-            # line.append(f'[{"=" * i}{" " * (n - i)}] ({str(advance): >3}%)')
-            line.append(f'{s_to_hms(abs(due))}')
-            line.append(f'{"since" if due < 0 else "to"} level IV')
-            line.append(f'{ts_to_datetime(ts).strftime("%H:%M:%S")} TCT')
-            line.append(f'[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={id})')
-            eb.add_field(name=f'{npc["name"]} ({str(advance)}%)', value="\n".join(line))
+            eb = Embed(color=my_blue)
+            eb.set_author(name=f'{npc["name"]} at {str(advance): >3}%', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/npc_{id}.png')
+            eb.set_footer(text=f'Level IV {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/loot{npc["levels"]["current"]}.png')
 
-        await ctx.send(embed=eb)
+            await ctx.send(embed=eb)
 
         # clean messages
-        await ctx.message.delete()
+        # await ctx.message.delete()
 
         # async for m in ctx.channel.history(limit=10, before=ctx.message).filter(self.botMessages):
         #     await m.delete()

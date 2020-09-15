@@ -30,6 +30,7 @@ import logging
 from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
+from discord import Embed
 
 # import bot functions and classes
 from inc.yata_db import set_configuration
@@ -81,7 +82,7 @@ class Crimes(commands.Cog):
 
         # handle API error
         if "error" in req:
-            await ctx.send(f':x: API error while pulling crimes with API key: *{req["error"]["error"]}*')
+            await self.bot.send_error_message(ctx.channel, f'API error while pulling crimes with API key: *{req["error"]["error"]}*')
             return
 
         crimes = req["crimes"]
@@ -89,16 +90,18 @@ class Crimes(commands.Cog):
         for k, v in crimes.items():
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
-                lst = ['```md', f'# organized crime ready', f'< Crime > {v["crime_name"]} #{k}', f'< Started > {ts_to_datetime(v["time_started"], fmt="short")}', f'< Ready > {ts_to_datetime(v["time_ready"], fmt="short")}', f'< Participants > {len(v["participants"])}\n']
+                description = [f'Started: {ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {ts_to_datetime(v["time_ready"], fmt="short")}']
+                eb = Embed(title=f'{v["crime_name"]} #{k} ready', description="\n".join(description), color=my_blue)
                 # logging.info(k, v)
+                participants = []
                 for p in v["participants"]:
                     tId = list(p)[0]
                     name = members.get(tId, dict({"name": "Player"}))["name"]
                     status = list(p.values())[0]
-                    lst.append(f'- {name}: {status["state"]} ({status["description"]})')
+                    participants.append(f'- {name}: {status["state"]} ({status["description"]})')
+                eb.add_field(name=f'{len(v["participants"])} participants', value="\n".join(participants))
 
-                lst.append('```')
-                await ctx.send(f"\n".join(lst))
+                await ctx.send(embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -126,11 +129,10 @@ class Crimes(commands.Cog):
 
         # delete if already exists
         if str(ctx.author.id) in currents:
-            lst = ["```md", "# Tracking organized crimes"]
+            eb = Embed(title="STOP tracking organized crimes", color=my_red)
             for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
-                lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
-            lst += ['', '<STOP>', "```"]
-            await ctx.channel.send("\n".join(lst))
+                eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
+            await ctx.channel.send(embed=eb)
             del self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)]
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -141,8 +143,7 @@ class Crimes(commands.Cog):
         # get torn user
         status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
-            lst = ['```md', f'# Tracking organized crimes', f'< error > could not get {ctx.author}\'s API key```']
-            await ctx.channel.send("\n".join(lst))
+            await self.bot.send_error_message(ctx.channel, f'Could not get {ctx.author}\'s API key')
             return
         current["torn_user"] = [str(tornId), name, '', key]
 
@@ -155,11 +156,10 @@ class Crimes(commands.Cog):
         if role is not None:
             current["role"] = [str(role.id), f'{role}', '@']
 
-        lst = ["```md", "# Tracking organized crimes"]
+        eb = Embed(title="START tracking organized crimes", color=my_green)
         for k, v in current.items():
-            lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
-        lst += ['', '<START>', "```"]
-        await ctx.channel.send("\n".join(lst))
+            eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
+        await ctx.channel.send(embed=eb)
         self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)] = current
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
@@ -175,7 +175,7 @@ class Crimes(commands.Cog):
         discord_id = oc.get("discord_user")[0] if len(oc.get("discord_user", {})) else "0"
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > discord member {discord_member} not found\n\n<STOP>```')
+            await self.bot.send_error_message(channel, f'Discord member #{discord_id} not found\n\nSTOP', title="Error tracking organized crimes")
             return False
 
         # get torn id, name and key
@@ -186,7 +186,7 @@ class Crimes(commands.Cog):
         #     return False
 
         if len(oc.get("torn_user")) < 4:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
+            await self.bot.send_error_message(channel, f'Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\nSTOP', title="Error tracking organized crimes")
             return False
 
         tornId = oc.get("torn_user")[0]
@@ -194,7 +194,7 @@ class Crimes(commands.Cog):
         key = oc.get("torn_user")[3]
 
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
-        notified = "**OC Tracking**\n" if roleId is None else f"<@&{roleId}>\n"
+        notified = "" if roleId is None else f"<@&{roleId}>"
 
         url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -209,26 +209,27 @@ class Crimes(commands.Cog):
 
         # handle API error
         if 'error' in req:
-            lst = [f'```md', f'# Tracking organized crimes\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
+
+            lst = [f'Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
             if req["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
 
             if req["error"]["code"] in [1, 2, 6, 7, 10]:
-                lst += ["", "<STOP>", "```"]
-                await channel.send("\n".join(lst))
+                lst += ["", "STOP"]
+                await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return False
             else:
-                lst += ["", "<CONTINUE>", "```"]
-                await channel.send("\n".join(lst))
+                lst += ["", "CONTINUE"]
+                await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return True
 
         if req is None or "ID" not in req:
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > wrong API output\n\n{hide_key(req)}\n\n<CONTINUE>```')
+            await self.bot.send_error_message(channel, f'API is talking shit... #blameched\n\nCONTINUE', title="Error tracking organized crimes")
             return True
 
         if not int(req["ID"]):
-            await channel.send(f'```md\n# Tracking organized crimes\n< error > no faction found for {name} {tornId}\n\n<STOP>```')
+            await self.bot.send_error_message(channel, f'No faction found for {name} [{tornId}]\n\nSTOP', title="Error tracking organized crimes")
             return False
 
         # faction id and name
@@ -266,17 +267,16 @@ class Crimes(commands.Cog):
             # if completed and already mentionned -> remove the already mentionned
             if completed and mentionned:
                 initId = str(v["initiated_by"])
-                lst = [
-                    f'{v["crime_name"]} completed',
-                    '```md',
-                    f'# Organized crime completed',
-                    f'< Faction > {fName}',
-                    f'< Crime > {v["crime_name"]}',
-                    f'< Initiated > {members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
-                    f'< Money > ${v["money_gain"]:,}',
-                    f'< Respect > {v["respect_gain"]:,}',
-                    '```']
-                await channel.send("\n".join(lst))
+                fields = {
+                    "Faction": f'{fName}',
+                    "Crime": f'{v["crime_name"]}',
+                    "Initiated": f'{members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
+                    "Money": f'${v["money_gain"]:,}',
+                    "Respect": f'{v["respect_gain"]:,}'}
+                eb = Embed(title=f'{v["crime_name"]} completed', color=my_blue)
+                for k, v in fields.items():
+                    eb.add_field(name=k, value=v)
+                await channel.send(embed=eb)
                 oc["mentions"].remove(str(k))
 
             # exit if completed
@@ -290,13 +290,20 @@ class Crimes(commands.Cog):
                     ready = False
 
             # if ready and not already mentionned -> mention
-            if ready and not mentionned:
-                await channel.send(f'{notified}{v["crime_name"]} ready\n```md\n# Organized crime ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\n<READY>```')
+            # if ready and not mentionned:
+            if True:
+                eb = Embed(title=f'OC ready', description=f'[{v["crime_name"]}](https://www.torn.com/factions.php?step=your#/tab=crimes)', color=my_green)
+                eb.add_field(name="Crime ID", value=f'{k}')
+                eb.add_field(name="Faction", value=f'{fName}')
+                await channel.send(f'{notified}', embed=eb)
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
             if not ready and mentionned:
-                await channel.send(f'{v["crime_name"]} not ready\n```md\n# Organized crime not ready\n< Faction > {fName}\n< Crime > {v["crime_name"]} #{k}\n\nNot ready anymore because of non Okay participants```')
+                eb = Embed(title=f'OC not ready anymore', description=v["crime_name"], color=my_red)
+                eb.add_field(name="Crime ID", value=f'{k}')
+                eb.add_field(name="Faction", value=f'{fName}')
+                await channel.send(embed=eb)
                 oc["mentions"].remove(str(k))
 
         # clean mentions
