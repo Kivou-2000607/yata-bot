@@ -290,8 +290,7 @@ class Crimes(commands.Cog):
                     ready = False
 
             # if ready and not already mentionned -> mention
-            # if ready and not mentionned:
-            if True:
+            if ready and not mentionned:
                 eb = Embed(title=f'OC ready', description=f'[{v["crime_name"]}](https://www.torn.com/factions.php?step=your#/tab=crimes)', color=my_green)
                 eb.add_field(name="Crime ID", value=f'{k}')
                 eb.add_field(name="Faction", value=f'{fName}')
