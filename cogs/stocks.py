@@ -67,7 +67,7 @@ class Stocks(commands.Cog):
         timeLeft = dict()
         role = self.bot.get_module_role(ctx.guild.roles, config.get(f"roles_{stock}", {}))
         if role is None:
-            await ctx.send(f"```md\n# Stock module: shared {stock.upper()} bonus block\n< error > no roles attributed to {stock}```")
+            await self.bot.send_error_message(ctx, f'No roles attributed to {stock}')
             return [], None
 
         for member in role.members:
@@ -90,23 +90,24 @@ class Stocks(commands.Cog):
 
             # deal with api error
             if "error" in req:
-                await ctx.send(f':x: {member.mention} API key error: *{req["error"].get("error", "?")}*')
+                await self.bot.send_error_message(ctx, f'API key error: {req["error"].get("error", "?")}')
                 continue
 
             # send pull request to member
             info = 'bank' if stock == "tcb" else "education"
-            lst = [f'```md',
-                   f'# Stock module: shared {stock.upper()} bonus block',
-                   f'Your <{info}> information has just been pulled',
-                   f'< Command > {stock}',
-                   f'< Time > {ts_to_datetime(req["timestamp"], fmt="short")}',
-                   f'< Server > {ctx.guild} [{ctx.guild.id}]',
-                   f'< Channel > {ctx.channel}',
-                   f'< Author > {ctx.author.nick} ({ctx.author} [{ctx.author.id}])```']
+            url = f'https://yata.alwaysdata.net/static/stocks/{2 if stock == "tcb" else 25}.png'
+            description = [
+                f'Your **{info}** information has just been pulled',
+                f'__Author__: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])',
+                f'__Server__: {ctx.guild} [{ctx.guild.id}]',
+            ]
+            eb = Embed(title=f"Shared {stock.upper()} bonus block", description="\n\n".join(description), color=my_blue)
+            eb.set_footer(text=ts_to_datetime(req["timestamp"], fmt="short"))
+            eb.set_thumbnail(url=url)
             try:
-                await member.send("\n".join(lst))
+                await member.send(embed=eb)
             except BaseException:
-                await ctx.send(f"```md\n# Stock module: shared {stock.upper()} bonus block\n< error > DM couldn't be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.```")
+                await self.bot.send_error_message(ctx, f'DM couldn\'t be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.')
                 continue
 
             # get stock owner
@@ -131,16 +132,19 @@ class Stocks(commands.Cog):
         logging.info(f'[stock/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
-        lst = ["# List of education time left and WSSB owners", ""]
+        lst = ["```md"]
         if len(timeLeft):
-            tmp = "{: <15} | {} | {}".format("NAME", "EDU TIME LEFT", "WSSB")
-            lst.append(tmp)
-            lst.append("-" * len(tmp))
+            # tmp = "{: <15} | {} | {}".format("NAME", "EDU TIME LEFT", "WSSB")
+            # lst.append(tmp)
+            # lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
 
-            await send_tt(ctx, lst)
+            lst.append("```")
+            eb = Embed(title="List of investment time left and WSSB owners", description="\n".join(lst), color=my_blue)
+            eb.set_thumbnail(url="https://yata.alwaysdata.net/static/stocks/25.png")
+            await ctx.send(embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -149,16 +153,20 @@ class Stocks(commands.Cog):
         logging.info(f'[stock/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
-        lst = ["# List of investment time left and TCB owners", ""]
+        lst = ["```md"]
         if len(timeLeft):
-            tmp = "{: <15} | {} | {}".format("NAME", "INV TIME LEFT", "TCB")
-            lst.append(tmp)
-            lst.append("-" * len(tmp))
+            # tmp = "{: <15} | {} | {}".format("NAME", "INV TIME LEFT", "TCB")
+            # lst.append(tmp)
+            # lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
                 lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
 
-            await send_tt(ctx, lst)
+            lst.append("```")
+            eb = Embed(title="List of investment time left and TCB owners", description="\n".join(lst), color=my_blue)
+            eb.set_thumbnail(url="https://yata.alwaysdata.net/static/stocks/2.png")
+            await ctx.send(embed=eb)
+
 
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)

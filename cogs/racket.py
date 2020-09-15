@@ -79,15 +79,13 @@ class Racket(commands.Cog):
             # New racket
             if k not in rackets_p:
                 title = "New racket"
-                color = 550000
 
             elif v["level"] != rackets_p[k]["level"]:
                 title = f'Racket moved {"up" if v["level"] > rackets_p[k]["level"] else "down"} from {rackets_p[k]["level"]} to {v["level"]}'
-                color = 550000
 
             if title:
                 factionO = await get_faction_name(v["faction"])
-                embed = Embed(title=title, description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
+                embed = Embed(title=title, description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=my_blue)
 
                 embed.add_field(name='Reward', value=f'{v["reward"]}')
                 embed.add_field(name='Territory', value=f'{k}')
@@ -106,9 +104,8 @@ class Racket(commands.Cog):
 
         for k, v in rackets_p.items():
             if k not in req["rackets"]:
-                color = 550000
                 factionO = await get_faction_name(v["faction"])
-                embed = Embed(title=f'Racket vanished', description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
+                embed = Embed(title=f'Racket vanished', description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=my_blue)
                 embed.add_field(name='Reward', value=f'{v["reward"]}')
                 embed.add_field(name='Territory', value=f'{k}')
                 embed.add_field(name='Level', value=f'{v["level"]}')
@@ -133,9 +130,8 @@ class Racket(commands.Cog):
             if not territory_p[k].get("war", False):
                 factionO = await get_faction_name(v["faction"])
                 factionA = await get_faction_name(v["war"]["assaulting_faction"])
-                color = 550000
                 title = f'New war for a {racket["name"]}'
-                embed = Embed(title=title, description=f'[{racket["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=color)
+                embed = Embed(title=title, description=f'[{racket["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=my_blue)
 
                 embed.add_field(name='Reward', value=f'{racket["reward"]}')
                 embed.add_field(name='Territory', value=f'{k}')
@@ -191,6 +187,4 @@ class Racket(commands.Cog):
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
-        logging.debug('[racket/notifications] waiting...')
         await self.bot.wait_until_ready()
-        logging.debug('[racket/notifications] start loop')

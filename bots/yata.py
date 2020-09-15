@@ -120,7 +120,7 @@ class YataBot(Bot):
         if master_status == -1:
             # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
             if ctx:
-                m = await ctx.send(f'```md\n# Get torn ID\n< error > no master key given```')
+                m = await self.send_error_message(ctx, f'No master key given.', title="Error getting user API key")
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -133,11 +133,10 @@ class YataBot(Bot):
         tornId, msg = await self.discord_to_torn(member, master_key)
 
         # handle master api error or not verified member
-
         if tornId == -1:
             # logging.info(f'[GET MEMBER KEY] status -1: master key error {msg["error"]}')
-            if ctx:
-                m = await ctx.send(f'```md\n# Get torn ID\n< error > Torn API error with master key id {master_id}: {msg["error"]}```')
+            if ctx and msg is not None:
+                m = await self.send_error_message(ctx, f'API error with master key id {master_id}: {msg["error"]}.', title="Error getting user API key")
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -145,7 +144,7 @@ class YataBot(Bot):
         elif tornId == -2:
             # logging.info(f'[GET MEMBER KEY] status -2: user not verified')
             if ctx:
-                m = await ctx.send(f'```md\n# Get torn ID\n< error > {member} are not not officially verified by Torn```')
+                m = await self.send_error_message(ctx, f'{member} is not officially verified by Torn.', title="Error getting user API key")
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -159,7 +158,8 @@ class YataBot(Bot):
         if not len(user):
             # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             if ctx:
-                m = await ctx.send(f'```md\n# Get torn ID\n< error > {member} is not in the YATA database. They have to log there so that I can use their key: https://yata.alwaysdata.net```')
+                m = await self.send_error_message(ctx, f'{member} is not in the YATA database. They have to log in the [website](https://yata.alwaysdata.net) so that I can use their key.', title="Error getting user API key")
+
                 if delError:
                     await asyncio.sleep(5)
                     await m.delete()
@@ -202,9 +202,9 @@ class YataBot(Bot):
             channels = [get(ctx.guild.channels, id=int(k)) for k in config.get(channel_key, {}) if str(k).isdigit()]
             allowed_channels = [c.mention for c in channels if c is not None]
             if len(allowed_channels):
-                msg = await ctx.send(f':no_entry: Command not allowed in this channel. Try {", ".join(allowed_channels)}.')
+                msg = await self.send_error_message(ctx, f'Command not allowed in this channel. Try {", ".join(allowed_channels)}.')
             else:
-                msg = await ctx.send(f':no_entry: Command not allowed in this channel. No channels have been setup.\nCheckout your dashboard: https://yata.alwaysdata.net/bot/dashboard/')
+                msg = await self.send_error_message(ctx, f'Command not allowed in this channel. No channels have been setup.\nCheckout your [dashboard](https://yata.alwaysdata.net/bot/dashboard/).')
 
             await asyncio.sleep(5)
             try:
@@ -219,7 +219,8 @@ class YataBot(Bot):
     async def check_channel_admin(self, ctx):
         channel_admin = self.get_guild_admin_channel(ctx.guild)
         if ctx.channel is not channel_admin or channel_admin is None:
-            msg = await ctx.send(f':no_entry: This command needs to be done in the admin channel: {"unset" if channel_admin is None else channel_admin.mention}.')
+            msg = await self.send_error_message(ctx, f'This command needs to be done in the admin channel: {"unset" if channel_admin is None else channel_admin.mention}.')
+
             await asyncio.sleep(5)
             await msg.delete()
             await ctx.message.delete()
@@ -365,8 +366,9 @@ class YataBot(Bot):
             self.configurations.pop(guild.id)
         await set_configuration(self.bot_id, guild.id, guild.name, {})
 
-    async def send_error_message(self, channel, description, fields={}):
-        eb = Embed(title="Error", description=description, color=my_red)
+    async def send_error_message(self, channel, description, fields={}, title=False):
+        title = title if title else "Error"
+        eb = Embed(title=title, description=description, color=my_red)
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
         return await channel.send(embed=eb)
