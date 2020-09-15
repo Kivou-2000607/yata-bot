@@ -45,8 +45,8 @@ class Loot(commands.Cog):
     def cog_unload(self):
         self.notify.cancel()
 
-    def botMessages(self, message):
-        return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
+    # def botMessages(self, message):
+    #     return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
 
     @commands.command(aliases=['duke', 'Duke', 'leslie', 'Leslie', 'Loot'])
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
@@ -67,7 +67,6 @@ class Loot(commands.Cog):
 
         # compute current time
         now = int(time.time())
-        msg = [f'NPC report of {ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT for {ctx.author.display_name}\n']
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
@@ -79,31 +78,35 @@ class Loot(commands.Cog):
                     req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
 
         if 'error' in req:
-            await ctx.send("```ARM\nError code {}\n{}```Have a look a the timings here: https://yata.alwaysdata.net/loot/".format(req['error']['code'], req['error']['error']))
+            await self.bot.send_error_message(ctx.channel, f'{req["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
             return
 
         # get NPC from the database and loop
+        eb = Embed(title="NPC timings to loot level IV", description=f'{ts_to_datetime(now).strftime("%y/%m/%d %H:%M:%S")} TCT', color=my_blue)
+        eb.set_thumbnail(url="https://yata.alwaysdata.net/static/images/loot/loot4.png")
         for id, npc in req.items():
+            print(npc)
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
             advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
             n = 20
             i = int(advance * n / 100)
 
-            line = [f'{npc["name"]: <7}:']
-            line.append(f'[{"=" * i}{" " * (n - i)}] ({str(advance): >3}%)')
-            line.append(f'{s_to_hms(abs(due))} {"since" if due < 0 else "to"} loot level IV')
-            line.append(f'[{ts_to_datetime(ts).strftime("%H:%M:%S")} TCT]')
+            line = []
+            # line.append(f'[{"=" * i}{" " * (n - i)}] ({str(advance): >3}%)')
+            line.append(f'{s_to_hms(abs(due))}')
+            line.append(f'{"since" if due < 0 else "to"} level IV')
+            line.append(f'{ts_to_datetime(ts).strftime("%H:%M:%S")} TCT')
+            line.append(f'[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={id})')
+            eb.add_field(name=f'{npc["name"]} ({str(advance)}%)', value="\n".join(line))
 
-            msg.append(" ".join(line))
-
-        await ctx.send("```ARM\n{}```".format("\n".join(msg)))
+        await ctx.send(embed=eb)
 
         # clean messages
         await ctx.message.delete()
 
-        async for m in ctx.channel.history(limit=10, before=ctx.message).filter(self.botMessages):
-            await m.delete()
+        # async for m in ctx.channel.history(limit=10, before=ctx.message).filter(self.botMessages):
+        #     await m.delete()
 
     @tasks.loop(seconds=5)
     async def notify(self):
@@ -126,7 +129,13 @@ class Loot(commands.Cog):
         url = "https://yata.alwaysdata.net/loot/timings/"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                req = await r.json()
+                try:
+                    req = await r.json()
+                except BaseException:
+                    req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
+
+        if 'error' in req:
+            return
 
         # loop over NPCs
         mentions = []
@@ -143,8 +152,8 @@ class Loot(commands.Cog):
                 mentions.append(notification)
 
                 title = "**{}** is currently {}".format(npc["name"], ll[lvl])
-                msg = "{}".format("https://www.torn.com/profiles.php?XID={}".format(id))
-                embed = Embed(title=title, description=msg, color=550000)
+                msg = f'[Profile](https://www.torn.com/profiles.php?XID={id}) - [Attack](https://www.torn.com/loader.php?sid=attack&user2ID={id})'
+                embed = Embed(title=title, description=msg, color=my_blue)
 
                 if due < 0:
                     embed.add_field(name='Loot level IV since', value='{}'.format(s_to_ms(abs(due))))
