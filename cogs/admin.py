@@ -566,7 +566,10 @@ class Admin(commands.Cog):
 
             msg.append(" ".join(discord_line))
 
-        await welcome_channel.send("\n".join(msg))
+        eb = Embed(description="\n".join(msg), color=my_blue)
+        eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        eb.set_thumbnail(url=member.avatar_url)
+        await welcome_channel.send(embed=eb)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

@@ -29,6 +29,7 @@ from discord.ext import commands
 from discord.abc import PrivateChannel
 from discord.utils import get
 from discord.ext import tasks
+from discord import Embed
 
 # import bot functions and classes
 from inc.yata_db import set_configuration
@@ -79,20 +80,26 @@ class Verify(commands.Cog):
         channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
         if channel is None:
             return
-        await channel.send(f'```md\n# Verify\n {message}```')
+
+        eb = Embed(color=my_green if success else my_red)
+        eb.add_field(name=f'Verification {"succeeded" if success else "failed"}', value=message)
+        eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        eb.set_thumbnail(url=member.avatar_url)
+        await channel.send(embed=eb)
 
         # if not Automatically verified send private message
         if not success and config.get("other", {}).get("force_verify", False):
-            msg = [f'**Welcome to the {member.guild}\'s discord server {member} o/**']
-            msg.append('This server requires that you verify your account in order to identify who you are in Torn.')
-            msg.append('There is two ways to do that:')
-            msg.append(f'1 - You can go to the official discord server and get verified there: https://torn.com/discord, then come back in the {member.guild} server and type `!verify` in a channel.')
-            msg.append('You can also directly use this link if you don\'t want to join the official discord: https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify')
-            msg.append('2 - Or you can type **in this channel**: `!verifyKey YOURAPIKEY` *(the api key is 16 random letters that can be found here: https://www.torn.com/preferences.php#tab=api)*')
-            msg.append(f'Either way, this process changes your nickname to your Torn name, gives you the {role} role and roles corresponding to your faction (depending on the server configuration).')
-            msg.append(f'If you change your name or faction you can repeat this verification whenever you want.')
+            msg = []
+            msg.append('This server requires that you **verify your account** in order to identify who you are in Torn.')
+            msg.append('There are two ways to do it:')
+            msg.append(f'1 - You can go to [the official discord server](https://torn.com/discord) and get verified, then come back in the {member.guild} server and type `!verify` in a channel.')
+            msg.append(f'2 - You can also directly use [the verification link](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify) if you don\'t want to join the official discord.')
+            msg.append(f'Either way, this process changes your nickname to your Torn name, gives you the {role} role and roles corresponding to your faction (depending on the server configuration). If you change your name or faction you can type `!verify` again whenever you want.')
 
-            await member.send('\n'.join(msg))
+            eb = Embed(title=f'Welcome to the {member.guild}\'s discord server', description="\n\n".join(msg), color=my_blue)
+            eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+            eb.set_thumbnail(url=member.guild.icon_url)
+            await member.send(embed=eb)
 
     @commands.command(aliases=["v"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
@@ -114,13 +121,13 @@ class Verify(commands.Cog):
         # get key
         status, tornId, key = await self.bot.get_master_key(ctx.guild)
         if status == -1:
-            await ctx.send('```md\n# verify\n< error > No master key given```')
+            await self.bot.send_error_message(ctx.channel, "No master key given")
             return
 
         # Get Verified role
         role = self.bot.get_module_role(ctx.guild.roles, config.get("roles_verified", {}))
         if role is None:
-            await ctx.send('```md\n# verify\n< error > No verified role given```')
+            await self.bot.send_error_message(ctx.channel, "No verified role given")
             return
 
         if len(args) == 1:  # with one arg (torn id or discord mention)
@@ -130,7 +137,7 @@ class Verify(commands.Cog):
                 userID = int(args[0])
                 logging.debug(f'[verify/verify] {ctx.guild}: user ID {userID}')
 
-                message, _ = await self._member(ctx, role, userID=userID, API_KEY=key)
+                message, success = await self._member(ctx, role, userID=userID, API_KEY=key)
 
             # check if arg is a mention of a discord user ID
             elif re.match(r'<@!?\d+>', args[0]):
@@ -138,18 +145,24 @@ class Verify(commands.Cog):
 
                 if len(discordID) and discordID[0].isdigit():
                     logging.debug(f'[verify/verify] {ctx.guild}: discord ID {discordID[0]}')
-                    message, _ = await self._member(ctx, role, discordID=discordID[0], API_KEY=key)
+                    message, success = await self._member(ctx, role, discordID=discordID[0], API_KEY=key)
                 else:
                     logging.debug(f'[verify/verify] {ctx.guild}: discord ID unreadable {discordID}')
-                    message = f"< error > Could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
+                    message = f"Could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
+                    success = False
 
             else:
-                message = "< error > Use !verify tornId or !verify @Kivou [2000607]"
+                message = "Use !verify tornId or !verify @Kivou [2000607]"
+                success = False
 
         else:  # no args
-            message, _ = await self._member(ctx, role, API_KEY=key)
+            message, success = await self._member(ctx, role, API_KEY=key)
 
-        await ctx.send(f'```md\n# Verify\n{message}```')
+        eb = Embed(title=f'Verification {"succeeded" if success else "failed"}', description=message, color=my_green if success else my_red)
+
+        await ctx.send(embed=eb)
+
+
 
     # @commands.command(aliases=['addkey'])
     # async def verifyKey(self, ctx, key):
@@ -340,7 +353,7 @@ class Verify(commands.Cog):
                     req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
                 if 'error' in req:
-                    return "< error > There is an API key problem ({}).".format(req['error']['error']), False
+                    return "There is an API key problem ({}).".format(req['error']['error']), False
                 userID = req['discord'].get("userID")
                 if userID == '':
                     return f"{author}, you are not officially verified by Torn", False
@@ -383,14 +396,14 @@ class Verify(commands.Cog):
             # check api error
             if 'error' in req:
                 if int(req['error']['code']) == 6:
-                    return f"< error > Torn ID {userID} is not known. Please check again.", False
+                    return f"Torn ID {userID} is not known. Please check again.", False
                 else:
-                    return "< error > There is a API key problem ({}).".format(req['error']['error']), False
+                    return "There is a API key problem ({}).".format(req['error']['error']), False
 
             # check != id shouldn't append or problem in torn API
             dis = req.get("discord")
             if int(dis.get("userID")) != userID:
-                return "< error >  That's odd... {} != {}.".format(userID, dis.get("userID")), False
+                return " That's odd... {} != {}.".format(userID, dis.get("userID")), False
 
             # check if registered in torn discord
             discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
@@ -440,7 +453,7 @@ class Verify(commands.Cog):
                         logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                 nl = '\n- '
-                return f'< {author} >\nYou have been verified and are now known as < {author.display_name} >. You have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                return f'{author}, you have been verified and are now known as {author.display_name}.\nYou have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
             else:
                 # loop over all members to check if the id exists
@@ -482,14 +495,14 @@ class Verify(commands.Cog):
                                 logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                         nl = '\n- '
-                        return f'< {member} >\nThey have been verified and are now known as < {member.display_name} >. They have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                        return f'{member} have been verified and are now known as {member.display_name}.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
                 # if no match in this loop it means that the member is not in this server
-                return f"You are trying to verify < {nickname} > but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
+                return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
-            return f"< error > while doing the verification: {hide_key(e)}", False
+            return f"Error while doing the verification: {hide_key(e)}", False
 
         return "< error > Weird... I didn't do anything...", False
 
@@ -503,16 +516,19 @@ class Verify(commands.Cog):
         # get key
         status, tornId, key = await self.bot.get_master_key(guild)
         if status == -1:
-            await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< error > no master key```')
+            await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
             return
 
         # Get Verified role
         role = self.bot.get_module_role(guild.roles, config.get("roles_verified", {}))
         if role is None:
-            await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< error > no verified roles set```')
+            await self.bot.send_error_message(channel, f'No verified roles set', title="Error on server members verification")
             return
 
-        await channel.send(f'```md\n# Verifying all members of {guild}\n< Force > {force}\n< Verified role > @{role}```')
+        eb = Embed(title=f'Verifying all members of {guild}', color=my_blue)
+        eb.add_field(name="Force", value=force)
+        eb.add_field(name="Verified role", value=f'@{role}')
+        await channel.send(embed=eb)
 
         # loop over members
         members = guild.members
@@ -522,25 +538,32 @@ class Verify(commands.Cog):
 
             if force:
                 if ctx:
-                    message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
+                    message, success = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
-                    message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
+                    message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
-                if not _:
-                    await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {member.display_name}: {message}```")
+                if not success:
+                    eb = Embed(description=f'{message}', color=my_green if success else my_red)
+                    eb.set_author(name=f'{member.display_name}', icon_url=member.avatar_url)
+                    eb.set_footer(text=f'{i+1:03d}/{len(members):03d}')
+                    await channel.send(embed=eb)
                 continue
 
             elif role in member.roles:
                 pass
             else:
                 if ctx:
-                    message, _ = await self._member(ctx, role, discordID=member.id, API_KEY=key)
+                    message, success = await self._member(ctx, role, discordID=member.id, API_KEY=key)
                 else:
-                    message, _ = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
+                    message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
-                await channel.send(f"```md\n< {i+1:03d}/{len(members):03d} > {message}```")
+                eb = Embed(description=f'{message}', color=my_green if success else my_red)
+                eb.set_author(name=f'{member.display_name}', icon_url=member.avatar_url)
+                eb.set_footer(text=f'{i+1:03d}/{len(members):03d}')
+                await channel.send(embed=eb)
 
-        await channel.send(f"```md\n# done verifying```")
+        eb = Embed(title=f'Done verifying', color=my_blue)
+        await channel.send(embed=eb)
 
     async def _loop_check(self, guild, channel, ctx=False, force=False):
 
@@ -565,10 +588,14 @@ class Verify(commands.Cog):
             faction_name = await get_faction_name(faction_id)
 
             if not len(faction_roles_unique):
-                await channel.send(f'```md\n# Checking {faction_name}\n< Force > {force}\n< Roles > {roles_list}\n< error > None of the following roles are unique```')
+                await self.bot.send_error_message(channel, f'None of the following roles are unique: {roles_list}', title=f"Error checking faction {faction_name}")
                 continue
 
-            await channel.send(f'```md\n# Checking {faction_name}\n< Force > {force}\n< Roles > {roles_list}\n< Unique role > @{html.unescape(faction_roles_unique[0].name)}```')
+            eb = Embed(title=f'Checking faction {faction_name}', color=my_blue)
+            eb.add_field(name="Force", value=force)
+            eb.add_field(name="Roles", value=roles_list)
+            eb.add_field(name="Unique role", value=f'@{html.unescape(faction_roles_unique[0].name)}')
+            await channel.send(embed=eb)
 
             # api call with members list from torn
             status, tornIdForKey, key = await self.bot.get_master_key(guild)
@@ -590,8 +617,7 @@ class Verify(commands.Cog):
 
             # deal with api error
             if "error" in req:
-                msg = f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*'
-                await channel.send(f"```md\n< error >{msg}```")
+                await self.bot.send_error_message(channel, f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*')
                 return
 
             members_torn = req.get("members", dict({}))
@@ -607,7 +633,11 @@ class Verify(commands.Cog):
                 if len(regex) == 1 and regex[0].isdigit():
                     tornId = int(regex[0])
                 else:
-                    await channel.send(f"```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} could not find torn ID within their display name (not checking them)```")
+
+                    eb = Embed(description=f'Could not find torn ID within their display name (not checking them)', color=my_red)
+                    eb.set_author(name=f'{m.display_name}', icon_url=m.avatar_url)
+                    eb.set_footer(text=f'{i+1:03d}/{len(members_with_role):03d}')
+                    await channel.send(embed=eb)
                     continue
 
                 # check if member still in faction
@@ -619,19 +649,31 @@ class Verify(commands.Cog):
                         for faction_role in faction_roles:
                             await m.remove_roles(faction_role)
 
-                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} is not part of {html.unescape(faction_name)} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
+                        eb = Embed(description=f'is not part of {html.unescape(faction_name)} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed', color=my_red)
+                        eb.set_author(name=f'{m.display_name}', icon_url=m.avatar_url)
+                        eb.set_footer(text=f'{i+1:03d}/{len(members_with_role):03d}')
+                        await channel.send(embed=eb)
 
                         # verify him again see if he has a new faction on the server
                         if ctx:
                             message, success = await self._member(ctx, vrole, discordID=m.id, API_KEY=key)
                         else:
                             message, success = await self._member(m, vrole, discordID=m.id, API_KEY=key, context=False)
-                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {message}```')
+                        eb = Embed(description=f'{message}', color=my_green if success else my_red)
+                        eb.set_author(name=f'{m.display_name}', icon_url=m.avatar_url)
+                        eb.set_footer(text=f'{i+1:03d}/{len(members_with_role):03d}')
+                        await channel.send(embed=eb)
+
 
                     else:
-                        await channel.send(f'```md\n< {i+1:03d}/{len(members_with_role):03d} > {m.display_name} is not part of {html.unescape(faction_name)} anymore: role{"s" if len(faction_roles)>1 else ""} {roles_list} has been removed```')
 
-        await channel.send(f"```md\n# done checking```")
+                        eb = Embed(description=f'is not part of {html.unescape(faction_name)} anymore.', color=my_red)
+                        eb.set_author(name=f'{m.display_name}', icon_url=m.avatar_url)
+                        eb.set_footer(text=f'{i+1:03d}/{len(members_with_role):03d}')
+                        await channel.send(embed=eb)
+
+        eb = Embed(title=f'Done checking', color=my_blue)
+        await channel.send(embed=eb)
 
     @tasks.loop(hours=1)
     async def dailyVerify(self):
@@ -670,9 +712,7 @@ class Verify(commands.Cog):
                 if channel is None:
                     logging.debug(f"[verify/dailyVerify] {guild}: no admin channel found")
                     continue
-                await channel.send("```md\nDaily verification of your members < START >```")
                 await self._loop_verify(guild, channel, force=True)
-                await channel.send("```md\nDaily verification of your members < DONE >```")
                 logging.debug(f"[verify/dailyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -719,9 +759,7 @@ class Verify(commands.Cog):
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     continue
-                await channel.send("```md\nWeekly verification of your members < START >```")
                 await self._loop_verify(guild, channel, force=True)
-                await channel.send("```md\nWeekly verification of your members < DONE >```")
                 logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
 
             except BaseException as e:
@@ -768,9 +806,7 @@ class Verify(commands.Cog):
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     continue
-                await channel.send("```md\nDaily check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("```md\nDaily check of your factions members < DONE >```")
                 logging.debug(f"[check/dailyCheck] checking all {guild}: end")
 
             except BaseException as e:
@@ -817,9 +853,7 @@ class Verify(commands.Cog):
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     continue
-                await channel.send("```md\nWeekly check of your factions members < START >```")
                 await self._loop_check(guild, channel, force=True)
-                await channel.send("```md\nWeekly check of your factions members < DONE >```")
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: end")
 
             except BaseException as e:

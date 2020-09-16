@@ -79,20 +79,18 @@ class Loot(commands.Cog):
 
         if 'error' in req:
             await self.bot.send_error_message(ctx.channel, f'{req["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
-            # return
-            req = {"4": {'name': 'Duke', 'hospout': 1600179436, 'update': 1600204232, 'status': 'Loot level IV', 'timings': {'1': {'due': -25002, 'ts': 1600179436, 'pro': 100}, '2': {'due': -23202, 'ts': 1600181236, 'pro': 100}, '3': {'due': -19602, 'ts': 1600184836, 'pro': 100}, '4': {'due': -12402, 'ts': 1600192036, 'pro': 100}, '5': {'due': 1998, 'ts': 1600206436, 'pro': 92}}, 'levels': {'current': 4, 'next': 5}}}
+            return
 
         # get NPC from the database and loop
         for id, npc in req.items():
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
             advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
-            n = 10
-            i = int(advance * n / 100)
-
-            eb = Embed(color=my_blue)
-            eb.set_author(name=f'{npc["name"]} at {str(advance): >3}%', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/npc_{id}.png')
-            eb.set_footer(text=f'Level IV {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/loot{npc["levels"]["current"]}.png')
+            ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
+            lvl = npc["levels"]["current"]
+            eb = Embed(description=f'**Level IV** {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")} ({str(advance): >3}%)',color=my_blue)
+            eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/npc_{id}.png')
+            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/loot/loot{lvl}.png')
 
             await ctx.send(embed=eb)
 
