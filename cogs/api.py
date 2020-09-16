@@ -278,7 +278,7 @@ class API(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key=2{key}'
+        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 r = await r.json()
