@@ -83,8 +83,9 @@ class Verify(commands.Cog):
 
         eb = Embed(color=my_green if success else my_red)
         eb.add_field(name=f'Verification {"succeeded" if success else "failed"}', value=message)
-        eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
-        eb.set_thumbnail(url=member.avatar_url)
+        # eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        # eb.set_thumbnail(url=member.avatar_url)
+        eb.set_author(name=member.display_name, icon_url=member.avatar_url)
         await channel.send(embed=eb)
 
         # if not Automatically verified send private message
@@ -139,6 +140,11 @@ class Verify(commands.Cog):
 
                 message, success = await self._member(ctx, role, userID=userID, API_KEY=key)
 
+                # try with discord ID instead of torn ID
+                if not success and get(ctx.guild.members, id=int(userID)):
+                    message, success = await self._member(ctx, role, discordID=userID, API_KEY=key)
+
+
             # check if arg is a mention of a discord user ID
             elif re.match(r'<@!?\d+>', args[0]):
                 discordID = re.findall(r'\d+', args[0])
@@ -159,6 +165,7 @@ class Verify(commands.Cog):
             message, success = await self._member(ctx, role, API_KEY=key)
 
         eb = Embed(title=f'Verification {"succeeded" if success else "failed"}', description=message, color=my_green if success else my_red)
+        eb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
 
         await ctx.send(embed=eb)
 
@@ -453,7 +460,7 @@ class Verify(commands.Cog):
                         logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                 nl = '\n- '
-                return f'{author}, you have been verified and are now known as {author.display_name}.\nYou have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                return f'{author}, you have been verified and are now known as **{author.display_name}**.\nYou have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
             else:
                 # loop over all members to check if the id exists
@@ -495,7 +502,7 @@ class Verify(commands.Cog):
                                 logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
 
                         nl = '\n- '
-                        return f'{member} have been verified and are now known as {member.display_name}.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                        return f'{member} have been verified and are now known as **{member.display_name}**.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
                 # if no match in this loop it means that the member is not in this server
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False

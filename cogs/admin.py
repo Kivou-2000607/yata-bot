@@ -63,7 +63,7 @@ class Admin(commands.Cog):
         logging.info(f'[admin/sync] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # for printing the updates
-        updates = ["```md", "# Updates"]
+        updates = []
 
         # get configuration from the database and create if new
         configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
@@ -76,20 +76,21 @@ class Admin(commands.Cog):
 
         # check if server admin and secret
         server_admins, server_secret = await get_server_admins(self.bot_id, ctx.guild.id)
-        admins_lst = ["```md", "# Bot admins"]
+        admins_lst = []
         if len(server_admins):
             for server_admin_id, server_admin in server_admins.items():
                 you = ' (you)' if int(server_admin_id) == ctx.author.id else ''
-                admins_lst.append(f'- < torn > {server_admin["name"]} [{server_admin["torn_id"]}] < discord > {self.bot.get_user(int(server_admin_id))} [{server_admin_id}]{you}')
+                admins_lst.append(f'- {server_admin["name"]} [{server_admin["torn_id"]}] / {self.bot.get_user(int(server_admin_id))} [{server_admin_id}]{you}')
         else:
-            admins_lst.append('< no admins >\n\nAsk an @Helper for help: https://yata.alwaysdata.net/discord')
-        admins_lst.append('```')
-        await ctx.send("\n".join(admins_lst))
+            admins_lst.append('No administrators')
+
+        eb = Embed(title="Server admin list", description="\n".join(admins_lst), color=my_blue)
+        await ctx.send(embed=eb)
 
         if str(ctx.author.id) not in server_admins:
-            updates.append("< You need to be a server admin to continue > \n\nAsk an @Helper for help: https://yata.alwaysdata.net/discord")
-            updates.append("```")
-            await ctx.send("\n".join(updates))
+            updates.append("You need to be a administrator to continue \n\nAsk an @Helper for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
+            eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
+            await ctx.send(embed=eb)
             return
 
         # create not configuration if need
@@ -130,14 +131,14 @@ class Admin(commands.Cog):
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
-                    updates.append(f"- [{module}](enabled)")
+                    updates.append(f":white_check_mark: **{module}** enabled")
                 else:
                     for key, value in configuration_db[module].items():
                         if configuration[module].get(key, {}) != value:
-                            updates.append(f"- [{module}]({key}) updated")
+                            updates.append(f":arrows_counterclockwise: **{module} {key}** updated")
                     for key in configuration[module]:
                         if key not in configuration_db[module]:
-                            updates.append(f"- [{module}]({key}) deleted")
+                            updates.append(f":x: **{module} {key}** disabled")
 
                 # choose how to sync
                 if module in ["rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
@@ -156,11 +157,11 @@ class Admin(commands.Cog):
                             del configuration[module][key]
 
                 else:
-                    updates.append(f"- {module} ignored")
+                    updates.append(f":no_entry_sign: {module} ignored")
 
             elif module in configuration and module not in ["admin"]:
                 configuration.pop(module)
-                updates.append(f"- [{module}](disabled)")
+                updates.append(f":x: **{module}** disabled")
 
         # push configuration
         # print(json.dumps(configuration))
@@ -168,36 +169,37 @@ class Admin(commands.Cog):
 
         self.bot.configurations[ctx.guild.id] = configuration
 
-        if len(updates) < 3:
-            updates.append("< none >")
-        updates.append("```Check out your dashboard: https://yata.alwaysdata.net/bot/dashboard/")
-        await ctx.send("\n".join(updates))
+        if not len(updates):
+            updates.append("None")
+        updates.append("\nCheck out [your dashboard](https://yata.alwaysdata.net/bot/dashboard/).")
+        eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_blue)
+        await ctx.send(embed=eb)
 
     @commands.command()
-    async def servers(self, ctx, *args):
+    async def cleanServers(self, ctx, *args):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/servers] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if ctx.author.id != 227470975317311488:
             logging.info(f'[admin/servers] not authorized')
             return
-
-        await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
-        for server in self.bot.guilds:
-            config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
-
-            # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')
-            if config:
-                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: ok')
-            else:
-                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration')
-                if server.id in self.bot.configurations:
-                    await ctx.send(f'Server {server} [{server.id}] with no admin')
-                else:
-                    await ctx.send(f'Server {server} [{server.id}] with no configuration')
-
-        for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
-            await ctx.send(f'```No bot in configuration id {server_id}```')
+        await ctx.send("Modify this function to 1/ kick the bot on servers with no configurations (older than a week) 2/ delete configurations with no bots.")
+        # await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
+        # for server in self.bot.guilds:
+        #     config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
+        #
+        #     # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')
+        #     if config:
+        #         logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: ok')
+        #     else:
+        #         logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration')
+        #         if server.id in self.bot.configurations:
+        #             await ctx.send(f'Server {server} [{server.id}] with no admin')
+        #         else:
+        #             await ctx.send(f'Server {server} [{server.id}] with no configuration')
+        #
+        # for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
+        #     await ctx.send(f'```No bot in configuration id {server_id}```')
 
     @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
@@ -206,7 +208,7 @@ class Admin(commands.Cog):
         logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if not (len(args) and args[0].isdigit()):
-            await ctx.send('```md\n< error > !info < server id > or !info < member id >```')
+            await self.bot.send_error_message(ctx, '!info < server id > or !info < member id >')
             return
 
         configurations = self.bot.configurations
@@ -216,15 +218,21 @@ class Admin(commands.Cog):
             guild = get(self.bot.guilds, id=id)
             server_admins = configurations[id].get("admin", {}).get("server_admins")
 
-            lst = [f"```md\n# Admins of server {guild} [{guild.id}]", ""]
+            eb = Embed(title=f'Server information', description=f"{guild} [{guild.id}]", color=my_blue)
             for i, (k, v) in enumerate(server_admins.items()):
-                lst.append(f'<Admin #{i + 1}>')
+                lst = []
                 member = get(guild.members, id=int(k))
-                lst.append(f'< discord > {member} [{member.id}] aka {member.display_name}')
-                lst.append(f'< torn > {v["name"]} [{v["torn_id"]}]')
+                if member is not None:
+                    lst.append(f'__Discord__: {member} [{member.id}] aka {member.display_name}')
+                else:
+                    lst.append(f'__Discord__: Left his own server (id={int(k)})')
+                lst.append(f'__Torn__: {v["name"]} [{v["torn_id"]}]')
 
-            lst.append("```")
-            await ctx.send("\n".join(lst))
+                eb.add_field(name=f'Admin #{i + 1}', value="\n".join(lst))
+                eb.add_field(name=f'Owner', value=f"{guild.owner} [{guild.owner.id}]")
+                eb.set_thumbnail(url=guild.icon_url)
+
+            await ctx.send(embed=eb)
             return
 
         # get all contacts
@@ -237,21 +245,22 @@ class Admin(commands.Cog):
             member = get(ctx.guild.members, id=id)
             guild_ids = [k for k, v in configurations.items() if str(id) in v.get("admin", {}).get("server_admins", {})]
 
-            print(guild_ids)
             if member is None:
-                lst = [f"```md\n# Discord member id {member.id} not found in this server", ""]
+                lst = [f"Discord member id {member.id} not found in this server", ""]
             else:
-                lst = [f"```md\n# Discord member {member} [{member.id}] aka {member.display_name}", ""]
+                lst = [f"Discord member {member} [{member.id}] aka {member.display_name}", ""]
 
             for i, k in enumerate(guild_ids):
                 guild = get(self.bot.guilds, id=int(k))
-                lst.append(f'<Server #{i + 1}> {guild} [{guild.id}]')
+                lst.append(f'__Server #{i + 1}__ {guild} [{guild.id}]')
 
-            lst.append("```")
-            await ctx.send("\n".join(lst))
+            eb = Embed(title=f'Administrator information', description="\n".join(lst), color=my_blue)
+            eb.set_thumbnail(url=member.avatar_url)
+            await ctx.send(embed=eb)
             return
 
-        await ctx.send(f'```md\n< error > server or member id {args[0]} not found in the configuration```')
+        await self.bot.send_error_message(ctx, f'Server or member id `{args[0]}` not found in the configuration')
+
 
     @commands.command()
     @commands.has_any_role(669682126203125760)
@@ -557,9 +566,14 @@ class Admin(commands.Cog):
                     lookup = member.guild.channels if w[0] == '#' else member.guild.roles
                     obj = member if word == "new_member" else get(lookup, name=word.replace("_", " "))
                     if obj is not None:
-                        discord_line.append(f'{obj.mention}{ponc}')
+                        if w[0] == '#':
+                            discord_line.append(f'{obj.mention}{ponc}')
+                        elif word == "new_member":
+                            discord_line.append(f'**{obj.display_name}**{ponc}')
+                        else:
+                            discord_line.append(f'**@{obj}**{ponc}')
                     else:
-                        discord_line.append(f'`{w[0]}{word.replace("_", " ")}`{ponc}')
+                        discord_line.append(f'*{w[0]}{word.replace("_", " ")}*{ponc}')
 
                 else:
                     discord_line.append(w)
@@ -567,8 +581,8 @@ class Admin(commands.Cog):
             msg.append(" ".join(discord_line))
 
         eb = Embed(description="\n".join(msg), color=my_blue)
-        eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
-        eb.set_thumbnail(url=member.avatar_url)
+        # eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        # eb.set_thumbnail(url=member.avatar_url)
         await welcome_channel.send(embed=eb)
 
     @commands.Cog.listener()

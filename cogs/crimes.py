@@ -194,7 +194,7 @@ class Crimes(commands.Cog):
         key = oc.get("torn_user")[3]
 
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
-        notified = "" if roleId is None else f"<@&{roleId}>"
+        notified = "OC" if roleId is None else f"<@&{roleId}>"
 
         url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
         async with aiohttp.ClientSession() as session:
@@ -294,7 +294,7 @@ class Crimes(commands.Cog):
                 eb = Embed(title=f'OC ready', description=f'[{v["crime_name"]}](https://www.torn.com/factions.php?step=your#/tab=crimes)', color=my_green)
                 eb.add_field(name="Crime ID", value=f'{k}')
                 eb.add_field(name="Faction", value=f'{fName}')
-                await channel.send(f'{notified}', embed=eb)
+                await channel.send(f'{notified} {v["crime_name"]}', embed=eb)
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
