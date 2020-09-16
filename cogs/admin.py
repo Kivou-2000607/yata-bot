@@ -229,8 +229,8 @@ class Admin(commands.Cog):
                 lst.append(f'__Torn__: {v["name"]} [{v["torn_id"]}]')
 
                 eb.add_field(name=f'Admin #{i + 1}', value="\n".join(lst))
-                eb.add_field(name=f'Owner', value=f"{guild.owner} [{guild.owner.id}]")
-                eb.set_thumbnail(url=guild.icon_url)
+            eb.add_field(name=f'Owner', value=f"{guild.owner} [{guild.owner.id}]")
+            eb.set_thumbnail(url=guild.icon_url)
 
             await ctx.send(embed=eb)
             return
