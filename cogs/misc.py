@@ -26,6 +26,7 @@ import logging
 
 # import discord modules
 from discord.ext import commands
+from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
@@ -46,41 +47,11 @@ class Misc(commands.Cog):
         else:
             comic = xkcd.getRandomComic()
             id = comic.getExplanation().split("/")[-1]
-        await ctx.send(f"xkcd #{id} **{comic.getTitle()}** {comic.getImageLink()}")
-        await asyncio.sleep(15)
-        await ctx.send(f"*{comic.getAltText()}*")
 
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def whatif(self, ctx, *args):
-        """gives random xkcd comic"""
-        if len(args) and args[0].isdigit():
-            comic = xkcd.getWhatIf(args[0])
-        else:
-            comic = xkcd.getRandomWhatIf()
-        await ctx.send(f"WhatIf #{comic.getNumber()} **{comic.getTitle()}** {comic.getLink()}")
-        # await asyncio.sleep(15)
-        # await ctx.send(f"*{comic.getAltText()}*")
-
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True, read_message_history=True)
-    @commands.guild_only()
-    async def explain(self, ctx, *args):
-        """explain random xkcd comic"""
-        if len(args) and args[0].isdigit():
-            comic = xkcd.Comic(args[0])
-            await ctx.send(f"Explanations for xkcd #{args[0]} **{comic.getTitle()}**: {comic.getExplanation()}")
-            return
-        else:
-            async for m in ctx.channel.history(limit=50):
-                if m.author.bot and m.content[:6] == "xkcd #":
-                    id = m.content.split("#")[-1].split(" ")[0]
-                    if id.isdigit():
-                        comic = xkcd.Comic(id)
-                        await ctx.send(f"Explanations for xkcd #{id} **{comic.getTitle()}**: {comic.getExplanation()}")
-                        return
-        await ctx.send("No xkcd found in this channel recent history")
+        eb = Embed(description=f'[{comic.getTitle()} #{id}]({comic.getExplanation()})', color=my_blue)
+        eb.set_image(url=comic.getImageLink())
+        eb.set_footer(text=comic.getAltText())
+        await ctx.send(embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
