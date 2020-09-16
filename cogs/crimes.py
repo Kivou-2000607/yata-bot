@@ -274,8 +274,8 @@ class Crimes(commands.Cog):
                     "Money": f'${v["money_gain"]:,}',
                     "Respect": f'{v["respect_gain"]:,}'}
                 eb = Embed(title=f'{v["crime_name"]} completed', color=my_blue)
-                for k, v in fields.items():
-                    eb.add_field(name=k, value=v)
+                for name, value in fields.items():
+                    eb.add_field(name=name, value=value)
                 await channel.send(embed=eb)
                 oc["mentions"].remove(str(k))
 
