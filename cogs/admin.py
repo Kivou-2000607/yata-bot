@@ -150,7 +150,8 @@ class Admin(commands.Cog):
                     configuration[module]["prefix"] = configuration_db[module].get("prefix", {'!': '!'})
 
                     # update admin channel
-                    for key in ["channels_admin", "message_welcome", "channels_welcome"]:
+                    for key in ["channels_admin", "message_welcome", "channels_welcome", "other"]:
+                        print(key)
                         if configuration_db[module].get(key, False):
                             configuration[module][key] = configuration_db[module].get(key)
                         elif key in configuration[module]:
@@ -486,13 +487,13 @@ class Admin(commands.Cog):
         if len(args) and args[0] in modules:
             module = args[0]
         else:
-            await ctx.send(f'```md\n< error > Modules with self assignement roles: {", ".join(modules)}.```')
+            await self.bot.send_error_message(ctx, f'Modules with self assignement roles: {", ".join(modules)}.')
             return
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, module)
         if not config:
-            await ctx.send(f"```md\n< error > {module} module not activated```")
+            await self.bot.send_error_message(ctx, f'Module **{module}** not activated.')
             return
 
         # get role
@@ -500,20 +501,21 @@ class Admin(commands.Cog):
 
         if role is None:
             # not role
-            msg = await ctx.send(f"```md\n< error > No roles has been attributed to the {module} module```")
+            await self.bot.send_error_message(ctx, f'No roles has been attributed to the module **{module}**.')
             return
 
         elif role in ctx.author.roles:
             # remove
-            add_remove = "<removed> from"
+            add = False
             await ctx.author.remove_roles(role)
         else:
             # assign
-            add_remove = "<added> to"
+            add = True
             await ctx.author.add_roles(role)
 
-        lst = ['```md', f'# self assign role ', f'Role < @{html.unescape(role.name)} > {add_remove} {ctx.author.display_name} for module < {module} >', '```']
-        msg = await ctx.send("\n".join(lst))
+        eb = Embed(description=f'Role @{html.unescape(role.name)} **{"added" if add else "removed"}** for module **{module}**', color=my_green if add else my_red)
+        eb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+        msg = await ctx.send(embed=eb)
 
         # clean messages
         # await asyncio.sleep(5)

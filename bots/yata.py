@@ -188,6 +188,9 @@ class YataBot(Bot):
         else:
             return c
 
+    def get_guild_beta(self, guild):
+        return self.configurations.get(guild.id, {}).get("admin", {}).get("other", {}).get("beta", False)
+
     def get_guild_admin_channel(self, guild):
         admin_id = [k for k in self.configurations.get(guild.id, {}).get("admin", {}).get("channels_admin", {})]
         if len(admin_id) and str(admin_id[0]).isdigit():

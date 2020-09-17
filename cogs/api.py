@@ -324,7 +324,7 @@ class API(commands.Cog):
             eb.add_field(name="Company", value="\n".join(lst))
 
         # social
-        lst = [f'Friends: {r["friends"]:,d}', f'Ennemies: {r["enemies"]:,d}']
+        lst = [f'Friends: {r["friends"]:,d}', f'Enemies: {r["enemies"]:,d}']
         if r["forum_posts"]:
             lst.append(f'Karma: {r["karma"]:,d} ({100 * r["karma"] // r["forum_posts"]}%)')
         else:
