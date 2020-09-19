@@ -528,7 +528,8 @@ class Crimes(commands.Cog):
                 if not message.embeds[0].to_dict() == embed.to_dict():
                     # print("update message")
                     await message.edit(content=content, embed=embed)
-                    return True
+
+                return True
 
         # if no message found send a new one
         # print("no message found")
