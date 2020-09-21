@@ -21,6 +21,7 @@ This file is part of yata-bot.
 import asyncio
 import aiohttp
 import datetime
+import pytz
 import json
 import re
 import traceback
@@ -412,6 +413,7 @@ class Crimes(commands.Cog):
         # loop over crimes
         crimes_fields = {"ready": [], "completed": [], "not_ready": [], "waiting": []}
         need_to_mention = False
+        need_to_display = []
         for k, v in req["crimes"].items():
             # is already mentionned
             mentionned = True if str(k) in oc["mentions"] else False
@@ -422,11 +424,6 @@ class Crimes(commands.Cog):
             # is completed
             completed = v["time_completed"] > 0
 
-            # DEBUG
-            # if k in ["7945726"]:
-            #     print("force ready")
-            #     ready = True
-            #     completed = False
 
             # exit if not ready
             if not ready:
@@ -441,7 +438,7 @@ class Crimes(commands.Cog):
                 #     "Initiated": f'{members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
                 #     "Money": f'${v["money_gain"]:,}',
                 #     "Respect": f'{v["respect_gain"]:,}'})
-                crimes_fields["completed"].append(f'{v["crime_name"]} #{str(k)}')
+                crimes_fields["completed"].append(f'{v["crime_name"]} `{str(k)}`')
                 oc["mentions"].remove(str(k))
 
             # exit if completed
@@ -459,10 +456,16 @@ class Crimes(commands.Cog):
                 else:
                     n_p_rea += 1
 
+            # DEBUG
+            # if k in ["8101213"]:
+            #     print("force ready")
+            #     ready = True
+            #     completed = False
+
             # if ready and not already mentionned -> mention
             if ready:
-                crimes_fields["ready"].append(f'- :white_check_mark: {v["crime_name"]} `{str(k)}`')
-
+                crimes_fields["ready"].append([str(k), v["crime_name"]])
+                need_to_display.append(v["crime_name"])
                 if not mentionned:
                     need_to_mention = True
                     oc["mentions"].append(str(k))
@@ -490,10 +493,17 @@ class Crimes(commands.Cog):
         #         await message.delete()
 
         # create the message
-        content = f'{notified} {fName} [{fId}]'
-        embed = Embed(title=f"{fName}'s Organized Crimes", color=my_blue)
+        if not len(need_to_display):
+            content = f'{notified}: no crimes ready'
+        elif len(need_to_display) == 1:
+            content = f'{notified}: {need_to_display[0]} ready'
+        else:
+            content = f'{notified}: {len(need_to_display)} crimes ready'
+
+        title = f"{fName}'s Organized Crimes"
+        embed = Embed(title=title, color=my_blue)
         if len(crimes_fields["ready"]):
-            embed.add_field(name="Ready", value="\n".join([f'[{c}](https://www.torn.com/factions.php?step=your#/tab=crimes)' for c in crimes_fields["ready"]]))
+            embed.add_field(name="Ready", value="\n".join([f':white_check_mark: [{v}](https://www.torn.com/factions.php?step=your#/tab=crimes) `{k}`' for k, v in crimes_fields["ready"]]))
         else:
             embed.add_field(name="Ready", value="None")
         if len(crimes_fields["waiting"]):
@@ -504,11 +514,18 @@ class Crimes(commands.Cog):
             embed.add_field(name="Just Completed", value="\n".join(crimes_fields["completed"]))
 
         embed.set_footer(text=f'Last update: {ts_format(req["timestamp"], fmt="short")}')
+        embed.timestamp = datetime.datetime.fromtimestamp(req["timestamp"], tz=pytz.UTC)
 
         # lookup in the last 10 messages to update instead of creating a new one
         # or delete if need a new mention
         async for message in channel.history(limit=2):
-            if message.author.bot and message.content == content and len(message.embeds):
+            if message.author.bot and len(message.embeds):
+                # check title of embed to get the message
+                eb1 = message.embeds[0].to_dict()
+                if eb1.get('title') != title:
+                    print("pass, not good message")
+                    continue
+
                 # print("found message to update")
 
                 # delete and create new message if need to mention
@@ -518,14 +535,8 @@ class Crimes(commands.Cog):
                     await channel.send(content, embed=embed)
                     return True
 
-                # remove footer to see if need to update
-                eb1 = message.embeds[0].to_dict()
-                del eb1['footer']
-                eb2 = embed.to_dict()
-                del eb2['footer']
-
                 # compare embed to see if needs to update or not
-                if not message.embeds[0].to_dict() == embed.to_dict():
+                if not message.embeds[0].to_dict().get('fields') == embed.to_dict().get('fields'):
                     # print("update message")
                     await message.edit(content=content, embed=embed)
 

@@ -53,9 +53,9 @@ def ts_now():
 def ts_format(timestamp, fmt=None):
     d = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
     if fmt == "time":
-        return d.strftime("%H:%M:%S")
+        return d.strftime("%H:%M:%S TCT")
     elif fmt == "short":
-        return d.strftime("%m/%d %H:%M:%S")
+        return d.strftime("%m/%d %H:%M:%S TCT")
     else:
         return d
 
