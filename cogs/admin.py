@@ -151,7 +151,6 @@ class Admin(commands.Cog):
 
                     # update admin channel
                     for key in ["channels_admin", "message_welcome", "channels_welcome", "other"]:
-                        print(key)
                         if configuration_db[module].get(key, False):
                             configuration[module][key] = configuration_db[module].get(key)
                         elif key in configuration[module]:

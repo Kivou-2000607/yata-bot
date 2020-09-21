@@ -325,8 +325,7 @@ class Crimes(commands.Cog):
 
         return True
 
-    async def _oc_v2(self, guild, oc):
-
+    async def _oc_v2(self, guild, oc, notifications):
         # get channel
         channelId = oc.get("channel")[0] if len(oc.get("channel", {})) else None
         channel = get(guild.channels, id=int(channelId))
@@ -457,7 +456,7 @@ class Crimes(commands.Cog):
                     n_p_rea += 1
 
             # DEBUG
-            # if k in ["8101213"]:
+            # if k in ["8096922"]:
             #     print("force ready")
             #     ready = True
             #     completed = False
@@ -466,7 +465,7 @@ class Crimes(commands.Cog):
             if ready:
                 crimes_fields["ready"].append([str(k), v["crime_name"]])
                 need_to_display.append(v["crime_name"])
-                if not mentionned:
+                if not mentionned and str(v["crime_id"]) in notifications:
                     need_to_mention = True
                     oc["mentions"].append(str(k))
 
@@ -493,12 +492,13 @@ class Crimes(commands.Cog):
         #         await message.delete()
 
         # create the message
+        notified = notified if need_to_mention else "OC"
         if not len(need_to_display):
-            content = f'{notified}: no crimes ready'
+            content = f'{notified} no crimes ready'
         elif len(need_to_display) == 1:
-            content = f'{notified}: {need_to_display[0]} ready'
+            content = f'{notified} {need_to_display[0]} ready'
         else:
-            content = f'{notified}: {len(need_to_display)} crimes ready'
+            content = f'{notified} {len(need_to_display)} crimes ready'
 
         title = f"{fName}'s Organized Crimes"
         embed = Embed(title=title, color=my_blue)
@@ -576,7 +576,7 @@ class Crimes(commands.Cog):
 
                     # call oc faction
                     previous_mentions = list(oc.get("mentions", []))
-                    status = await self._oc_v2(guild, oc)
+                    status = await self._oc_v2(guild, oc, config.get("notifications", {}))
 
                     if status and previous_mentions != oc.get("mentions", []):
                         tochange[discord_user_id] = oc
