@@ -35,34 +35,37 @@ class Repository(commands.Cog):
         try:
 
             if len(args) < 3:
-                await ctx.send(f':x: You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
+                await self.bot.send_error_message(ctx, 'You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
                 return
             elif not (args[0] in ["yata", "yata-bot"] or args[-1].isdigit()):
-                await ctx.send(f':x: You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
+                await self.bot.send_error_message(ctx, 'You need to give a repo name, a title and a discord message id to your bug: `!bug <yata|yata-bot> <title> <message id>`')
                 return
             else:
                 connection = RepoConnection(token=self.bot.github_token, name=f"kivou-2000607/{args[0]}")
                 msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[-1])]
                 if len(msg) < 1:
-                    await ctx.send(f':x: Message id `{args[-1]}` not found in the channel recent history`')
+                    await self.bot.send_error_message(ctx, f'Message id `{args[-1]}` not found in the channel recent history')
                     return
 
                 lst = [msg[0].content, "", msg[0].author.display_name, msg[0].jump_url]
-                emoji = self.bot.get_emoji(655750002630590464)
                 connection.create_issue(" ".join(args[1:-1]), "\n".join(lst), label_name=type)
-                await msg[0].add_reaction(emoji)
 
-                await ctx.send(f':white_check_mark: Your {type} has been reported.')
+                emoji = self.bot.get_emoji(655750002630590464)
+                if emoji:
+                    await msg[0].add_reaction(emoji)
+
+                eb = Embed(description=f'Your {type} has been reported.', color=my_green)
 
         except BaseException as e:
-            await ctx.send(f'Failed to create the issue: {e}')
+            await self.bot.send_error_message(ctx, f'Failed to create the issue: {e}')
+
 
     @commands.command()
-    @commands.has_any_role(679669933680230430, 669682126203125760)
+    @commands.has_any_role(679669933680230430, 669682126203125760, 753300236918718545)
     async def bug(self, ctx, *args):
         await self.create_issue(ctx, "bug", args)
 
     @commands.command()
-    @commands.has_any_role(679669933680230430, 669682126203125760)
+    @commands.has_any_role(679669933680230430, 669682126203125760, 753300236918718545)
     async def suggestion(self, ctx, *args):
         await self.create_issue(ctx, "suggestion", args)

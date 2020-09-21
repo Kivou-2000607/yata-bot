@@ -24,6 +24,9 @@ import datetime
 import re
 import traceback
 
+# import discord modules
+from discord import Embed
+
 my_blue = 4488859
 my_red = 15544372
 my_green = 4175668
@@ -60,37 +63,33 @@ def ts_format(timestamp, fmt=None):
 def hide_key(error):
     for find in re.findall('key=[a-zA-Z0-9]{1,16}', f'{error}'):
         error = str(error).replace(find, "key=***")
-    return error
+    return str(error)
 
 
 def log_fmt(error, headers=dict({}), full=False):
-    lst = ['```md']
+    eb = Embed(title="YATA bot error", description=hide_key(error), color=my_red)
 
     # headers
     if len(headers):
-        lst.append('# headers')
         for k, v in headers.items():
             if isinstance(v, list):
-                lst.append(f'> {k:<16} {", ".join(v)}')
+                eb.add_field(name=k, value=", ".join(v))
             else:
-                lst.append(f'> {k:<16} {v}')
-        lst.append('')
+                eb.add_field(name=k, value=v)
 
-    # error message
-    if len(headers) or full:
-        lst.append('# error message')
-    errorMSG = hide_key(error)
-    lst.append(f'{errorMSG}')
+    # # error message
+    # if len(headers) or full:
+    #     lst.append('# error message')
+    # errorMSG = hide_key(error)
+    # lst.append(f'{errorMSG}')
 
     # traceback
     if full:
         tb = "\n".join([line[:-2] for line in traceback.format_exception(type(error), error, error.__traceback__)])
         tb = hide_key(tb)
-        lst.append('\n# full message')
-        lst.append(f'{tb}')
+        eb.add_field(name="Full message", value=f"```{tb}```")
 
-    lst.append('```')
-    return "\n".join(lst)
+    return eb
 
 
 def is_mention(mention, type="role"):

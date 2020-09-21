@@ -239,10 +239,10 @@ class YataBot(Bot):
         if channel is None:
             logging.error(f'[send_log_main] no main system channel')
         else:
-            await channel.send(log_fmt(log, headers=headers, full=full))
+            await channel.send(embed=log_fmt(log, headers=headers, full=full))
 
     async def send_log_dm(self, log, author):
-        await author.send(log_fmt(log))
+        await author.send(embed=log_fmt(log))
 
     async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
         # fallback if guild_id or channel_id has not been given
@@ -288,7 +288,7 @@ class YataBot(Bot):
             return
 
         try:
-            await channel.send(log_fmt(log))
+            await channel.send(embed=log_fmt(log))
             logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel}')
 
         except discord.errors.Forbidden:
@@ -306,7 +306,7 @@ class YataBot(Bot):
                 return
 
             try:
-                await channel_fb.send(log_fmt(log))
+                await channel_fb.send(embed=log_fmt(log))
                 logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel} (fallback channel)')
                 return
             except discord.errors.Forbidden:
