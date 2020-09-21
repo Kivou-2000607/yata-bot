@@ -523,7 +523,7 @@ class Crimes(commands.Cog):
                 # check title of embed to get the message
                 eb1 = message.embeds[0].to_dict()
                 if eb1.get('title') != title:
-                    print("pass, not good message")
+                    # print("pass, not good message")
                     continue
 
                 # print("found message to update")

@@ -76,19 +76,18 @@ class Admin(commands.Cog):
 
         # check if server admin and secret
         server_admins, server_secret = await get_server_admins(self.bot_id, ctx.guild.id)
-        admins_lst = []
         if len(server_admins):
+            eb = Embed(title="Server administrators", color=my_blue)
             for server_admin_id, server_admin in server_admins.items():
                 you = ' (you)' if int(server_admin_id) == ctx.author.id else ''
-                admins_lst.append(f'- {server_admin["name"]} [{server_admin["torn_id"]}] / {self.bot.get_user(int(server_admin_id))} [{server_admin_id}]{you}')
+                eb.add_field(name=f'{server_admin["name"]} [{server_admin["torn_id"]}]{you}', value=f'{self.bot.get_user(int(server_admin_id))} [{server_admin_id}]')
         else:
-            admins_lst.append('No administrators')
+            eb = Embed(title="Server administrators", description="No administrators", color=my_red)
 
-        eb = Embed(title="Server admin list", description="\n".join(admins_lst), color=my_blue)
         await ctx.send(embed=eb)
 
         if str(ctx.author.id) not in server_admins:
-            updates.append("You need to be a administrator to continue \n\nAsk an @Helper for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
+            updates.append("You need to be an administrator to continue, ask an @Helper for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
             eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
             await ctx.send(embed=eb)
             return
