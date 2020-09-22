@@ -224,7 +224,7 @@ class API(commands.Cog):
 
             # check if member
             if member is None:
-                await self.bot.send_error_message(ctx.channel, f"Couldn't find discord member: {discordId}. Try !who < torn ID >")
+                await self.bot.send_error_message(ctx.channel, f"Couldn't find discord member: {discordId}.\nTry `!who < torn ID >`.")
                 return
 
             # try to parse Torn user ID
@@ -234,7 +234,7 @@ class API(commands.Cog):
             else:
                 status, tornId, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
                 if status in [-1, -2, -3]:
-                    await self.bot.send_error_message(ctx.channel, "Could not find Torn ID within their display name and verification failed. Try !who < Torn ID >")
+                    await self.bot.send_error_message(ctx.channel, "Could not find Torn ID within their display name and verification failed.\nTry `!who < Torn ID >`.")
                     return
 
         # other cases I didn't think of
@@ -256,22 +256,37 @@ class API(commands.Cog):
 
         # Torn API call
         selections = ["profile", "personalstats", "discord", "timestamp"]
-        r, e = await self.bot.api_call("user", "", selections, key, error_channel=ctx.channel)
+        r, e = await self.bot.api_call("user", tornId, selections, key, error_channel=ctx.channel)
         if e:
             return
 
-        eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description=f'[Level {r["level"]} {r["rank"]} {r["age"]:,d} days old](https://www.torn.com/profiles.php?XID={tornId})', colour=my_blue)
+        eb = Embed(description=f'Level {r["level"]} | {r["rank"]} | {r["age"]:,d} days old', colour=my_blue)
+        try:
+            dm = self.bot.get_user(int(r["discord"].get("discordID")))
+        except BaseException as e:
+            dm = None
+
+        if dm is not None:
+            eb.set_author(name=f'{r["name"]} [{r["player_id"]}]', url=f'https://www.torn.com/profiles.php?XID={tornId}', icon_url=dm.avatar_url)
+        else:
+            eb.set_author(name=f'{r["name"]} [{r["player_id"]}]', url=f'https://www.torn.com/profiles.php?XID={tornId}')
 
         # status
         s = r["status"]
+        if r["last_action"]["status"] == "Idle":
+            online_status = ":orange_circle:"
+        elif r["last_action"]["status"] == "Offline":
+            online_status = ":red_circle:"
+        else:
+            online_status = ":green_circle:"
         lst = [
-                f'Last Action: {r["last_action"]["relative"]} ({r["last_action"]["status"]})',
+                f'Last Action: {r["last_action"]["relative"]}',
                 f'Description: {s["description"]}',
             ]
         if s["details"]:
             lst.append(cleanhtml(s["details"]))
         lst.append(f'Life: {r["life"]["current"]:,d}/{r["life"]["maximum"]:,d}')
-        eb.add_field(name="Status", value="\n".join(lst))
+        eb.add_field(name=f"{online_status} Status", value="\n".join(lst))
 
         # items
         lst = [f'Xanax: {r["personalstats"].get("xantaken", 0):,d}', f'Refills: {r["personalstats"].get("refills", 0):,d}', f'SE: {r["personalstats"].get("statenhancersused", 0):,d}']
@@ -315,14 +330,14 @@ class API(commands.Cog):
         eb.add_field(name="Misc", value="\n".join(lst))
 
 
-        try:
-            dm = self.bot.get_user(int(r["discord"].get("discordID")))
-            eb.set_thumbnail(url=dm.avatar_url)
-        except BaseException:
-            pass
+        # try:
+        #     dm = self.bot.get_user(int(r["discord"].get("discordID")))
+        #     eb.set_thumbnail(url=dm.avatar_url)
+        # except BaseException:
+        #     pass
 
         # if r.get("discord" {}).get("discordID", False):
-        eb.set_footer(text=f'Update: {ts_format(r["timestamp"], fmt="short")}')
+        # eb.set_footer(text=f'Update: {ts_format(r["timestamp"], fmt="short")}')
 
         await ctx.send(embed=eb)
 
