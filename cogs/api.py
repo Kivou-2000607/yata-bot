@@ -62,25 +62,14 @@ class API(commands.Cog):
             return
 
         # make api call
-        url = f"https://api.torn.com/user/?selections=discord,weaponexp&key={key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        # handle API error
-        if "error" in req:
-            await self.bot.send_error_message(ctx.author, "Error calling weapon experience: " + req["error"]["error"])
-            return
-
-        # if no weapon exp
-        if not len(req.get("weaponexp", [])):
-            await self.bot.send_error_message(ctx.author, "Error calling weapon experience: no weapon exp")
+        response, e = await self.bot.api_call("user", "", ["weaponexp"], key, check_key=["weaponexp"], error_channel=ctx.author)
+        if e:
             return
 
         # send list
         maxed = []
         tomax = []
-        for w in req.get("weaponexp", []):
+        for w in response.get("weaponexp", []):
             if w["exp"] == 100:
                 maxed.append(w)
             elif w["exp"] > 4:
@@ -133,14 +122,8 @@ class API(commands.Cog):
             return
 
         # make api call
-        url = f"https://api.torn.com/user/?selections=discord,personalstats&key=2{key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        # handle API error
-        if "error" in req:
-            await self.bot.send_error_message(ctx.author, "Error calling finishing hits: " + req["error"]["error"])
+        response, e = await self.bot.api_call("user", "", ["personalstats"], key, check_key=["personalstats"], error_channel=ctx.author)
+        if e:
             return
 
         bridge = {"heahits": "Heavy artillery",
@@ -158,7 +141,7 @@ class API(commands.Cog):
 
         finishingHits = []
         for k, v in bridge.items():
-            finishingHits.append([v, req.get("personalstats", dict({})).get(k, 0)])
+            finishingHits.append([v, response.get("personalstats", dict({})).get(k, 0)])
 
         lst = []
         # send list
@@ -185,20 +168,14 @@ class API(commands.Cog):
             return
 
         # make api call
-        url = f"https://api.torn.com/user/?selections=discord,networth&key={key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
-
-        # handle API error
-        if "error" in req:
-            await self.bot.send_error_message(ctx.author, "Error calling networth breakdown: " + req["error"]["error"])
+        response, e = await self.bot.api_call("user", "", ["networth"], key, check_key=["networth"], error_channel=ctx.author)
+        if e:
             return
 
         # send list
         lst = []
         eb = Embed(title=f"Networth breakdown", colour=my_blue)
-        for k, v in req.get("networth", dict({})).items():
+        for k, v in response.get("networth", dict({})).items():
             if int(v):
                 if k == "displaycase":
                     name = "Display Case"
@@ -278,13 +255,9 @@ class API(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/user/{tornId}?selections=profile,personalstats,discord,timestamp&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await self.bot.send_error_message(ctx.channel, f'Error code {r["error"]["code"]}: {r["error"]["error"]}', fields={"Player's profile": f"https://www.torn.com/profiles.php?XID={tornId}"})
+        selections = ["profile", "personalstats", "discord", "timestamp"]
+        r, e = await self.bot.api_call("user", "", selections, key, error_channel=ctx.channel)
+        if e:
             return
 
         eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description=f'[Level {r["level"]} {r["rank"]} {r["age"]:,d} days old](https://www.torn.com/profiles.php?XID={tornId})', colour=my_blue)
@@ -416,22 +389,19 @@ class API(commands.Cog):
                         keys.append("travel")
 
                     # make Torn API call
-                    url = f'https://api.torn.com/user/?selections={",".join(list(set(keys)))}&key={record["value"]}'
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(url) as r:
-                            req = await r.json()
+                    response = await self.bot.api_call("user", "", list(set(keys)), record["value"])
 
-                    if 'error' in req:
-                        logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {req["error"]["code"]}: {req["error"]["error"]}')
+                    if 'error' in response:
+                        logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {response["error"]["code"]}: {response["error"]["error"]}')
                         continue
 
                     # notify event
                     if "event" in notifications:
-                        if not req["notifications"]["events"]:
+                        if not response["notifications"]["events"]:
                             notifications["event"] = dict({})
                         else:
                             # loop over events
-                            for k, v in req["events"].items():
+                            for k, v in response["events"].items():
                                 # if new event not notified -> notify
                                 if not v["seen"] and k not in notifications["event"]:
                                     await member.send(cleanhtml(v["event"]).replace(" [View]", ""))
@@ -443,11 +413,11 @@ class API(commands.Cog):
 
                     # notify message
                     if "message" in notifications:
-                        if not req["notifications"]["messages"]:
+                        if not response["notifications"]["messages"]:
                             notifications["messages"] = dict({})
                         else:
                             # loop over messages
-                            for k, v in req["messages"].items():
+                            for k, v in response["messages"].items():
                                 # if new event not notified -> notify
                                 if not v["seen"] and k not in notifications["message"]:
                                     await member.send(f'New message from {v["name"]}: {v["title"]}')
@@ -459,21 +429,21 @@ class API(commands.Cog):
 
                     # notify awards
                     if "award" in notifications:
-                        if req["notifications"]["awards"]:
+                        if response["notifications"]["awards"]:
                             # if new award or different number of awards
-                            if not notifications["award"].get("notified", False) or notifications["award"].get("notified") != req["notifications"]["awards"]:
-                                s = "s" if req["notifications"]["awards"] > 1 else ""
-                                await member.send(f'You have {req["notifications"]["awards"]} new award{s}')
-                                notifications["award"]["notified"] = req["notifications"]["awards"]
+                            if not notifications["award"].get("notified", False) or notifications["award"].get("notified") != response["notifications"]["awards"]:
+                                s = "s" if response["notifications"]["awards"] > 1 else ""
+                                await member.send(f'You have {response["notifications"]["awards"]} new award{s}')
+                                notifications["award"]["notified"] = response["notifications"]["awards"]
 
                         else:
                             notifications["award"] = dict({})
 
                     # notify energy
                     if "energy" in notifications:
-                        if req["energy"]["fulltime"] < 90:
+                        if response["energy"]["fulltime"] < 90:
                             if not notifications["energy"].get("notified", False):
-                                await member.send(f'Energy at {req["energy"]["current"]} / {req["energy"]["maximum"]}')
+                                await member.send(f'Energy at {response["energy"]["current"]} / {response["energy"]["maximum"]}')
                             notifications["energy"]["notified"] = True
 
                         else:
@@ -481,9 +451,9 @@ class API(commands.Cog):
 
                     # notify nerve
                     if "nerve" in notifications:
-                        if req["nerve"]["fulltime"] < 90:
+                        if response["nerve"]["fulltime"] < 90:
                             if not notifications["nerve"].get("notified", False):
-                                await member.send(f'Nerve at {req["nerve"]["current"]} / {req["nerve"]["maximum"]}')
+                                await member.send(f'Nerve at {response["nerve"]["current"]} / {response["nerve"]["maximum"]}')
                             notifications["nerve"]["notified"] = True
 
                         else:
@@ -491,9 +461,9 @@ class API(commands.Cog):
 
                     # notify chain
                     if "chain" in notifications:
-                        if req["chain"]["timeout"] < 90 and req["chain"]["current"] > 10:
+                        if response["chain"]["timeout"] < 90 and response["chain"]["current"] > 10:
                             if not notifications["chain"].get("notified", False):
-                                await member.send(f'Chain timeout in {req["chain"]["timeout"]} seconds')
+                                await member.send(f'Chain timeout in {response["chain"]["timeout"]} seconds')
                             notifications["chain"]["notified"] = True
 
                         else:
@@ -501,9 +471,9 @@ class API(commands.Cog):
 
                     # notify education
                     if "education" in notifications:
-                        if req["education_timeleft"] < 90:
+                        if response["education_timeleft"] < 90:
                             if not notifications["education"].get("notified", False):
-                                await member.send(f'Education ends in {req["education_timeleft"]} seconds')
+                                await member.send(f'Education ends in {response["education_timeleft"]} seconds')
                             notifications["education"]["notified"] = True
 
                         else:
@@ -511,9 +481,9 @@ class API(commands.Cog):
 
                     # notify bank
                     if "bank" in notifications:
-                        if req["city_bank"]["time_left"] < 90:
+                        if response["city_bank"]["time_left"] < 90:
                             if not notifications["bank"].get("notified", False):
-                                await member.send(f'Bank investment ends in {req["city_bank"]["time_left"]} seconds (${req["city_bank"]["amount"]:,.0f})')
+                                await member.send(f'Bank investment ends in {response["city_bank"]["time_left"]} seconds (${response["city_bank"]["amount"]:,.0f})')
                             notifications["bank"]["notified"] = True
 
                         else:
@@ -521,9 +491,9 @@ class API(commands.Cog):
 
                     # notify drug
                     if "drug" in notifications:
-                        if req["cooldowns"]["drug"] < 90:
+                        if response["cooldowns"]["drug"] < 90:
                             if not notifications["drug"].get("notified", False):
-                                await member.send(f'Drug cooldown ends in {req["cooldowns"]["drug"]} seconds')
+                                await member.send(f'Drug cooldown ends in {response["cooldowns"]["drug"]} seconds')
                             notifications["drug"]["notified"] = True
 
                         else:
@@ -531,9 +501,9 @@ class API(commands.Cog):
 
                     # notify medical
                     if "medical" in notifications:
-                        if req["cooldowns"]["medical"] < 90:
+                        if response["cooldowns"]["medical"] < 90:
                             if not notifications["medical"].get("notified", False):
-                                await member.send(f'Medical cooldown ends in {req["cooldowns"]["medical"]} seconds')
+                                await member.send(f'Medical cooldown ends in {response["cooldowns"]["medical"]} seconds')
                             notifications["medical"]["notified"] = True
 
                         else:
@@ -541,9 +511,9 @@ class API(commands.Cog):
 
                     # notify booster
                     if "booster" in notifications:
-                        if req["cooldowns"]["booster"] < 90:
+                        if response["cooldowns"]["booster"] < 90:
                             if not notifications["booster"].get("notified", False):
-                                await member.send(f'Booster cooldown ends in {req["cooldowns"]["booster"]} seconds')
+                                await member.send(f'Booster cooldown ends in {response["cooldowns"]["booster"]} seconds')
                             notifications["booster"]["notified"] = True
 
                         else:
@@ -551,10 +521,10 @@ class API(commands.Cog):
 
                     # notify travel
                     if "travel" in notifications:
-                        if req["travel"]["time_left"] < 90:
+                        if response["travel"]["time_left"] < 90:
                             if not notifications["travel"].get("destination", False):
-                                await member.send(f'Landing in {req["travel"]["destination"]} in {req["travel"]["time_left"]} seconds')
-                            notifications["travel"] = req["travel"]
+                                await member.send(f'Landing in {response["travel"]["destination"]} in {response["travel"]["time_left"]} seconds')
+                            notifications["travel"] = response["travel"]
 
                         else:
                             notifications["travel"] = dict({})

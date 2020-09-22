@@ -319,7 +319,7 @@ class Chain(commands.Cog):
             factionId = int(args[0])
 
         else:
-            await ctx.send(":x: Either enter nothing or a faction `!hosp <factionId>`.")
+            await self.bot.send_error_message(ctx, 'Either enter nothing or a faction `!hosp <factionId>`')
             return
 
         # get configuration for guild
@@ -334,11 +334,11 @@ class Chain(commands.Cog):
                 r = await r.json()
 
         if 'error' in r:
-            await ctx.send(f':x: Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
             return
 
-        if r["name"] is None:
-            await ctx.send(f':x: No faction with ID {factionId}')
+        if not r["name"]:
+            await self.bot.send_error_message(ctx, f'No faction with ID {factionId}')
             return
 
         hosps = {}
@@ -382,7 +382,7 @@ class Chain(commands.Cog):
             factionId = int(args[0])
 
         else:
-            await ctx.send(":x: Either enter nothing or a faction `!okay <factionId>`.")
+            await self.bot.send_error_message(ctx, 'Either enter nothing or a faction `!okay <factionId>`')
             return
 
         # get configuration for guild
@@ -397,11 +397,11 @@ class Chain(commands.Cog):
                 r = await r.json()
 
         if 'error' in r:
-            await ctx.send(f':x: Error code {r["error"]["code"]}: {r["error"]["error"]}')
+            await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
             return
 
-        if r["name"] is None:
-            await ctx.send(f':x: No faction with ID {factionId}')
+        if not r["name"]:
+            await self.bot.send_error_message(ctx, f'No faction with ID {factionId}')
             return
 
         hosps = {}
@@ -438,7 +438,7 @@ class Chain(commands.Cog):
             return
 
         if not len(args):
-            await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id> or mention a member !vault @Mention```")
+            await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
             return
 
         # get author key
@@ -455,14 +455,14 @@ class Chain(commands.Cog):
             member = ctx.guild.get_member(int(discordID[0]))
             checkVaultId, err = await self.bot.discord_to_torn(member, key)
             if checkVaultId == -1:
-                await ctx.send(f'```md\n# Vault\n< API error {err["code"]} > {err["error"]}```')
+                await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
                 return
             elif checkVaultId == -2:
-                await ctx.send(f'```md\n# Vault\n< error > discord member {discordID[0]} is not verified.```')
+                await self.bot.send_error_message(ctx, f'Discord member {discordID[0]} is not verified')
                 return
 
         else:
-            await ctx.channel.send("```md\n# Vault\n< error > You need to enter a torn user ID: !vault <torn_id> or mention a member !vault @Mention```")
+            await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
             return
 
         url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
@@ -477,31 +477,31 @@ class Chain(commands.Cog):
             req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
         if 'error' in req:
-            await ctx.send(f'```md\n# Vault\n< API error {req["error"]["code"]} > {req["error"]["error"]}```')
+            await self.bot.send_error_message(ctx, f'API error code {r["error"]["code"]}: {r["error"]["error"]}')
             return
 
         factionName = f'{req["name"]} [{req["ID"]}]'
         members = req["members"]
         donations = req["donations"]
         checkVaultId = str(checkVaultId)
-        lst = [f'Faction: {factionName}']
+        eb = Embed(title="Vault status", color=my_blue)
         if checkVaultId in members:
             member = members[checkVaultId]
-            lst.append(f'User: {member["name"]} [{checkVaultId}]')
-            lst.append(f'Action: {member["last_action"]["relative"]}')
+            eb.add_field(name=f'User', value=f'{member["name"]} [{checkVaultId}]')
+            eb.add_field(name=f'Action', value=f'{member["last_action"]["relative"]}')
         else:
-            lst.append(f'User: Member [{checkVaultId}]')
-            lst.append(f'Action: Not in faction')
+            eb.add_field(name=f'User', value=f'Member [{checkVaultId}]')
+            eb.add_field(name=f'Action', value=f'Not in faction')
 
         if checkVaultId in donations:
             member = donations[checkVaultId]
-            lst.append(f'Money: ${member["money_balance"]:,d}')
-            lst.append(f'Points: {member["points_balance"]:,d}')
+            eb.add_field(name=f'Money', value=f'${member["money_balance"]:,d}')
+            eb.add_field(name=f'Points', value=f'{member["points_balance"]:,d}')
         else:
-            lst.append(f'Money: No vault records')
-            lst.append(f'Points: No vault records')
+            eb.add_field(name=f'Money', value=f'No vault records')
+            eb.add_field(name=f'Points', value=f'No vault records')
 
-        await ctx.author.send('```md\n#vault\n{}```'.format("\n".join(lst)))
+        await ctx.author.send(embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)

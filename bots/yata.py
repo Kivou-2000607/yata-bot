@@ -239,7 +239,14 @@ class YataBot(Bot):
         if channel is None:
             logging.error(f'[send_log_main] no main system channel')
         else:
-            await channel.send(embed=log_fmt(log, headers=headers, full=full))
+            eb = log_fmt(log, headers=headers, full=full)
+            try:
+                await channel.send(embed=eb)
+            except BaseException:
+                await channel.send("**ERROR MESSAGE**")
+                msg = eb.to_dict()
+                for field in msg.get('fields', {}):
+                    await channel.send(f'**{field["name"]}**: {field["value"]}')
 
     async def send_log_dm(self, log, author):
         await author.send(embed=log_fmt(log))
@@ -356,14 +363,26 @@ class YataBot(Bot):
 
     async def on_guild_join(self, guild):
 
-        await self.send_log_main(f'I **joined** server {guild} [`{guild.id}`] owned by {guild.owner} ')
+        channel = self.get_guild_admin_channel(get(self.guilds, id=self.main_server_id))
+        eb = Embed(title="Bot joined a server", color=my_green)
+        eb.add_field(name="Server name", value=guild)
+        eb.add_field(name="Server id", value=f'`{guild.id}`')
+        eb.add_field(name="Owner", value=guild.owner)
+        eb.set_thumbnail(url=guild.icon_url)
+        await channel.send(embed=eb)
 
         self.configurations[guild.id] = {}
         await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
 
     async def on_guild_remove(self, guild):
 
-        await self.send_log_main(f'I **left** server {guild} [`{guild.id}`] owned by {guild.owner}')
+        channel = self.get_guild_admin_channel(get(self.guilds, id=self.main_server_id))
+        eb = Embed(title="Bot left a server", color=my_red)
+        eb.add_field(name="Server name", value=guild)
+        eb.add_field(name="Server id", value=f'`{guild.id}`')
+        eb.add_field(name="Owner", value=guild.owner)
+        eb.set_thumbnail(url=guild.icon_url)
+        await channel.send(embed=eb)
 
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
@@ -381,3 +400,28 @@ class YataBot(Bot):
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
         return await channel.send(embed=eb)
+
+    async def api_call(self, section, id, selections, key, check_key=[], error_channel=False):
+
+        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                try:
+                    response = await r.json()
+                except BaseException:
+                    response = {'error': {'error': 'API is talking shit... response not serializable.', 'code': -1}}
+
+        if not isinstance(response, dict):
+            response = {'error': {'error': 'API is talking shit... invalid response format.', 'code': -1}}
+
+        if 'error' not in response:
+            for key in check_key:
+                if key not in response:
+                    response = {'error': {'error': f'API is talking shit... key `{key}` not found in the response.', 'code': -1}}
+                    break
+
+        if 'error' in response and error_channel:
+            await self.send_error_message(error_channel, response["error"]["error"], title=f'API Error code {response["error"]["code"]}')
+            return response, True
+        else:
+            return response, False
