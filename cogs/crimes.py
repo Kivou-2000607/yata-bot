@@ -73,24 +73,12 @@ class Crimes(commands.Cog):
             return
 
         # make api call
-        url = f"https://api.torn.com/faction/?selections=basic,crimes&key={key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        # handle API error
-        if "error" in req:
-            await self.bot.send_error_message(ctx.channel, f'API error while pulling crimes with API key: *{req["error"]["error"]}*')
+        response, e = await self.bot.api_call("faction", "", ["basic", "crimes"], key, error_channel=ctx.channel)
+        if e:
             return
 
-        crimes = req["crimes"]
-        members = req["members"]
+        crimes = response["crimes"]
+        members = response["members"]
         for k, v in crimes.items():
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
@@ -200,26 +188,15 @@ class Crimes(commands.Cog):
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
         notified = "OC" if roleId is None else f"<@&{roleId}>"
 
-        url = f'https://api.torn.com/faction/?selections=basic,crimes&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+        response, e = await self.bot.api_call("faction", "", ["basic", "crimes"], key)
+        if e and 'error' in response:
 
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        # handle API error
-        if 'error' in req:
-
-            lst = [f'Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
-            if req["error"]["code"] in [7]:
+            lst = [f'Problem with {name} [{tornId}]\'s key: {response["error"]["error"]}']
+            if response["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
 
-            if req["error"]["code"] in [1, 2, 6, 7, 10]:
+            if response["error"]["code"] in [1, 2, 6, 7, 10]:
                 lst += ["", "STOP"]
                 await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return False
@@ -228,20 +205,20 @@ class Crimes(commands.Cog):
                 await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return True
 
-        if req is None or "ID" not in req:
+        if response is None or "ID" not in response:
             await self.bot.send_error_message(channel, f'API is talking shit... #blameched\n\nCONTINUE', title="Error tracking organized crimes")
             return True
 
-        if not int(req["ID"]):
+        if not int(response["ID"]):
             await self.bot.send_error_message(channel, f'No faction found for {name} [{tornId}]\n\nSTOP', title="Error tracking organized crimes")
             return False
 
         # faction id and name
-        fId = req["ID"]
-        fName = req["name"]
+        fId = response["ID"]
+        fName = response["name"]
 
         # faction members
-        members = req["members"]
+        members = response["members"]
 
         # get timestamps
         now = datetime.datetime.utcnow()
@@ -253,7 +230,7 @@ class Crimes(commands.Cog):
             oc["mentions"] = []
 
         # loop over crimes
-        for k, v in req["crimes"].items():
+        for k, v in response["crimes"].items():
 
             # is already mentionned
             mentionned = True if str(k) in oc["mentions"] else False
@@ -312,7 +289,7 @@ class Crimes(commands.Cog):
         # clean mentions
         cleanedMentions = []
         for k in oc["mentions"]:
-            if str(k) in req["crimes"]:
+            if str(k) in response["crimes"]:
                 cleanedMentions.append(str(k))
 
         oc["mentions"] = cleanedMentions
@@ -357,26 +334,15 @@ class Crimes(commands.Cog):
         roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
         notified = "OC" if roleId is None else f"<@&{roleId}>"
 
-        url = f'https://api.torn.com/faction/?selections=basic,crimes,timestamp&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+        response, e = await self.bot.api_call("faction", "", ["basic", "crimes", "timestamp"], key)
+        if e and 'error' in response:
 
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        # handle API error
-        if 'error' in req:
-
-            lst = [f'Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
-            if req["error"]["code"] in [7]:
+            lst = [f'Problem with {name} [{tornId}]\'s key: {response["error"]["error"]}']
+            if response["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
 
-            if req["error"]["code"] in [1, 2, 6, 7, 10]:
+            if response["error"]["code"] in [1, 2, 6, 7, 10]:
                 lst += ["", "STOP"]
                 await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return False
@@ -385,20 +351,20 @@ class Crimes(commands.Cog):
                 await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
                 return True
 
-        if req is None or "ID" not in req:
+        if response is None or "ID" not in response:
             await self.bot.send_error_message(channel, f'API is talking shit... #blameched\n\nCONTINUE', title="Error tracking organized crimes")
             return True
 
-        if not int(req["ID"]):
+        if not int(response["ID"]):
             await self.bot.send_error_message(channel, f'No faction found for {name} [{tornId}]\n\nSTOP', title="Error tracking organized crimes")
             return False
 
         # faction id and name
-        fId = req["ID"]
-        fName = html.unescape(req["name"])
+        fId = response["ID"]
+        fName = html.unescape(response["name"])
 
         # faction members
-        members = req["members"]
+        members = response["members"]
 
         # get timestamps
         now = datetime.datetime.utcnow()
@@ -413,7 +379,7 @@ class Crimes(commands.Cog):
         crimes_fields = {"ready": [], "completed": [], "not_ready": [], "waiting": []}
         need_to_mention = False
         need_to_display = []
-        for k, v in req["crimes"].items():
+        for k, v in response["crimes"].items():
             # is already mentionned
             mentionned = True if str(k) in oc["mentions"] else False
 
@@ -480,7 +446,7 @@ class Crimes(commands.Cog):
         # clean mentions
         cleanedMentions = []
         for k in oc["mentions"]:
-            if str(k) in req["crimes"]:
+            if str(k) in response["crimes"]:
                 cleanedMentions.append(str(k))
 
         oc["mentions"] = cleanedMentions
@@ -513,8 +479,8 @@ class Crimes(commands.Cog):
         if len(crimes_fields["completed"]):
             embed.add_field(name="Just Completed", value="\n".join(crimes_fields["completed"]))
 
-        embed.set_footer(text=f'Last update: {ts_format(req["timestamp"], fmt="short")}')
-        embed.timestamp = datetime.datetime.fromtimestamp(req["timestamp"], tz=pytz.UTC)
+        embed.set_footer(text=f'Last update: {ts_format(response["timestamp"], fmt="short")}')
+        embed.timestamp = datetime.datetime.fromtimestamp(response["timestamp"], tz=pytz.UTC)
 
         # lookup in the last 10 messages to update instead of creating a new one
         # or delete if need a new mention
