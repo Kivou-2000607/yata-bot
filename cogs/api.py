@@ -404,9 +404,9 @@ class API(commands.Cog):
                         keys.append("travel")
 
                     # make Torn API call
-                    response = await self.bot.api_call("user", "", list(set(keys)), record["value"])
+                    response, e = await self.bot.api_call("user", "", keys, record["value"])
 
-                    if 'error' in response:
+                    if e and 'error' in response:
                         logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {response["error"]["code"]}: {response["error"]["error"]}')
                         continue
 
