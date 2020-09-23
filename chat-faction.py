@@ -26,7 +26,7 @@ import cloudscraper
 import aiohttp
 import json
 
-from inc.handy import chat_message
+from inc.handy import chat_embed
 from inc.yata_db import get_secret
 
 room = "Faction:33241"
@@ -51,11 +51,11 @@ async def chat(uid, secret, hooks, room):
                 d = json.loads(data).get("data", [dict({})])[0]
                 txt = d.get("messageText")
                 if d.get("roomId", "") == room and txt:
-                    msg = chat_message(d)
-                    await webhooks["full"].send(msg)
+                    msg = chat_embed(d)
+                    await webhooks["full"].send(embed=msg)
 
                     for keyword in [k for k in webhooks if k != "full"]:
                         if re.search(f"\W*({keyword})\W*", txt.lower()) is not None:
-                            await webhooks[keyword].send(msg)
+                            await webhooks[keyword].send(embed=msg)
 
 asyncio.get_event_loop().run_until_complete(chat(iud, secret, json.loads(hooks), room))

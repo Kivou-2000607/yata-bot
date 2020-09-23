@@ -173,8 +173,8 @@ def chat_message(d):
 
 def chat_embed(d):
     eb = Embed(description=d.get("messageText"), color=my_blue)
-    eb.author(name=f'{d.get("senderName")} [{d.get("senderId")}]', url=f'https://www.torn.com/profiles.php?XID={d.get("senderId")}')
-    eb.set_footer(text=ts_to_datetime(d.get("time"), fmt="short"))
+    eb.set_author(name=f'{d.get("senderName")} [{d.get("senderId")}]', url=f'https://www.torn.com/profiles.php?XID={d.get("senderId")}')
+    eb.set_footer(text=ts_format(d.get("time"), fmt="short"))
     eb.timestamp = datetime.datetime.fromtimestamp(d.get("time"), tz=pytz.UTC)
     return eb
 
