@@ -669,6 +669,10 @@ class Admin(commands.Cog):
     async def cleanServers(self):
         logging.info(f'[admin/cleanServers] start task')
 
+        # get main channel
+        guild = get(self.bot.guilds, id=self.bot.main_server_id)
+        channel = self.bot.get_guild_admin_channel(guild)
+
         await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
         for server in self.bot.guilds:
             config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
@@ -682,13 +686,14 @@ class Admin(commands.Cog):
                 logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration or no admin since {days_since_join:.2f} days')
 
                 if days_since_join > 7:
-                    await self.bot.send_log_main(f"I left server {server} [{server.id}] because there is no configurations or no admins since {days_since_join:.2f} days", title="Bot configuration cleaning")
+                    await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I left server {server} [{server.id}] because there is no configurations or no admins since {days_since_join:.2f} days", color=my_blue))
                     await server.leave()
-
+                    if server.id in self.bot.configurations:
+                        self.bot.configurations.pop(server.id)
 
         for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
             logging.info(f'[admin/servers] No bot in configuration id [{server_id}]')
-            await self.bot.send_log_main(f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", title="Bot configuration cleaning")
+            await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
             await delete_configuration(self.bot_id, server_id)
 
 
