@@ -111,6 +111,22 @@ async def set_configuration(bot_id, discord_id, server_name, configuration):
     await con.close()
 
 
+async def delete_configuration(bot_id, discord_id):
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+
+    # check if server already in the database
+    server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+    if server is not None:  # delete if in the db
+        await con.execute('''
+        DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2
+        ''', bot_id, discord_id)
+
+    await con.close()
+
+
 async def get_server_admins(bot_id, discord_id):
     db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
     dbname = db_cred["dbname"]

@@ -36,6 +36,7 @@ from discord import Embed
 # import bot functions and classes
 # from includes.yata_db import get_member_key
 from inc.yata_db import set_configuration
+from inc.yata_db import delete_configuration
 from inc.yata_db import get_yata_user
 from inc.handy import *
 
@@ -386,7 +387,7 @@ class YataBot(Bot):
 
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
-        await set_configuration(self.bot_id, guild.id, guild.name, {})
+        await delete_configuration(self.bot_id, guild.id)
 
     async def send_error_message(self, channel, description, fields={}, title=False):
         title = title if title else "Error"

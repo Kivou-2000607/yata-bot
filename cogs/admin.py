@@ -37,11 +37,7 @@ from discord import Embed
 from discord.ext import tasks
 
 # import bot functions and classes
-from inc.yata_db import get_server_admins
-from inc.yata_db import set_configuration
-from inc.yata_db import get_configuration
-from inc.yata_db import set_n_servers
-from inc.yata_db import get_yata_user
+from inc.yata_db import *
 
 from inc.handy import *
 
@@ -50,11 +46,13 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
+        self.cleanServers.start()
         if self.bot.bot_id == 3:
             self.assignRoles.start()
 
     def cog_unload(self):
         self.assignRoles.cancel()
+        self.cleanServers.cancel()
 
     @commands.command()
     @commands.guild_only()
@@ -174,31 +172,6 @@ class Admin(commands.Cog):
         eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_blue)
         await ctx.send(embed=eb)
 
-    @commands.command()
-    async def cleanServers(self, ctx, *args):
-        """Admin tool for the bot owner"""
-        logging.info(f'[admin/servers] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
-
-        if ctx.author.id != 227470975317311488:
-            logging.info(f'[admin/servers] not authorized')
-            return
-        await ctx.send("Modify this function to 1/ kick the bot on servers with no configurations (older than a week) 2/ delete configurations with no bots.")
-        # await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
-        # for server in self.bot.guilds:
-        #     config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
-        #
-        #     # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')
-        #     if config:
-        #         logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: ok')
-        #     else:
-        #         logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration')
-        #         if server.id in self.bot.configurations:
-        #             await ctx.send(f'Server {server} [{server.id}] with no admin')
-        #         else:
-        #             await ctx.send(f'Server {server} [{server.id}] with no configuration')
-        #
-        # for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
-        #     await ctx.send(f'```No bot in configuration id {server_id}```')
 
     @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
@@ -691,6 +664,38 @@ class Admin(commands.Cog):
                 logging.info(f"[admin/assignRoles] {member.display_name} remove {yata}")
                 await member.remove_roles(yata)
 
+
+    @tasks.loop(hours=24)
+    async def cleanServers(self):
+        logging.info(f'[admin/cleanServers] start task')
+
+        await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
+        for server in self.bot.guilds:
+            config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
+            bot = get(server.members, id=self.bot.user.id)
+            days_since_join = (ts_now() - int(datetime.datetime.timestamp(bot.joined_at))) / (60 * 60 * 24.)
+
+            # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')
+            if config:
+                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: ok')
+            else:
+                logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration or no admin since {days_since_join:.2f} days')
+
+                if days_since_join > 7:
+                    await self.bot.send_log_main(f"I left server {server} [{server.id}] because there is no configurations or no admins since {days_since_join:.2f} days", title="Bot configuration cleaning")
+                    await server.leave()
+
+
+        for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
+            logging.info(f'[admin/servers] No bot in configuration id [{server_id}]')
+            await self.bot.send_log_main(f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", title="Bot configuration cleaning")
+            await delete_configuration(self.bot_id, server_id)
+
+
     @assignRoles.before_loop
     async def before_assignRoles(self):
+        await self.bot.wait_until_ready()
+
+    @cleanServers.before_loop
+    async def before_cleanServers(self):
         await self.bot.wait_until_ready()
