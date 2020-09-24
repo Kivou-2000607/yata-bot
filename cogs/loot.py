@@ -73,16 +73,16 @@ class Loot(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:
-                    req = await r.json()
+                    response = await r.json()
                 except BaseException:
-                    req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
+                    response = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
 
-        if 'error' in req:
-            await self.bot.send_error_message(ctx.channel, f'{req["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
+        if 'error' in response:
+            await self.bot.send_error_message(ctx.channel, f'{response["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
             return
 
         # get NPC from the database and loop
-        for id, npc in req.items():
+        for id, npc in response.items():
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
             advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
@@ -122,21 +122,22 @@ class Loot(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:
-                    req = await r.json()
+                    response = await r.json()
                 except BaseException:
-                    req = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
+                    response = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
 
-        if 'error' in req:
+        if 'error' in response:
             return
 
         # loop over NPCs
         mentions = []
         embeds = []
         nextDue = []
-        for id, npc in req.items():
+        for id, npc in response.items():
             lvl = npc["levels"]["current"]
             due = npc["timings"]["4"]["due"]
             ts = npc["timings"]["4"]["ts"]
+            timestamp = npc["update"]
 
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
@@ -156,7 +157,8 @@ class Loot(commands.Cog):
 
                 url = thumbs.get(id, "?")
                 embed.set_thumbnail(url=url)
-                embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
+                # embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
+                embed = append_update(embed, timestamp)
                 embeds.append(embed)
                 logging.debug(f'[loot/notifications] {npc["name"]}: notify (due {due})')
             elif due > 0:

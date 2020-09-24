@@ -194,3 +194,8 @@ async def send_tt(ctx, lst, limit=1800, tt=True, style="md"):
             await ctx.send("```{}\n{}```".format(style, msg))
         else:
             await ctx.send("{}".format(msg))
+
+def append_update(embed, timestamp, text=""):
+    embed.set_footer(text=f'{text}{ts_format(timestamp, fmt="short")}')
+    embed.timestamp = datetime.datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+    return embed
