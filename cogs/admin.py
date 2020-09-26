@@ -46,7 +46,8 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
-        self.cleanServers.start()
+        if self.bot.bot_id in [1, 3]:
+            self.cleanServers.start()
         if self.bot.bot_id == 3:
             self.assignRoles.start()
 
@@ -695,8 +696,12 @@ class Admin(commands.Cog):
 
         for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
             logging.info(f'[admin/servers] No bot in configuration id [{server_id}]')
-            await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
-            await delete_configuration(self.bot_id, server_id)
+            try:
+                await delete_configuration(self.bot_id, server_id)
+                await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
+            except BaseException as e:
+                await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I can't delete the configuration of server ID {server_id} because there is still an administartor even if I'm not in the server anymore", color=my_red))
+                pass
 
         await channel.send(embed=Embed(description="Done cleaning servers and configurations", color=my_blue))
 
