@@ -673,6 +673,8 @@ class Admin(commands.Cog):
         guild = get(self.bot.guilds, id=self.bot.main_server_id)
         channel = self.bot.get_guild_admin_channel(guild)
 
+        await channel.send(embed=Embed(description="Start cleaning servers and configurations", color=my_blue))
+
         await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
         for server in self.bot.guilds:
             config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
@@ -696,6 +698,7 @@ class Admin(commands.Cog):
             await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
             await delete_configuration(self.bot_id, server_id)
 
+        await channel.send(embed=Embed(description="Done cleaning servers and configurations", color=my_blue))
 
     @assignRoles.before_loop
     async def before_assignRoles(self):
