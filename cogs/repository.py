@@ -57,10 +57,11 @@ class Repository(commands.Cog):
                 if emoji:
                     await msg[0].add_reaction(emoji)
 
-                eb = Embed(description=f'Your {type} has been reported.', color=my_green)
+                eb = Embed(description=f'Your  has been reported.', color=my_green)
+                await ctx.send(embed=eb)
 
         except BaseException as e:
-            await self.bot.send_error_message(ctx, f'Failed to create the issue: {e}')
+            await self.bot.send_error_message(ctx, f'Failed to create issue: {e}')
 
 
     @commands.command()
