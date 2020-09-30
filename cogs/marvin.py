@@ -19,11 +19,15 @@ This file is part of yata-bot.
 
 # import standard modules
 import random
+import asyncio
+import time
 
 # import discord modules
+from discord import Embed
 from discord.ext import commands
 from discord.utils import get
 
+from inc.handy import *
 
 class Marvin(commands.Cog):
     def __init__(self, bot):
@@ -50,23 +54,34 @@ class Marvin(commands.Cog):
 
         self.quotes = []
 
+        self.guilds_reactions = {
+            760796567484629002: {
+                'pico': 755352458833821727,
+                'dollarbill': 755352458833821727
+            },
+            760807943762739230: {
+                'puzzle': 730445536959922296,
+                'pico': 623877807059107843,
+                'dollarbill': 662658717933895680,
+                'speakers': 760838431793610772,
+                'goldlaptop': 755759435581751347
+            }
+        }
+
     @commands.Cog.listener()
     async def on_message(self, message):
-
         # return if bot
         if message.author.bot:
             return
 
         # if it's pinged
-        splt = message.content.split()
-        if '<@!708796850978684968>' in splt or '<@708796850978684968>' in splt:
+        if '<@!708796850978684968>' in message.content:
             await message.channel.send("*sigh*")
 
         # in #lobby
         if message.channel.id in [581227228537421829]:
-            splt = message.content.split(" ")
             readme = get(message.guild.channels, id=623906124428476427)
-            if "<@&679669933680230430>" in splt:
+            if "<@&679669933680230430>" in message.content:
                 await message.channel.send(f"It's not a good channel to ask for help. Please read {readme.mention}.")
                 return
 
@@ -77,8 +92,7 @@ class Marvin(commands.Cog):
 
         # in #yata-bot-setup
         if message.channel.id in [703587583862505483] and 679669933680230430 not in message.author.roles:
-            splt = message.content.split(" ")
-            if "<@&679669933680230430>" in splt:
+            if "<@&679669933680230430>" in message.content:
                 lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume.",
                        "Please wait a moment for an helper. They like to pretend they are busy...",
                        "In the meantime they asked me to tell you to:",
@@ -98,3 +112,84 @@ class Marvin(commands.Cog):
 
             await message.channel.send(quote)
             return
+
+    async def toggle_role(self, payload):
+        add = payload.event_type == 'REACTION_ADD'
+
+        # check if watch message
+        if payload.message_id in self.guilds_reactions:
+
+            # check emoji
+            emoji_role = self.guilds_reactions[payload.message_id]
+
+            # reset message
+            if payload.emoji.name == '🍌' and add:
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                channel = get(guild.text_channels, id=payload.channel_id)
+                async for message in channel.history(limit=20):
+                    print(message)
+                    if message.id == payload.message_id:
+                        print("clear reaction")
+                        await message.clear_reactions()
+                        time.sleep(1)
+                        for emoji in emoji_role:
+                            print(emoji)
+                            emoji = get(guild.emojis, name=emoji)
+                            await message.add_reaction(emoji)
+                            time.sleep(1)
+                        break
+
+                eb = Embed(description=f'Reaction message cleared', color=my_blue)
+                msg = await channel.send(embed=eb)
+                await asyncio.sleep(10)
+                await msg.delete()
+                return
+
+            # check if user is bot
+            user = self.bot.get_user(payload.user_id)
+            if user is None or user.bot:
+                print("return because bot")
+                return
+
+
+            if payload.emoji.name in emoji_role:
+                # get guild and roles
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                role = get(guild.roles, id=emoji_role[payload.emoji.name])
+                member = get(guild.members, id=payload.user_id)
+                channel = get(guild.text_channels, id=payload.channel_id)
+
+                if role is None:
+                    msg = await self.bot.send_error_message(channel, "No role attributed this reaction")
+                    await asyncio.sleep(10)
+                    await msg.delete()
+
+                try:
+
+                    if add:
+                        await member.add_roles(role)
+                    else:
+
+                        await member.remove_roles(role)
+
+                    eb = Embed(description=f'Role @{role.name} **{"added" if add else "removed"}**', color=my_green if add else my_red)
+                    eb.set_author(name=member.display_name, icon_url=member.avatar_url)
+                    msg = await channel.send(embed=eb)
+                    await asyncio.sleep(10)
+                    await msg.delete()
+
+                except BaseException as e:
+                    msg = await self.bot.send_error_message(channel, f"{e}", title=f'Error {"adding" if add else "removing"} role @{role}')
+                    await asyncio.sleep(10)
+                    await msg.delete()
+
+
+
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        await self.toggle_role(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        await self.toggle_role(payload)
