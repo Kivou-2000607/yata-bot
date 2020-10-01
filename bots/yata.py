@@ -404,7 +404,8 @@ class YataBot(Bot):
 
     async def api_call(self, section, id, selections, key, check_key=[], error_channel=False):
 
-        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}'
+        proxy = True if len(key) == 32 else False
+        url = f'https://{"torn-proxy.com" if proxy else "api.torn.com"}/{section}/{id}?selections={",".join(selections)}&key={key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:
@@ -422,6 +423,9 @@ class YataBot(Bot):
                     break
 
         if 'error' in response:
+            # change error message if it's a proxy error to format as per API error
+            if proxy and 'proxy' in response:
+                response = {'error': {'error': f'{response["error"]} (proxy error {response["proxy_code"]}: {response["proxy_error"]})', 'code': response["code"]}}
             if error_channel:
                 await self.send_error_message(error_channel, response["error"]["error"], title=f'API Error code {response["error"]["code"]}')
             return response, True
