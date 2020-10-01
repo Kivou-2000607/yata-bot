@@ -111,11 +111,6 @@ class Loot(commands.Cog):
             '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
             '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png",
             '19': "https://yata.alwaysdata.net/static/images/loot/npc_19.png"}
-        items = {
-            '4': ["Rheinmetall MG", "Homemade Pocket Shotgun", "Madball", "Nail Bomb"],
-            '10': ["Snow Cannon", "Diamond Icicle", "Snowball"],
-            '15': ["Nock Gun", "Beretta Pico", "Riding Crop", "Sand"],
-            '19': ["Bread Knife"]}
 
         # YATA api
         url = "https://yata.alwaysdata.net/loot/timings/"
@@ -139,26 +134,21 @@ class Loot(commands.Cog):
             ts = npc["timings"]["4"]["ts"]
             timestamp = npc["update"]
 
-            ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             if due > -60 and due < 10 * 60:
-                notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "**NOW**")
+                notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "now")
                 mentions.append(notification)
 
-                title = "**{}** is currently {}".format(npc["name"], ll[lvl])
-                msg = f'[Profile](https://www.torn.com/profiles.php?XID={id}) - [Attack](https://www.torn.com/loader.php?sid=attack&user2ID={id})'
-                embed = Embed(title=title, description=msg, color=my_blue)
+                # author field
+                author = f'{npc["name"]} [{id}]'
+                author_icon = thumbs.get(id, "?")
+                author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={id}'
 
-                if due < 0:
-                    embed.add_field(name='Loot level IV since', value='{}'.format(s_to_ms(abs(due))))
-                    embed.add_field(name='Date', value='{} TCT'.format(ts_to_datetime(npc["timings"]["4"]["ts"]).strftime("%y/%m/%d %H:%M:%S")))
-                else:
-                    embed.add_field(name='Loot {} in'.format(ll[lvl + 1]), value='{}'.format(s_to_ms(due)))
-                    embed.add_field(name='At', value='{} TCT'.format(ts_to_datetime(ts).strftime("%H:%M:%S")))
+                # description field
+                description = f'Loot level IV {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
+                embed = Embed(description=description, color=my_blue)
+                embed.set_author(name=author, url=author_url, icon_url=author_icon)
+                embed = append_update(embed, ts, text="At ")
 
-                url = thumbs.get(id, "?")
-                embed.set_thumbnail(url=url)
-                # embed.set_footer(text='Items to loot: {}'.format(', '.join(items.get(id, ["Nice things"]))))
-                embed = append_update(embed, timestamp)
                 embeds.append(embed)
                 logging.debug(f'[loot/notifications] {npc["name"]}: notify (due {due})')
             elif due > 0:
@@ -192,7 +182,7 @@ class Loot(commands.Cog):
                 # loop of npcs to mentions
                 for m, e in zip(mentions, embeds):
                     logging.debug(f"[LOOT] guild {guild}: mention {m}.")
-                    msg = f'Go for {m}' if role is None else f'{role.mention}, go for {m}'
+                    msg = f'{m} {"" if role is None else role.mention}'
                     await channel.send(msg, embed=e)
 
             except BaseException as e:

@@ -421,8 +421,9 @@ class YataBot(Bot):
                     response = {'error': {'error': f'API is talking shit... key `{key}` not found in the response.', 'code': -1}}
                     break
 
-        if 'error' in response and error_channel:
-            await self.send_error_message(error_channel, response["error"]["error"], title=f'API Error code {response["error"]["code"]}')
+        if 'error' in response:
+            if error_channel:
+                await self.send_error_message(error_channel, response["error"]["error"], title=f'API Error code {response["error"]["code"]}')
             return response, True
         else:
             return response, False

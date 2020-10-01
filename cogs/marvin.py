@@ -127,13 +127,10 @@ class Marvin(commands.Cog):
                 guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = get(guild.text_channels, id=payload.channel_id)
                 async for message in channel.history(limit=20):
-                    print(message)
                     if message.id == payload.message_id:
-                        print("clear reaction")
                         await message.clear_reactions()
                         time.sleep(1)
                         for emoji in emoji_role:
-                            print(emoji)
                             emoji = get(guild.emojis, name=emoji)
                             await message.add_reaction(emoji)
                             time.sleep(1)
@@ -148,7 +145,6 @@ class Marvin(commands.Cog):
             # check if user is bot
             user = self.bot.get_user(payload.user_id)
             if user is None or user.bot:
-                print("return because bot")
                 return
 
 

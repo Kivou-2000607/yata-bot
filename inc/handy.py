@@ -136,6 +136,21 @@ def s_to_hm(seconds, max_hours=24):
     str_max_hours = ">{} hours".format(max_hours)
     return "{: >9}".format(str_max_hours) if hours > max_hours else "{: >2}h {: >2}min".format(hours, minutes)
 
+def s_to_time(seconds, max_hours=24):
+    time = float(seconds)
+    hours = int(time // 3600)
+    time %= 3600
+    minutes = int(time // 60)
+    time %= 60
+    seconds = int(time)
+
+    if hours > max_hours:
+        return f'more than {max_hours}h'
+    else:
+        ret = ''
+        for k, v in {"h": hours, "m": minutes, "s": seconds}.items():
+            ret += f'{v:02d}{k} ' if v else ''
+        return ret if ret else '0s'
 
 def s_to_dhm(seconds, max_days=99):
     time = float(seconds)

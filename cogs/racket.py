@@ -53,27 +53,20 @@ class Racket(commands.Cog):
 
         guild = self.bot.get_guild(self.bot.main_server_id)
         _, _, key = await self.bot.get_master_key(guild)
-        url = f'https://api.torn.com/torn/?selections=rackets,territory,timestamp&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
 
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        if "error" in req:
+        response, e = await self.bot.api_call("torn", "", ["rackets", "territory", "timestamp"], key)
+        print(response)
+        if e:
+            logging.error(f"[racket/notifications] Error {e}")
             return
 
         timestamp_p, randt_p = get_data(self.bot.bot_id, "rackets")
         rackets_p = randt_p["rackets"]
         territory_p = randt_p["territory"]
 
-        tsnow = int(req["timestamp"])
+        tsnow = int(response["timestamp"])
         mentions = []
-        for k, v in req["rackets"].items():
+        for k, v in response["rackets"].items():
             title = False
             war = v.get("war", False)
             # New racket
@@ -103,7 +96,7 @@ class Racket(commands.Cog):
                 mentions.append(embed)
 
         for k, v in rackets_p.items():
-            if k not in req["rackets"]:
+            if k not in response["rackets"]:
                 factionO = await get_faction_name(v["faction"])
                 embed = Embed(title=f'Racket vanished', description=f'[{v["name"]} at {k}](https://www.torn.com/city.php#terrName={k})', color=my_blue)
                 embed.add_field(name='Reward', value=f'{v["reward"]}')
@@ -117,9 +110,9 @@ class Racket(commands.Cog):
                 embed.set_footer(text=f'{ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
 
-        # req["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
+        # response["territory"]["TVG"]["war"] = {"assaulting_faction": 44974, "defending_faction": 44974, "started": 1586510047, "ends": 1586769247}
 
-        for k, v in req["territory"].items():
+        for k, v in response["territory"].items():
             title = False
             war = v.get("war", False)
             racket = v.get("racket", False)
@@ -149,7 +142,7 @@ class Racket(commands.Cog):
         logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
 
         logging.debug(f"[racket/notifications] push rackets")
-        await push_data(self.bot.bot_id, int(req["timestamp"]), req, "rackets")
+        await push_data(self.bot.bot_id, int(response["timestamp"]), response, "rackets")
 
         # DEBUG
         # embed = Embed(title="Test Racket")
@@ -177,7 +170,7 @@ class Racket(commands.Cog):
                     continue
 
                 for m in mentions:
-                    msg = await channel.send('' if role is None else f'{role.mention}', embed=m)
+                    msg = await channel.send('' if role is None else f'Rackets update {role.mention}', embed=m)
 
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')

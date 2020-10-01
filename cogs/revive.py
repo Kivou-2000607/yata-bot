@@ -90,38 +90,35 @@ class Revive(commands.Cog):
 
         if key is not None:
             # api call to get potential status and faction
-            url = f'https://api.torn.com/user/{tornId}?key={key}'
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    req = await r.json()
-
-            # handle API error
-            if 'error' in req:
+            response, e = await self.bot.api_call("user", tornId, ["profile", "timestamp"], key)
+            if e and "error" in response:
                 if status in [0]:
-                    errors.append(f'Problem using {name} [{id}]\'s key: *{req["error"]["error"]}*')
+                    errors.append(f'Problem using {name} [{id}]\'s key: *{response["error"]["error"]}*')
                 elif status in [-3, -4]:
-                    errors.append(f'Problem using server admin key: *{req["error"]["error"]}*')
+                    errors.append(f'Problem using server admin key: *{response["error"]["error"]}*')
                 else:
-                    errors.append(f'Problem with API key (status = {status}): *{req["error"]["error"]}*')
+                    errors.append(f'Problem with API key (status = {status}): *{response["error"]["error"]}*')
                 errors.append("I cannot specify faction or hospitalization time")
         else:
             return
 
         # create call message
-        name = req.get("name", "Player")
+        name = response.get("name", "Player")
         url = f'https://www.torn.com/profiles.php?XID={tornId}'
         lst = []
-        if req.get('faction', False) and req["faction"]["faction_id"]:
-            f = req["faction"]
+        if response.get('faction', False) and response["faction"]["faction_id"]:
+            f = response["faction"]
             lst.append(f'[{name} [{tornId}]](https://www.torn.com/profiles.php?XID={tornId}) from [{html.unescape(f["faction_name"])} [{f["faction_id"]}]](https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]}) needs a revive.')
         else:
             lst.append(f'[{name} [{tornId}]](https://www.torn.com/profiles.php?XID={tornId}) needs a revive.')
 
         # add status
-        if req.get('status', False) and req["status"]["state"] == "Hospital":
-            lst.append(f'{req["status"]["description"]} ({cleanhtml(req["status"]["details"])}).')
+        if response.get('status', False) and response["status"]["state"] == "Hospital":
+            lst.append(f'{response["status"]["description"]} ({cleanhtml(response["status"]["details"])}).')
 
-        eb = Embed(title=f'Revive call', description='\n'.join(lst), color=my_blue)
+        eb = Embed(description='\n'.join(lst), color=my_blue)
+        eb.set_author(name=f'Revive call from {ctx.author.display_name}', icon_url=ctx.author.avatar_url)
+        eb.timestamp = now()
 
         # list of messages to delete them after
         delete = config.get("other", {}).get("delete", False)
@@ -152,7 +149,8 @@ class Revive(commands.Cog):
                 remote_config = self.bot.get_guild_configuration_by_module(remote_guild, "revive")
 
                 if str(ctx.guild.id) in remote_config.get("blacklist", {}):
-                    m = await ctx.send(f'*Server {remote_guild.name} has blacklisted you*')
+                    eb_bl = Embed(title="Revive call blacklisted", description=f'Server {remote_guild.name} has blacklisted you.', color=my_red)
+                    m = await ctx.send(embed=eb_bl)
                     msgList.append([m, ctx.channel, delete])
                 else:
                     # get guild, role, channel and delete option

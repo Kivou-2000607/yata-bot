@@ -170,7 +170,6 @@ class Verify(commands.Cog):
         await ctx.send(embed=eb)
 
 
-
     # @commands.command(aliases=['addkey'])
     # async def verifyKey(self, ctx, key):
     #     """Verify member with API key"""
@@ -271,6 +270,7 @@ class Verify(commands.Cog):
     #         # final message to member
     #         await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
 
+
     @commands.command(aliases=["verifyall"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
     @commands.guild_only()
@@ -348,73 +348,44 @@ class Verify(commands.Cog):
             # case no userID and no discordID is given (author verify itself)
             if author_verif:
                 author = ctx.author
-                url = f"https://api.torn.com/user/{author.id}?selections=discord&key={API_KEY}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        try:
-                            req = await r.json()
-                        except BaseException:
-                            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+                response, e = await self.bot.api_call("user", author.id, ["discord"], API_KEY)
+                if e and "error" in response:
+                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
-                if not isinstance(req, dict):
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-                if 'error' in req:
-                    return "There is an API key problem ({}).".format(req['error']['error']), False
-                userID = req['discord'].get("userID")
+                userID = response['discord'].get("userID")
                 if userID == '':
                     return f"{author}, you are not officially verified by Torn", False
 
             # case discordID is given
             # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
             if discordID is not None:  # use this condition to force API call to check userID even if it is given
-                url = f"https://api.torn.com/user/{discordID}?selections=discord&key={API_KEY}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as r:
-                        try:
-                            req = await r.json()
-                        except BaseException:
-                            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
+                response, e = await self.bot.api_call("user", discordID, ["discord"], API_KEY)
+                if e and "error" in response:
+                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
-                if not isinstance(req, dict):
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-                if 'error' in req:
-                    return ":x: There is an API key problem ({}).".format(req['error']['error']), False
-                if req['discord'].get("userID") == '':
+                if response['discord'].get("userID") == '':
                     return f"{guild.get_member(discordID)} is not officially verified by Torn", False
                 else:
-                    userID = int(req['discord'].get("userID"))
+                    userID = int(response['discord'].get("userID"))
 
             logging.info(f"[verify/_member] verifying userID = {userID}")
 
             # api call request
-            url = f"https://api.torn.com/user/{userID}?selections=profile,discord&key={API_KEY}"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    try:
-                        req = await r.json()
-                    except BaseException:
-                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            if not isinstance(req, dict):
-                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            # check api error
-            if 'error' in req:
-                if int(req['error']['code']) == 6:
+            response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
+            if e and "error" in response:
+                if int(response["error"]["code"]) == 6:
                     return f"Torn ID {userID} is not known. Please check again.", False
                 else:
-                    return "There is a API key problem ({}).".format(req['error']['error']), False
+                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
             # check != id shouldn't append or problem in torn API
-            dis = req.get("discord")
+            dis = response.get("discord")
             if int(dis.get("userID")) != userID:
-                return " That's odd... {} != {}.".format(userID, dis.get("userID")), False
+                return f'That\'s odd... {userID} != {dis.get("userID")}', False
 
             # check if registered in torn discord
             discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
-            name = req.get("name", "???")
+            name = response.get("name", "???")
             nickname = f"{name} [{userID}]"
 
             if discordID is None:
@@ -434,8 +405,8 @@ class Verify(commands.Cog):
                 await author.add_roles(verified_role)
 
                 # Get faction roles
-                fId = str(req['faction']['faction_id'])
-                fNa = str(req['faction']['faction_name'])
+                fId = str(response['faction']['faction_id'])
+                fNa = str(response['faction']['faction_name'])
                 faction_roles_id = config.get("factions", {}).get(fId, {})
                 faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
@@ -447,7 +418,7 @@ class Verify(commands.Cog):
 
                 if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                     try:
-                        position_name = f'{html.unescape(req.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
+                        position_name = f'{html.unescape(response.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
                         position_role = get(ctx.guild.roles, name=position_name)
                         if position_role is None:
                             position_role = await ctx.guild.create_role(name=position_name)
@@ -476,8 +447,8 @@ class Verify(commands.Cog):
                         await member.add_roles(verified_role)
 
                         # Get faction roles
-                        fId = str(req['faction']['faction_id'])
-                        fNa = str(req['faction']['faction_name'])
+                        fId = str(response['faction']['faction_id'])
+                        fNa = str(response['faction']['faction_name'])
                         faction_roles_id = config.get("factions", {}).get(fId, {})
                         faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
 
@@ -489,7 +460,7 @@ class Verify(commands.Cog):
 
                         if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                             try:
-                                position_name = f'{html.unescape(req.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
+                                position_name = f'{html.unescape(response.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
                                 position_role = get(ctx.guild.roles, name=position_name)
                                 if position_role is None:
                                     position_role = await ctx.guild.create_role(name=position_name)
@@ -611,23 +582,13 @@ class Verify(commands.Cog):
                 await channel.send(f"```md\n< error >{msg}```")
                 continue
 
-            url = f'https://api.torn.com/faction/{faction_id}?selections=basic&key={key}'
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    try:
-                        req = await r.json()
-                    except BaseException:
-                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            if not isinstance(req, dict):
-                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            # deal with api error
-            if "error" in req:
-                await self.bot.send_error_message(channel, f'API key error for master key [{tornIdForKey}]: *{req["error"]["error"]}*')
+            # api call
+            response, e = await self.bot.api_call("faction", faction_id, ["basic"], key)
+            if e and "error" in response:
+                await self.bot.send_error_message(channel, f'API key error code {response["error"]["code"]} (for master key [{tornIdForKey}]): {response["error"]["error"]}')
                 return
 
-            members_torn = req.get("members", dict({}))
+            members_torn = response.get("members", dict({}))
 
             # loop over the members with this role
             members_with_role = [m for m in guild.members if faction_roles_unique[0] in m.roles]

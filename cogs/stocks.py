@@ -77,20 +77,9 @@ class Stocks(commands.Cog):
                 continue
 
             # get information from API key
-            url = f'https://api.torn.com/user/?selections={so.get(stock)[0]},stocks,discord,timestamp&key={key}'
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    try:
-                        req = await r.json()
-                    except BaseException:
-                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            if not isinstance(req, dict):
-                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            # deal with api error
-            if "error" in req:
-                await self.bot.send_error_message(ctx, f'API key error: {req["error"].get("error", "?")}')
+            response, e = await self.bot.api_call("user", "", [so.get(stock)[0], "stocks", "discord", "timestamp"], key)
+            if e and 'error' in response:
+                await self.bot.send_error_message(ctx, f'API error code {response["error"]["code"]}: {response["error"]["error"]}')
                 continue
 
             # send pull request to member
@@ -102,7 +91,7 @@ class Stocks(commands.Cog):
                 f'__Server__: {ctx.guild} [{ctx.guild.id}]',
             ]
             eb = Embed(title=f"Shared {stock.upper()} bonus block", description="\n\n".join(description), color=my_blue)
-            eb.set_footer(text=ts_to_datetime(req["timestamp"], fmt="short"))
+            eb.set_footer(text=ts_to_datetime(response["timestamp"], fmt="short"))
             eb.set_thumbnail(url=url)
             try:
                 await member.send(embed=eb)
@@ -111,7 +100,7 @@ class Stocks(commands.Cog):
                 continue
 
             # get stock owner
-            user_stocks = req.get('stocks')
+            user_stocks = response.get('stocks')
             if user_stocks is not None:
                 for k, v in user_stocks.items():
                     if v['stock_id'] == so.get(stock)[1] and v['shares'] >= so.get(stock)[2]:
@@ -119,9 +108,9 @@ class Stocks(commands.Cog):
 
             # get time left
             if stock == "tcb":
-                timeLeft[name] = req.get('city_bank', dict({})).get("time_left", 0)
+                timeLeft[name] = response.get('city_bank', dict({})).get("time_left", 0)
             elif stock == "wssb":
-                timeLeft[name] = req.get('education_timeleft', 0)
+                timeLeft[name] = response.get('education_timeleft', 0)
 
         return timeLeft, stockOwners
 

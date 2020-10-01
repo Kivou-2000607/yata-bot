@@ -81,47 +81,39 @@ class Chain(commands.Cog):
                 logging.debug(f"[chain/chain] factionId = {faction}")
                 continue
             else:
-                await ctx.send(f":x: ignore argument {arg}. syntax is ```!chain <factionId> <@Role>```")
+                await self.bot.send_error_message(ctx.channel, f'Ignore argument {arg}. The syntax is ```!chain <factionId> <@Role>```')
 
         # Initial call to get faction name
         status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
             return
 
-        url = f'https://api.torn.com/faction/{faction}?selections=basic,chain&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        # handle API error
-        if 'error' in req:
-            await ctx.send(f':x: Problem with {Name} [{tornId}]\'s key: *{req["error"]["error"]}*')
+        response, e = await self.bot.api_call("faction", faction, ["basic", "chain"], key)
+        if e and "error" in response:
+            await self.bot.send_error_message(ctx.channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title="API error")
             return
 
         # handle no faction
-        if req["ID"] is None:
-            await ctx.send(f':x: No faction with id {faction}')
+        if response["ID"] is None:
+            await self.bot.send_error_message(ctx.channel, f'No faction with id {faction}')
             return
 
         # Set Faction role
-        fId = str(req['ID'])
-        factionName = "{name} [{ID}]".format(**req)
+        fId = str(response['ID'])
+        factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
 
         # if no chain
-        if req.get("chain", dict({})).get("current", 0) == 0:
-            await ctx.send(f':x: `{factionName}` No chains on the horizon')
+        if response.get("chain", dict({})).get("current", 0) == 0:
+            eb = Embed(title=f"{factionName} chain wathing", description=f'No chains on the horizon', color=my_red)
+            await ctx.send(embed=eb)
             return
 
         if role is None:
-            await ctx.send(f":chains: `{factionName}` Start watching")
+            eb = Embed(title=f"{factionName} chain wathing", description=f'Start watching', color=my_green)
+            await ctx.send(embed=eb)
         else:
-            await ctx.send(f":chains: `{factionName}` Start watching. Will notify {role} on timeout.")
+            eb = Embed(title=f"{factionName} chain wathing", description=f'Start watching. Will notify {role} on timeout', color=my_green)
+            await ctx.send(embed=eb)
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -136,7 +128,8 @@ class Chain(commands.Cog):
             for m in history:
                 if m.content in ["!stopchain", "!stop"]:
                     await m.delete()
-                    await ctx.send(f":x: `{factionName}` Stop watching chain")
+                    eb = Embed(title=f"{factionName} chain wathing", description=f'Stop watching.', color=my_red)
+                    await ctx.send(embed=eb)
                     return
 
             # Initial call to get faction name
@@ -144,33 +137,23 @@ class Chain(commands.Cog):
             if status < 0:
                 return
 
-            url = f'https://api.torn.com/faction/{fId}?selections=chain,timestamp&key={key}'
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    try:
-                        req = await r.json()
-                    except BaseException:
-                        req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            if not isinstance(req, dict):
-                req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-            # handle API error
-            if 'error' in req:
-                await ctx.send(f':x: `{factionName}` Master key problem: *{req["error"]["error"]}*')
+            response, e = await self.bot.api_call("faction", factionId, ["chain", "timestamp"], key)
+            if e and 'error' in response:
+                eb = Embed(title=f"{factionName} chain wathing", description=f'API error with master key: {response["error"]["error"]}.', color=my_red)
+                await ctx.send(embed=eb)
                 return
 
             # get timings
-            timeout = req.get("chain", dict({})).get("timeout", 0)
-            cooldown = req.get("chain", dict({})).get("cooldown", 0)
-            current = req.get("chain", dict({})).get("current", 0)
+            timeout = response.get("chain", dict({})).get("timeout", 0)
+            cooldown = response.get("chain", dict({})).get("cooldown", 0)
+            current = response.get("chain", dict({})).get("current", 0)
             # timeout = 7
             # cooldown = 0
             # current = 10
 
             # get delay
             nowts = (now - epoch).total_seconds()
-            apits = req.get("timestamp")
+            apits = response.get("timestamp")
 
             delay = int(nowts - apits)
             txtDelay = f"   *API caching delay of {delay}s*" if delay else ""
@@ -181,25 +164,26 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                await ctx.send(f':x: `{factionName}` Chain at **{current}** in cooldown for {cooldown/60:.1f}min   :cold_face:')
+                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f}min', color=my_blue)
+                await ctx.send(embed=eb)
                 return
 
             # if timeout
             elif timeout == 0:
-                await ctx.send(f':x: `{factionName}` Chain timed out   :rage:')
+                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain timed out', color=my_red)
+                await ctx.send(embed=eb)
                 return
 
             # if warning
             elif timeout < deltaW:
-                if role is None:
-                    await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
-                else:
-                    await ctx.send(f':chains: `{factionName}` {role} Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
+                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
+                await ctx.send("" if role is None else role, embed=eb)
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
-                await ctx.send(f':chains: `{factionName}` Chain at **{current}** and timeout in **{timeout}s**{txtDelay}')
+                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
+                await ctx.send(embed=eb)
 
             # sleeps
             # logging.info(timeout, deltaW, delay, 30 - delay)
@@ -253,7 +237,7 @@ class Chain(commands.Cog):
             factionId = int(args[0])
 
         else:
-            await ctx.send(":x: Either enter nothing or a faction `!fly <factionId>`.")
+            await self.bot.send_error_message(ctx.channel, f'Either enter nothing or a faction `!fly <factionId>`')
             return
 
         # get configuration for guild
@@ -262,13 +246,9 @@ class Chain(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await ctx.send(f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+        r, e = await self.bot.api_call("faction", factionId, ["basic"], key)
+        if e and "error" in r:
+            await self.bot.send_error_message(ctx.channel, f'Code {r["error"]["code"]}: {r["error"]["error"]}', title="API error")
             return
 
         travels = {"Traveling": dict({}), "In": dict({}), "Returning": dict({})}
@@ -328,13 +308,9 @@ class Chain(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+        r, e = await self.bot.api_call("faction", factionId, ["basic"], key)
+        if e and "error" in r:
+            await self.bot.send_error_message(ctx.channel, f'Code {r["error"]["code"]}: {r["error"]["error"]}', title="API error")
             return
 
         if not r["name"]:
@@ -391,13 +367,9 @@ class Chain(commands.Cog):
             return
 
         # Torn API call
-        url = f'https://api.torn.com/faction/{factionId}?selections=basic&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                r = await r.json()
-
-        if 'error' in r:
-            await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+        r, e = await self.bot.api_call("faction", factionId, ["basic"], key)
+        if e and "error" in r:
+            await self.bot.send_error_message(ctx.channel, f'Code {r["error"]["code"]}: {r["error"]["error"]}', title="API error")
             return
 
         if not r["name"]:
@@ -465,24 +437,14 @@ class Chain(commands.Cog):
             await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
             return
 
-        url = f'https://api.torn.com/faction/?selections=basic,donations&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    req = await r.json()
-                except BaseException:
-                    req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        if 'error' in req:
-            await self.bot.send_error_message(ctx, f'API error code {r["error"]["code"]}: {r["error"]["error"]}')
+        response, e = await self.bot.api_call("faction", factionId, ["basic", "donations"], key)
+        if e and "error" in response:
+            await self.bot.send_error_message(ctx.channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title="API error")
             return
 
-        factionName = f'{req["name"]} [{req["ID"]}]'
-        members = req["members"]
-        donations = req["donations"]
+        factionName = f'{response["name"]} [{response["ID"]}]'
+        members = response["members"]
+        donations = response["donations"]
         checkVaultId = str(checkVaultId)
         eb = Embed(title="Vault status", color=my_blue)
         if checkVaultId in members:
@@ -529,11 +491,10 @@ class Chain(commands.Cog):
 
         # delete if already exists
         if str(ctx.author.id) in currents:
-            lst = ["```md", "# Tracking retals"]
+            eb = Embed(title="Retals tracking", description="STOP tracking", color=my_red)
             for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
-                lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
-            lst += ['', '<STOP>', "```"]
-            await ctx.channel.send("\n".join(lst))
+                eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
+            await ctx.channel.send(embed=eb)
             del self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)]
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -544,8 +505,7 @@ class Chain(commands.Cog):
         # get torn user
         status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
-            lst = ['```md', f'# Tracking retals', f'< error > could not get {ctx.author}\'s API key```']
-            await ctx.channel.send("\n".join(lst))
+            await self.bot.send_error_message(ctx, f"Could not get {ctx.author}'s API key")
             return
         current["torn_user"] = [str(tornId), name, '', key]
 
@@ -558,11 +518,10 @@ class Chain(commands.Cog):
         if role is not None:
             current["role"] = [str(role.id), f'{role}', '@']
 
-        lst = ["```md", "# Tracking retals"]
+        eb = Embed(title="Retals tracking", description="START tracking", color=my_green)
         for k, v in current.items():
-            lst.append(f'< {k} > {v[2]}{v[1]} [{v[0]}]')
-        lst += ['', '<START>', "```"]
-        await ctx.channel.send("\n".join(lst))
+            eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
+        await ctx.channel.send(embed=eb)
         self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)] = current
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
@@ -578,7 +537,9 @@ class Chain(commands.Cog):
         discord_id = retal.get("discord_user")[0] if len(retal.get("discord_user", {})) else "0"
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:
-            await channel.send(f'```md\n# Tracking retals\n< error > discord member {discord_member} not found\n\n<STOP>```')
+            eb = Embed(title=f"Retals tracking error", description=f'Discord member {discord_member} not found', color=my_red)
+            eb.set_footer(text="STOP tracking")
+            await channel.send(embed=eb)
             return False
 
         # get torn id, name and key
@@ -588,9 +549,9 @@ class Chain(commands.Cog):
         #     await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
 
-        if len(retal.get("torn_user")) < 4:
-            await channel.send(f'```md\n# Tracking retals\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
-            return False
+        # if len(retal.get("torn_user")) < 4:
+        #     await channel.send(f'```md\n# Tracking retals\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
+        #     return False
 
         tornId = retal.get("torn_user")[0]
         name = retal.get("torn_user")[1]
@@ -599,48 +560,45 @@ class Chain(commands.Cog):
         roleId = retal.get("role")[0] if len(retal.get("role", {})) else None
         notified = " " if roleId is None else f" <@&{roleId}> "
 
-        url = f'https://api.torn.com/faction/?selections=basic,attacks&key={key}'
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                req = await r.json()
+        response, e = await self.bot.api_call("faction", "", ["basic", "attacks"], key)
+        # e = True; response = {'error': {'error': 'test', 'code': 8}}
+        if e and 'error' in response:
+            title=f'Retals tracking API key error'
+            description = f'Error with {name} [{tornId}]\'s key: {response["error"]["error"]}'
+            if response["error"]["code"] in [7]:
+                description += "\nIt means that you don't have the required AA permission (AA for API access) for this API request."
+                description += "\nThis is an in-game permission that faction leader and co-leader can grant to their members."
 
-        if not isinstance(req, dict):
-            req = {'error': {'error': 'API is talking shit... #blameched', 'code': -1}}
-
-        # handle API error
-        if 'error' in req:
-            lst = [f'```md', f'# Tracking retals\n< error > Problem with {name} [{tornId}]\'s key: {req["error"]["error"]}']
-            if req["error"]["code"] in [7]:
-                lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
-                lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
-
-            if req["error"]["code"] in [1, 2, 6, 7, 10]:
-                lst += ["", "<STOP>", "```"]
-                await channel.send("\n".join(lst))
-                return False
+            if response["error"]["code"] in [1, 2, 6, 7, 10]:
+                foot = "STOP tracking"
+                color = my_red
+                ret = False
             else:
-                lst += ["", "<CONTINUE>", "```"]
-                await channel.send("\n".join(lst))
-                return True
+                foot = "CONTINUE tracking"
+                color = my_blue
+                ret = True
 
-        if req is None or "ID" not in req:
-            await channel.send(f'```md\n# Tracking retals\n< error > wrong API output\n\n{hide_key(req)}\n\n<CONTINUE>```')
-            return True
+            eb = Embed(title=title, description=description, color=color)
+            eb.set_footer(text=foot)
+            await channel.send(embed=eb)
+            return ret
 
-        if not int(req["ID"]):
-            await channel.send(f'```md\n# Tracking retals\n< error > no faction found for {name} {tornId}\n\n<STOP>```')
+        if not int(response["ID"]):
+            eb = Embed(title=f"Retals tracking error", description=f'No faction found for {name} {tornId}', color=my_red)
+            eb.set_footer(text="STOP tracking")
+            await channel.send(embed=eb)
             return False
 
         # faction id and name
-        fId = req["ID"]
-        fName = req["name"]
+        fId = response["ID"]
+        fName = response["name"]
 
         now = datetime.datetime.utcnow()
         epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
         nowts = (now - epoch).total_seconds()
         if "mentions" not in retal:
             retal["mentions"] = []
-        for k, v in req["attacks"].items():
+        for k, v in response["attacks"].items():
             delay = int(nowts - v["timestamp_ended"]) / float(60)
             if str(k) in retal["mentions"]:
                 # logging.debug(f"[chain/_retalTask] ignore mention #{k}")
@@ -678,7 +636,7 @@ class Chain(commands.Cog):
         # clean mentions
         cleanedMentions = []
         for k in retal["mentions"]:
-            if str(k) in req["attacks"]:
+            if str(k) in response["attacks"]:
                 cleanedMentions.append(str(k))
 
         retal["mentions"] = cleanedMentions
