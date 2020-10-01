@@ -57,7 +57,8 @@ class Repository(commands.Cog):
                 if emoji:
                     await msg[0].add_reaction(emoji)
 
-                eb = Embed(description=f'Your  has been reported.', color=my_green)
+                eb = Embed(description=f'Your {type} has been reported.', color=my_green)
+                eb.set_author(name=msg[0].author.display_name, icon_url=msg[0].author.avatar_url)
                 await ctx.send(embed=eb)
 
         except BaseException as e:
