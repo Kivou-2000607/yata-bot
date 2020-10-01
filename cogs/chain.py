@@ -95,11 +95,10 @@ class Chain(commands.Cog):
 
         # handle no faction
         if response["ID"] is None:
-            await self.bot.send_error_message(ctx.channel, f'No faction with id {faction}')
+            await self.bot.send_error_message(ctx.channel, f'No faction with id `{faction}`')
             return
 
         # Set Faction role
-        fId = str(response['ID'])
         factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
 
         # if no chain
@@ -137,7 +136,7 @@ class Chain(commands.Cog):
             if status < 0:
                 return
 
-            response, e = await self.bot.api_call("faction", factionId, ["chain", "timestamp"], key)
+            response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
             if e and 'error' in response:
                 eb = Embed(title=f"{factionName} chain wathing", description=f'API error with master key: {response["error"]["error"]}.', color=my_red)
                 await ctx.send(embed=eb)
