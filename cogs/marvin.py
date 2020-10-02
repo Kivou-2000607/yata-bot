@@ -64,7 +64,8 @@ class Marvin(commands.Cog):
                 'pico': 623877807059107843,
                 'dollarbill': 662658717933895680,
                 'speakers': 760838431793610772,
-                'goldlaptop': 755759435581751347
+                'goldlaptop': 755759435581751347,
+                'medkit': 668605030336692235
             }
         }
 
