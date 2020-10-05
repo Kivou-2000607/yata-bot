@@ -103,15 +103,15 @@ class Chain(commands.Cog):
 
         # if no chain
         if response.get("chain", dict({})).get("current", 0) == 0:
-            eb = Embed(title=f"{factionName} chain wathing", description=f'No chains on the horizon', color=my_red)
+            eb = Embed(title=f"{factionName} chain watching", description=f'No chains on the horizon', color=my_red)
             await ctx.send(embed=eb)
             return
 
         if role is None:
-            eb = Embed(title=f"{factionName} chain wathing", description=f'Start watching', color=my_green)
+            eb = Embed(title=f"{factionName} chain watching", description=f'Start watching', color=my_green)
             await ctx.send(embed=eb)
         else:
-            eb = Embed(title=f"{factionName} chain wathing", description=f'Start watching. Will notify {role} on timeout', color=my_green)
+            eb = Embed(title=f"{factionName} chain watching", description=f'Start watching. Will notify {role} on timeout', color=my_green)
             await ctx.send(embed=eb)
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
@@ -127,7 +127,7 @@ class Chain(commands.Cog):
             for m in history:
                 if m.content in ["!stopchain", "!stop"]:
                     await m.delete()
-                    eb = Embed(title=f"{factionName} chain wathing", description=f'Stop watching.', color=my_red)
+                    eb = Embed(title=f"{factionName} chain watching", description=f'Stop watching.', color=my_red)
                     await ctx.send(embed=eb)
                     return
 
@@ -138,7 +138,7 @@ class Chain(commands.Cog):
 
             response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
             if e and 'error' in response:
-                eb = Embed(title=f"{factionName} chain wathing", description=f'API error with master key: {response["error"]["error"]}.', color=my_red)
+                eb = Embed(title=f"{factionName} chain watching", description=f'API error with master key: {response["error"]["error"]}.', color=my_red)
                 await ctx.send(embed=eb)
                 return
 
@@ -163,25 +163,25 @@ class Chain(commands.Cog):
 
             # if cooldown
             if cooldown > 0:
-                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f}min', color=my_blue)
+                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f}min', color=my_blue)
                 await ctx.send(embed=eb)
                 return
 
             # if timeout
             elif timeout == 0:
-                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain timed out', color=my_red)
+                eb = Embed(title=f"{factionName} chain watching", description=f'Chain timed out', color=my_red)
                 await ctx.send(embed=eb)
                 return
 
             # if warning
             elif timeout < deltaW:
-                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
+                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
                 await ctx.send("" if role is None else role, embed=eb)
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
-                eb = Embed(title=f"{factionName} chain wathing", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
+                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
                 await ctx.send(embed=eb)
 
             # sleeps
