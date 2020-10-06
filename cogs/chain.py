@@ -436,7 +436,7 @@ class Chain(commands.Cog):
             await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
             return
 
-        response, e = await self.bot.api_call("faction", factionId, ["basic", "donations"], key)
+        response, e = await self.bot.api_call("faction", "", ["basic", "donations"], key)
         if e and "error" in response:
             await self.bot.send_error_message(ctx.channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title="API error")
             return
