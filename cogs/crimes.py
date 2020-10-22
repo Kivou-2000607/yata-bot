@@ -469,15 +469,42 @@ class Crimes(commands.Cog):
         title = f"{fName}'s Organized Crimes"
         embed = Embed(title=title, color=my_blue)
         if len(crimes_fields["ready"]):
-            embed.add_field(name="Ready", value="\n".join([f':white_check_mark: [{v}](https://www.torn.com/factions.php?step=your#/tab=crimes) `{k}`' for k, v in crimes_fields["ready"]]))
+            list_of_crimes = []
+            for k, v in crimes_fields["ready"]:
+                list_of_crimes.append(f':white_check_mark: [{v}](https://www.torn.com/factions.php?step=your#/tab=crimes) `{k}`')
+                if len("\n".join(list_of_crimes)) > 1000:
+                    list_of_crimes[-1] = '...'
+                    break
+            embed.add_field(name="Ready", value="\n".join(list_of_crimes))
         else:
             embed.add_field(name="Ready", value="None")
+
         if len(crimes_fields["waiting"]):
-            embed.add_field(name="Waiting", value="\n".join(crimes_fields["waiting"]))
+            list_of_crimes = []
+            for v in crimes_fields["waiting"]:
+                list_of_crimes.append(v)
+                if len("\n".join(list_of_crimes)) > 1000:
+                    list_of_crimes[-1] = '...'
+                    break
+            embed.add_field(name="Waiting", value="\n".join(list_of_crimes))
+
         if len(crimes_fields["not_ready"]):
-            embed.add_field(name="Not Ready anymore", value="\n".join(crimes_fields["not_ready"]))
+            list_of_crimes = []
+            for v in crimes_fields["not_ready"]:
+                list_of_crimes.append(v)
+                if len("\n".join(list_of_crimes)) > 1000:
+                    list_of_crimes[-1] = '...'
+                    break
+            embed.add_field(name="Not Ready anymore", value="\n".join(list_of_crimes))
+
         if len(crimes_fields["completed"]):
-            embed.add_field(name="Just Completed", value="\n".join(crimes_fields["completed"]))
+            list_of_crimes = []
+            for v in crimes_fields["completed"]:
+                list_of_crimes.append(v)
+                if len("\n".join(list_of_crimes)) > 1000:
+                    list_of_crimes[-1] = '...'
+                    break
+            embed.add_field(name="Just Completed", value="\n".join(list_of_crimes))
 
         embed.set_footer(text=f'Last update: {ts_format(response["timestamp"], fmt="short")}')
         embed.timestamp = datetime.datetime.fromtimestamp(response["timestamp"], tz=pytz.UTC)
