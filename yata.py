@@ -25,6 +25,7 @@ import logging
 import logging.config
 import time
 import sys
+import discord
 
 # import bot
 from bots.yata import YataBot
@@ -45,6 +46,12 @@ from cogs.marvin import Marvin
 
 # import includes
 from inc.yata_db import load_configurations
+
+# configure intents
+intents = discord.Intents.default()
+intents.typing = False
+intents.presences = False
+intents.members = True
 
 # logging
 logging.config.fileConfig('logging.conf')
@@ -78,7 +85,8 @@ bot = YataBot(configurations=configurations,
               command_prefix=get_prefix,
               bot_id=bot_id,
               main_server_id=main_server_id,
-              github_token=github_token)
+              github_token=github_token,
+              intents=intents)
 bot.remove_command('help')
 
 # load classes

@@ -107,3 +107,4 @@ venv.bak/
 export.sh
 source.bash
 *.pid
+.vscode
