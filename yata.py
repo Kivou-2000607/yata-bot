@@ -92,7 +92,14 @@ bot.remove_command('help')
 # load classes
 bot.add_cog(Admin(bot))
 
-if int(bot_id) in [1, 3]:
+# bot ids:
+# 1: Chappie (dev bot)
+# 2: Marvin (YATA server administrator)
+# 3: YATA (the public bot)
+# 4: Nub Boat (duplicate WSSB stock for Nub Navy server)
+# 5: YATA backup (the backup version of the public bot)
+
+if int(bot_id) in [1, 3, 5]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))

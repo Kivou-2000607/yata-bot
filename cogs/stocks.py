@@ -45,7 +45,7 @@ class Stocks(commands.Cog):
 
     def cog_unload(self):
         self.notify.cancel()
-
+    
     async def get_times(self, ctx, stock=""):
 
         # options for different stocks
