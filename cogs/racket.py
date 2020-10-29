@@ -59,16 +59,14 @@ class Racket(commands.Cog):
             return
 
         response, e = await self.bot.api_call("torn", "", ["rackets", "territory", "timestamp"], key)
-        print(response)
         if e:
             logging.error(f"[racket/notifications] Error {e}")
             return
 
-        timestamp_p, randt_p = get_data(self.bot.bot_id, "rackets")
-        rackets_p = randt_p["rackets"]
-        territory_p = randt_p["territory"]
+        _, randt_p = get_data(self.bot.bot_id, "rackets")        
+        rackets_p = randt_p["rackets"] if "rackets" in randt_p else {}
+        territory_p = randt_p["territory"] if "territory" in randt_p else {}
 
-        tsnow = int(response["timestamp"])
         mentions = []
         for k, v in response["rackets"].items():
             title = False

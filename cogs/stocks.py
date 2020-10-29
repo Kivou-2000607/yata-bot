@@ -163,6 +163,7 @@ class Stocks(commands.Cog):
         logging.debug(f"[stock/notify] start task")
 
         _, mentions_keys_prev = get_data(self.bot.bot_id, "stocks")
+        mentions_keys_prev = mentions_keys_prev if len(mentions_keys_prev) else []  # make sure it's a list if empty
         mentions_keys = []
         mentions = []
         try:
@@ -206,7 +207,7 @@ class Stocks(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
-
+            
             # set alerts
             for k, v in req.items():
                 if "graph" in v:
