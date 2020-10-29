@@ -54,6 +54,10 @@ class Racket(commands.Cog):
         guild = self.bot.get_guild(self.bot.main_server_id)
         _, _, key = await self.bot.get_master_key(guild)
 
+        if key is None:
+            logging.error(f"[racket/notifications] Error no key found for on main server id {self.bot.main_server_id}")
+            return
+
         response, e = await self.bot.api_call("torn", "", ["rackets", "territory", "timestamp"], key)
         print(response)
         if e:
