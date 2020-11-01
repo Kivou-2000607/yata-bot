@@ -75,7 +75,7 @@ class Loot(commands.Cog):
             ts = hospout + (210 * 60)
             due = ts - ts_now()
             level = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}.get(loot.get("status").split(" ")[-1], 0)
-            loots[loot.get("id")] = {'name': name, 'due': due, 'ts':  ts, 'hospout': hospout, 'level': level}
+            loots[loot.get("tId")] = {'name': name, 'due': due, 'ts':  ts, 'hospout': hospout, 'level': level}
 
         # get NPC from the database and loop
         for id, npc in loots.items():
@@ -87,7 +87,6 @@ class Loot(commands.Cog):
             eb = Embed(description=f'**Level IV** {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")} ({str(advance): >3}%)',color=my_blue)
             eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/media/images/loot/npc_{id}.png')
             eb.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/loot/loot{lvl}.png')
-
             await ctx.send(embed=eb)
 
         # clean messages
@@ -115,7 +114,7 @@ class Loot(commands.Cog):
             name = loot.get("name")
             ts = loot.get("hospitalTS") + (210 * 60)
             due = ts - ts_now()
-            loots[loot.get("id")] = { 'name': name, 'due': due, 'ts':  ts }
+            loots[loot.get("tId")] = { 'name': name, 'due': due, 'ts':  ts }
 
         # loop over NPCs
         mentions = []
