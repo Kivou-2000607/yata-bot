@@ -85,8 +85,8 @@ class Loot(commands.Cog):
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
             lvl = npc["level"]
             eb = Embed(description=f'**Level IV** {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")} ({str(advance): >3}%)',color=my_blue)
-            eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/npc_{id}.png')
-            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/loot/loot{lvl}.png')
+            eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/media/images/loot/npc_{id}.png')
+            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/loot/loot{lvl}.png')
 
             await ctx.send(embed=eb)
 
@@ -102,11 +102,11 @@ class Loot(commands.Cog):
 
         # images and items
         thumbs = {
-            '4': "https://yata.alwaysdata.net/static/images/loot/npc_4.png",
-            '7': "https://yata.alwaysdata.net/static/images/loot/npc_7.png",
-            '10': "https://yata.alwaysdata.net/static/images/loot/npc_10.png",
-            '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png",
-            '19': "https://yata.alwaysdata.net/static/images/loot/npc_19.png"}
+            '4': "https://yata.alwaysdata.net/media/images/loot/npc_4.png",
+            '7': "https://yata.alwaysdata.net/media/images/loot/npc_7.png",
+            '10': "https://yata.alwaysdata.net/media/images/loot/npc_10.png",
+            '15': "https://yata.alwaysdata.net/media/images/loot/npc_15.png",
+            '19': "https://yata.alwaysdata.net/media/images/loot/npc_19.png"}
 
         # get npc timings from YATA db
         loots_raw = await get_loots()

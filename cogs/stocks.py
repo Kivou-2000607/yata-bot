@@ -84,7 +84,7 @@ class Stocks(commands.Cog):
 
             # send pull request to member
             info = 'bank' if stock == "tcb" else "education"
-            url = f'https://yata.alwaysdata.net/static/stocks/{2 if stock == "tcb" else 25}.png'
+            url = f'https://yata.alwaysdata.net/media/images/stocks/{2 if stock == "tcb" else 25}.png'
             description = [
                 f'Your **{info}** information has just been pulled',
                 f'__Author__: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])',
@@ -132,7 +132,7 @@ class Stocks(commands.Cog):
 
             lst.append("```")
             eb = Embed(title="List of investment time left and WSSB owners", description="\n".join(lst), color=my_blue)
-            eb.set_thumbnail(url="https://yata.alwaysdata.net/static/stocks/25.png")
+            eb.set_thumbnail(url="https://yata.alwaysdata.net/media/images/stocks/25.png")
             await ctx.send(embed=eb)
 
     @commands.command()
@@ -153,7 +153,7 @@ class Stocks(commands.Cog):
 
             lst.append("```")
             eb = Embed(title="List of investment time left and TCB owners", description="\n".join(lst), color=my_blue)
-            eb.set_thumbnail(url="https://yata.alwaysdata.net/static/stocks/2.png")
+            eb.set_thumbnail(url="https://yata.alwaysdata.net/media/images/stocks/2.png")
             await ctx.send(embed=eb)
 
 
@@ -257,7 +257,7 @@ class Stocks(commands.Cog):
                     # embed.add_field(name="Prices", value="\n".join(lst))
 
                     # thumbnail
-                    embed.set_thumbnail(url=f'https://yata.alwaysdata.net/static/stocks/{stockInfo[k]["id"]}.png')
+                    embed.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/stocks/{stockInfo[k]["id"]}.png')
                     mentions.append(embed)
                     mentions_keys.append(v)
 

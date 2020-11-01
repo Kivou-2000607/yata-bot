@@ -367,7 +367,7 @@ class Admin(commands.Cog):
                "[Loot level timers](https://yata.alwaysdata.net/loot/)", ]
         embed.add_field(name='Loot', value='\n'.join(lst))
 
-        embed.set_thumbnail(url="https://yata.alwaysdata.net/static/images/logo.png")
+        embed.set_thumbnail(url="https://yata.alwaysdata.net/media/images/logo.png")
 
         await ctx.send("", embed=embed)
 
