@@ -35,6 +35,7 @@ from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
+from inc.yata_db import get_loots
 
 
 class Loot(commands.Cog):
@@ -65,29 +66,24 @@ class Loot(commands.Cog):
         if not allowed:
             return
 
-        # compute current time
-        now = int(time.time())
-
-        # YATA api
-        url = "https://yata.alwaysdata.net/loot/timings/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    response = await r.json()
-                except BaseException:
-                    response = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
-
-        if 'error' in response:
-            await self.bot.send_error_message(ctx.channel, f'{response["error"]["error"]}. Have a look a the timings [here](https://yata.alwaysdata.net/loot/).')
-            return
+        # get npc timings from YATA db
+        loots_raw = await get_loots()
+        loots = {}
+        for loot in loots_raw:
+            name = loot.get("name")
+            hospout = loot.get("hospitalTS")
+            ts = hospout + (210 * 60)
+            due = ts - ts_now()
+            level = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}.get(loot.get("status").split(" ")[-1], 0)
+            loots[loot.get("id")] = {'name': name, 'due': due, 'ts':  ts, 'hospout': hospout, 'level': level}
 
         # get NPC from the database and loop
-        for id, npc in response.items():
-            due = npc["timings"]["4"]["due"]
-            ts = npc["timings"]["4"]["ts"]
+        for id, npc in loots.items():
+            due = npc["due"]
+            ts = npc["ts"]
             advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
             ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
-            lvl = npc["levels"]["current"]
+            lvl = npc["level"]
             eb = Embed(description=f'**Level IV** {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")} ({str(advance): >3}%)',color=my_blue)
             eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/static/images/loot/npc_{id}.png')
             eb.set_thumbnail(url=f'https://yata.alwaysdata.net/static/images/loot/loot{lvl}.png')
@@ -112,27 +108,22 @@ class Loot(commands.Cog):
             '15': "https://yata.alwaysdata.net/static/images/loot/npc_15.png",
             '19': "https://yata.alwaysdata.net/static/images/loot/npc_19.png"}
 
-        # YATA api
-        url = "https://yata.alwaysdata.net/loot/timings/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    response = await r.json()
-                except BaseException:
-                    response = {'error': {'error': 'YATA\'s API is talking shit... #blamekivou', 'code': -1}}
-
-        if 'error' in response:
-            return
+        # get npc timings from YATA db
+        loots_raw = await get_loots()
+        loots = {}
+        for loot in loots_raw:
+            name = loot.get("name")
+            ts = loot.get("hospitalTS") + (210 * 60)
+            due = ts - ts_now()
+            loots[loot.get("id")] = { 'name': name, 'due': due, 'ts':  ts }
 
         # loop over NPCs
         mentions = []
         embeds = []
         nextDue = []
-        for id, npc in response.items():
-            lvl = npc["levels"]["current"]
-            due = npc["timings"]["4"]["due"]
-            ts = npc["timings"]["4"]["ts"]
-            timestamp = npc["update"]
+        for id, npc in loots.items():
+            due = npc["due"]
+            ts = npc["ts"]
 
             if due > -60 and due < 10 * 60:
                 notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "now")

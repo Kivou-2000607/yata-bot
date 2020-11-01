@@ -228,3 +228,15 @@ async def reset_notifications(tornId):
     con = await asyncpg.connect(database=dbname, **db_cred)
     await con.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
     await con.close()
+
+
+async def get_loots():
+    # get YATA npcs loot timings
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    loots = await con.fetch(f'SELECT * FROM loot_NPC WHERE show = true;')
+    await con.close()
+
+    return loots
