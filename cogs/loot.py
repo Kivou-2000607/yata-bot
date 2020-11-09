@@ -99,14 +99,6 @@ class Loot(commands.Cog):
     async def notify(self):
         logging.debug("[loot/notifications] start task")
 
-        # images and items
-        thumbs = {
-            '4': "https://yata.alwaysdata.net/media/images/loot/npc_4.png",
-            '7': "https://yata.alwaysdata.net/media/images/loot/npc_7.png",
-            '10': "https://yata.alwaysdata.net/media/images/loot/npc_10.png",
-            '15': "https://yata.alwaysdata.net/media/images/loot/npc_15.png",
-            '19': "https://yata.alwaysdata.net/media/images/loot/npc_19.png"}
-
         # get npc timings from YATA db
         loots_raw = await get_loots()
         loots = {}
@@ -120,7 +112,7 @@ class Loot(commands.Cog):
         mentions = []
         embeds = []
         nextDue = []
-        for id, npc in loots.items():
+        for npc_id, npc in loots.items():
             due = npc["due"]
             ts = npc["ts"]
 
@@ -129,9 +121,9 @@ class Loot(commands.Cog):
                 mentions.append(notification)
 
                 # author field
-                author = f'{npc["name"]} [{id}]'
-                author_icon = thumbs.get(id, "?")
-                author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={id}'
+                author = f'{npc["name"]} [{npc_id}]'
+                author_icon = f"https://yata.alwaysdata.net/media/images/loot/npc_{npc_id}.png"
+                author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc_id}'
 
                 # description field
                 description = f'Loot level IV {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
