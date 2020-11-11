@@ -49,8 +49,15 @@ class Stocks(commands.Cog):
     async def get_times(self, ctx, stock=""):
 
         # options for different stocks
-        # [user api selection, stock id, n shares for BB]
-        so = {"wssb": ["education", 25, 1000000], "tcb": ["money", 2, 1500000]}
+        so = {
+            "wssb": {
+                25: ["wssb", 1000000],
+                26: ["istc", 100000],
+            },
+            "tcb": {
+                2: ["tcb", 1500000],
+            }
+        }
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "stocks", check_key=f"channels_{stock}")
@@ -63,7 +70,7 @@ class Stocks(commands.Cog):
             return [], None
 
         # list all users
-        stockOwners = []
+        stockOwners = {}
         timeLeft = dict()
         role = self.bot.get_module_role(ctx.guild.roles, config.get(f"roles_{stock}", {}))
         if role is None:
@@ -72,22 +79,22 @@ class Stocks(commands.Cog):
 
         for member in role.members:
             # get user key from YATA database
-            status, id, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
+            status, _, name, key = await self.bot.get_user_key(ctx, member, needPerm=True)
             if status < 0:
                 continue
 
             # get information from API key
-            response, e = await self.bot.api_call("user", "", [so.get(stock)[0], "stocks", "discord", "timestamp"], key)
+            info = 'money' if stock == "tcb" else "education"
+            response, e = await self.bot.api_call("user", "", [info, "stocks", "discord", "timestamp"], key)
             if e and 'error' in response:
                 await self.bot.send_error_message(ctx, f'API error code {response["error"]["code"]}: {response["error"]["error"]}')
                 continue
 
             # send pull request to member
-            info = 'bank' if stock == "tcb" else "education"
             url = f'https://yata.alwaysdata.net/media/images/stocks/{2 if stock == "tcb" else 25}.png'
             description = [
                 f'Your **{info}** information has just been pulled',
-                f'__Author__: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])',
+                f'__Author__: {escape_markdown(ctx.author.display_name)} ({ctx.author} [{ctx.author.id}])',
                 f'__Server__: {ctx.guild} [{ctx.guild.id}]',
             ]
             eb = Embed(title=f"Shared {stock.upper()} bonus block", description="\n\n".join(description), color=my_blue)
@@ -98,13 +105,9 @@ class Stocks(commands.Cog):
             except BaseException:
                 await self.bot.send_error_message(ctx, f'DM couldn\'t be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.')
                 continue
-
+            
             # get stock owner
-            user_stocks = response.get('stocks')
-            if user_stocks is not None:
-                for k, v in user_stocks.items():
-                    if v['stock_id'] == so.get(stock)[1] and v['shares'] >= so.get(stock)[2]:
-                        stockOwners.append(name)
+            stockOwners[name] = list(set([so[stock][s["stock_id"]][0] for s in response.get('stocks', {}).values() if s["stock_id"] in so[stock] and s["shares"] >= so[stock][s["stock_id"]][1]]))
 
             # get time left
             if stock == "tcb":
@@ -128,10 +131,11 @@ class Stocks(commands.Cog):
             # lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
+                own = f'{", ".join(stockOwners[k])}' if k in stockOwners else " "
+                lst.append(f'{k.replace("_", " "): <15} | {s_to_dhm(v)} |  {own}')
 
             lst.append("```")
-            eb = Embed(title="List of investment time left and WSSB owners", description="\n".join(lst), color=my_blue)
+            eb = Embed(title="List of education time left and WSSB/ISTC owners", description="\n".join(lst), color=my_blue)
             eb.set_thumbnail(url="https://yata.alwaysdata.net/media/images/stocks/25.png")
             await ctx.send(embed=eb)
 
@@ -149,7 +153,8 @@ class Stocks(commands.Cog):
             # lst.append("-" * len(tmp))
 
             for k, v in sorted(timeLeft.items(), key=lambda x: x[1]):
-                lst.append("{: <15} | {} |  {}".format(k, s_to_dhm(v), "x" if k in stockOwners else " "))
+                own = f'{", ".join(stockOwners[k])}' if k in stockOwners else " "
+                lst.append(f'{k.replace("_", " "): <15} | {s_to_dhm(v)} |  {own}')
 
             lst.append("```")
             eb = Embed(title="List of investment time left and TCB owners", description="\n".join(lst), color=my_blue)
