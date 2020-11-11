@@ -94,7 +94,7 @@ class Stocks(commands.Cog):
             url = f'https://yata.alwaysdata.net/media/images/stocks/{2 if stock == "tcb" else 25}.png'
             description = [
                 f'Your **{info}** information has just been pulled',
-                f'__Author__: {escape_markdown(ctx.author.display_name)} ({ctx.author} [{ctx.author.id}])',
+                f'__Author__: {ctx.author.nick} ({ctx.author} [{ctx.author.id}])',
                 f'__Server__: {ctx.guild} [{ctx.guild.id}]',
             ]
             eb = Embed(title=f"Shared {stock.upper()} bonus block", description="\n\n".join(description), color=my_blue)
