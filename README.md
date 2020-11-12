@@ -14,7 +14,7 @@
 https://yata.alwaysdata.net/bot/
 
 ### Host the bot
-If you want to host the bot on your server read the documentation, join the YATA discord and ping and @Helper for a setup.
+If you want to host the bot on your server read the documentation, join the YATA discord and ping a @Staff for a setup.
 
 Enjoy,
 

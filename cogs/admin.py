@@ -86,7 +86,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=eb)
 
         if str(ctx.author.id) not in server_admins:
-            updates.append("You need to be an administrator to continue, ask an @Helper for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
+            updates.append("You need to be an administrator to continue, ask a @Staff for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
             eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
             await ctx.send(embed=eb)
             return
@@ -349,7 +349,7 @@ class Admin(commands.Cog):
 
         lst = [
             "Have a look at the [online documentation](https://yata.alwaysdata.net/bot/documentation/) or browse the links.",
-            "If you need more information ping an @Helper in the [YATA server](https://yata.alwaysdata.net/discord).", ]
+            "If you need more information ping a @Staff in the [YATA server](https://yata.alwaysdata.net/discord).", ]
         embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
 
         lst = ["[General information](https://yata.alwaysdata.net/bot/)",
