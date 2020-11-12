@@ -66,14 +66,15 @@ class Marvin(commands.Cog):
                 'medkit': 668605030336692235,
                 'speakers': 760838431793610772,
                 'goldlaptop': 755759435581751347,
+                'torn': 776387850689314836,
                 'yata': 776353120912408588,
                 'python': 776351392209567764,
                 'js': 776351375411380225,
             }
         }
         self.guilds_cascading_roles = {
-            # helper: [yata helper, python helper, js helper]
-            776354040414076950: [776353120912408588, 776351392209567764, 776351375411380225],
+            # helper: [yata helper, python helper, js helper, torn helper]
+            776354040414076950: [776353120912408588, 776351392209567764, 776351375411380225, 776387850689314836],
         }
 
     @commands.Cog.listener()
