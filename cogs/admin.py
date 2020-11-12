@@ -419,37 +419,37 @@ class Admin(commands.Cog):
 
             return
 
-        elif len(args) and args[0].lower() == "yata":
-            # return if not admin
-            admin_role = get(ctx.guild.roles, id=669682126203125760)
-            if admin_role not in ctx.author.roles:
-                return
+        # elif len(args) and args[0].lower() == "yata":
+        #     # return if not admin
+        #     admin_role = get(ctx.guild.roles, id=669682126203125760)
+        #     if admin_role not in ctx.author.roles:
+        #         return
 
-            r = get(ctx.guild.roles, id=703674852476846171)
+        #     r = get(ctx.guild.roles, id=703674852476846171)
 
-            # loop over member
-            if r is None:
-                await ctx.send(f":x: no role {args[0]}")
-            else:
-                msg = await ctx.send(f":clock1: Assigning {r}")
+        #     # loop over member
+        #     if r is None:
+        #         await ctx.send(f":x: no role {args[0]}")
+        #     else:
+        #         msg = await ctx.send(f":clock1: Assigning {r}")
 
-            n = len(ctx.guild.members)
-            for i, member in enumerate(ctx.guild.members):
-                if len(await get_yata_user(member.id, type="D")) and r not in member.roles:
-                    logging.info(f"[admin/assign] {member.display_name} add {r}")
-                    await member.add_roles(r)
+        #     n = len(ctx.guild.members)
+        #     for i, member in enumerate(ctx.guild.members):
+        #         if len(await get_yata_user(member.id, type="D")) and r not in member.roles:
+        #             logging.info(f"[admin/assign] {member.display_name} add {r}")
+        #             await member.add_roles(r)
 
-                elif not len(await get_yata_user(member.id, type="D")) and r in member.roles:
-                    logging.info(f"[admin/assign] {member.display_name} remove {r}")
-                    await member.remove_roles(r)
+        #         elif not len(await get_yata_user(member.id, type="D")) and r in member.roles:
+        #             logging.info(f"[admin/assign] {member.display_name} remove {r}")
+        #             await member.remove_roles(r)
 
-                progress = int(100 * i / float(n))
-                if not i % (1 + n // 25):
-                    await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
+        #         progress = int(100 * i / float(n))
+        #         if not i % (1 + n // 25):
+        #             await msg.edit(content=f":clock{i%12 + 1}: Assigning {r} `{progress:>3}%`")
 
-            await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
+        #     await msg.edit(content=f":white_check_mark: Assigning {r} `100%`")
 
-            return
+        #     return
 
         # PUBLIC PART
 
@@ -639,8 +639,9 @@ class Admin(commands.Cog):
 
         # assign @host and @yata
         host = get(guild.roles, id=657131110077169664)
-        yata = get(guild.roles, id=703674852476846171)
-        if host is None or yata is None:
+        # yata = get(guild.roles, id=703674852476846171)
+        # if host is None or yata is None:
+        if host is None:
             return
 
         # get all contacts
@@ -659,14 +660,14 @@ class Admin(commands.Cog):
                 logging.info(f"[admin/assignRoles] {member.display_name} remove {host}")
                 await member.remove_roles(host)
 
-            is_yata = await get_yata_user(member.id, type="D")
-            if len(is_yata) and yata not in member.roles:
-                logging.info(f"[admin/assignRoles] {member.display_name} add {yata}")
-                await member.add_roles(yata)
+            # is_yata = await get_yata_user(member.id, type="D")
+            # if len(is_yata) and yata not in member.roles:
+            #     logging.info(f"[admin/assignRoles] {member.display_name} add {yata}")
+            #     await member.add_roles(yata)
 
-            elif not len(is_yata) and yata in member.roles:
-                logging.info(f"[admin/assignRoles] {member.display_name} remove {yata}")
-                await member.remove_roles(yata)
+            # elif not len(is_yata) and yata in member.roles:
+            #     logging.info(f"[admin/assignRoles] {member.display_name} remove {yata}")
+            #     await member.remove_roles(yata)
 
 
     @tasks.loop(hours=24)

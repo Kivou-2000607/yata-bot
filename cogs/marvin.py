@@ -103,7 +103,7 @@ class Marvin(commands.Cog):
         if message.channel.id in [703587583862505483] and 679669933680230430 not in message.author.roles:
             if "<@&679669933680230430>" in message.content:
                 lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume.",
-                       "Please wait a moment for an helper. They like to pretend they are busy...",
+                       "Please wait a moment for a staff member. They like to pretend they are busy...",
                        "In the meantime they asked me to tell you to:",
                        "- make sure you followed these steps https://yata.alwaysdata.net/bot/host/",
                        "- give us the **name of the server**",
