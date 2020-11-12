@@ -66,7 +66,14 @@ class Marvin(commands.Cog):
                 'medkit': 668605030336692235,
                 'speakers': 760838431793610772,
                 'goldlaptop': 755759435581751347,
+                'yata': 776353120912408588,
+                'python': 776351392209567764,
+                'js': 776351375411380225,
             }
+        }
+        self.guilds_cascading_roles = {
+            # helper: [yata helper, python helper, js helper]
+            776354040414076950: [776353120912408588, 776351392209567764, 776351375411380225],
         }
 
     @commands.Cog.listener()
@@ -76,7 +83,8 @@ class Marvin(commands.Cog):
             return
 
         # if it's pinged
-        if '<@!708796850978684968>' in message.content:
+        print(message.content)
+        if '<@&735047465220440075>' in message.content:
             await message.channel.send("*sigh*")
 
         # in #lobby
@@ -166,12 +174,23 @@ class Marvin(commands.Cog):
                     if add:
                         await member.add_roles(role)
                     else:
-
                         await member.remove_roles(role)
 
                     eb = Embed(description=f'Role @{role.name} **{"added" if add else "removed"}**', color=my_green if add else my_red)
                     eb.set_author(name=member.display_name, icon_url=member.avatar_url)
                     msg = await channel.send(embed=eb)
+
+                    # check if user have at least one helper role
+                    for role_main_id, role_casc_ids in self.guilds_cascading_roles.items():
+                        main_role = get(guild.roles, id=role_main_id)
+                        if main_role is None:
+                            continue
+                        
+                        if len([r for r in member.roles if r.id in role_casc_ids]):
+                            await member.add_roles(main_role)
+                        else:
+                            await member.remove_roles(main_role)
+
                     await asyncio.sleep(10)
                     await msg.delete()
 

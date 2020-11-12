@@ -490,9 +490,12 @@ class Admin(commands.Cog):
         msg = await ctx.send(embed=eb)
 
         # clean messages
-        # await asyncio.sleep(5)
-        # await msg.delete()
-        # await ctx.message.delete()
+        await asyncio.sleep(5)
+        try:
+            await msg.delete()
+            await ctx.message.delete()
+        except BaseException:
+            pass
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
