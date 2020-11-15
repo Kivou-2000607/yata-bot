@@ -323,7 +323,7 @@ class Chain(commands.Cog):
                 a = v["last_action"]
                 hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
 
-        lst = [f'Members of **{r["name"]} [{r["ID"]}]** hospitalized: {len(hosps)}']
+        lst = [f'Members of **{cleanhtml(r["name"])} [{r["ID"]}]** hospitalized: {len(hosps)}']
         for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
             # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
@@ -382,10 +382,80 @@ class Chain(commands.Cog):
                 a = v["last_action"]
                 hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
 
-        lst = [f'Members of **{r["name"]} [{r["ID"]}]** that are Okay: {len(hosps)}']
+        lst = [f'Members of **{cleanhtml(r["name"])} [{r["ID"]}]** that are Okay: {len(hosps)}']
         for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
             # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
+            lst.append(line)
+
+        await send_tt(ctx, lst, tt=False)
+
+    @commands.command(aliases=['la'])
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
+    async def last_action(self, ctx, *args):
+        """Gives faction members that are okay"""
+        logging.info(f'[chain/last_action] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        # get configuration
+        config = self.bot.get_guild_configuration_by_module(ctx.guild, "chain")
+        if not config:
+            return
+
+        # check if channel is allowed
+        allowed = await self.bot.check_channel_allowed(ctx, config)
+        if not allowed:
+            return
+
+        # send error message if no arg (return)
+        if not len(args):
+            factionId = None
+
+        # check if arg is int
+        elif args[0].isdigit():
+            factionId = int(args[0])
+
+        else:
+            await self.bot.send_error_message(ctx, 'Either enter nothing or a faction `!okay <factionId>`')
+            return
+
+        # get configuration for guild
+        status, _, _, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False, returnMaster=True, delError=True)
+        if status in [-1, -2]:
+            return
+
+        # Torn API call
+        r, e = await self.bot.api_call("faction", factionId, ["basic"], key)
+        if e and "error" in r:
+            await self.bot.send_error_message(ctx.channel, f'Code {r["error"]["code"]}: {r["error"]["error"]}', title="API error")
+            return
+
+        if not r["name"]:
+            await self.bot.send_error_message(ctx, f'No faction with ID {factionId}')
+            return
+
+        members = r.get("members", dict({}))
+
+        lst = [f'Members of **{cleanhtml(r["name"])} [{r["ID"]}]** ordered by last action']
+        for k, v in sorted(members.items(), key=lambda x: -x[1]["last_action"]["timestamp"]):
+            if v["last_action"]["status"] == "Idle":
+                online = ":orange_circle:"
+            elif v["last_action"]["status"] == "Offline":
+                online = ":red_circle:"
+            elif v["last_action"]["status"] == "Online":
+                online = ":green_circle:"
+            else:
+                online = ":white_circle:"
+
+            if v["status"]["color"] == "green":
+                status = ":green_square:"
+            elif v["status"]["color"] == "red":
+                status = ":red_square:"
+            elif v["status"]["color"] == "blue":
+                status = ":blue_square:"
+            else:
+                status = ":white_circle:"
+            line = f'{online}{status} **{v["name"]} [{k}]**: last action {v["last_action"]["relative"]}, {v["status"]["description"]}'
             lst.append(line)
 
         await send_tt(ctx, lst, tt=False)
