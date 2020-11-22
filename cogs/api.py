@@ -208,8 +208,25 @@ class API(commands.Cog):
 
         # check if arg is int
         elif args[0].isdigit():
-            logging.debug(f'[api/who] 1 int given -> torn user')
-            tornId = int(args[0])
+            if len(args[0]) <= 7:  # torn ID
+                logging.debug(f'[api/who] 1 int given -> torn user')
+                tornId = int(args[0])
+            else:  # discord ID (requires an API call)
+                logging.debug(f'[api/who] 1 int given -> discord user')
+                # get author key
+                status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+                if status < 0:
+                    await self.bot.send_error_message(ctx.channel, "Author key not found to make the API call")
+                    return
+                r, e = await self.bot.api_call("user", int(args[0]), ["discord"], key, error_channel=ctx.channel)
+                if e or 'discord' not in r:
+                    return
+                tornId = r.get('discord', {}).get('userID', 0)
+                if str(tornId).isdigit():
+                    tornId = int(tornId)
+                else:
+                    await self.bot.send_error_message(ctx.channel, f"Discord ID `{args[0]}` not verified")
+                    return
 
         # check if arg is a mention of a discord user ID
         elif re.match(r'<@!?\d+>', args[0]):
@@ -251,7 +268,7 @@ class API(commands.Cog):
         # status, _, key = await self.bot.get_master_key(ctx.guild)
         status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
         if status < 0:
-            await self.bot.send_error_message(ctx.channel, "Key not found")
+            await self.bot.send_error_message(ctx.channel, "Author key not found to make the API call")
             return
 
         # Torn API call
