@@ -42,7 +42,7 @@ from inc.handy import *
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        if self.bot.bot_id == 5:
+        if self.bot.bot_id == 3:
             self.notify.start()
 
     def cog_unload(self):
