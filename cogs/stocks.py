@@ -45,7 +45,7 @@ class Stocks(commands.Cog):
 
     def cog_unload(self):
         self.notify.cancel()
-    
+
     async def get_times(self, ctx, stock=""):
 
         # options for different stocks
@@ -105,10 +105,12 @@ class Stocks(commands.Cog):
             except BaseException:
                 await self.bot.send_error_message(ctx, f'DM couldn\'t be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.')
                 continue
-            
-            # get stock owner
-            stockOwners[name] = list(set([so[stock][s["stock_id"]][0] for s in response.get('stocks', {}).values() if s["stock_id"] in so[stock] and s["shares"] >= so[stock][s["stock_id"]][1]]))
 
+            # get stock owner
+            if response.get('stocks') is None:
+                stockOwners[name] = []
+            else:
+                stockOwners[name] = list(set([so[stock][s["stock_id"]][0] for s in response.get('stocks', {}).values() if s["stock_id"] in so[stock] and s["shares"] >= so[stock][s["stock_id"]][1]]))
             # get time left
             if stock == "tcb":
                 timeLeft[name] = response.get('city_bank', dict({})).get("time_left", 0)
@@ -212,7 +214,7 @@ class Stocks(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     req = await r.json()
-            
+
             # set alerts
             for k, v in req.items():
                 if "graph" in v:
