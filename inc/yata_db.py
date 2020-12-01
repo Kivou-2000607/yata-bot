@@ -240,3 +240,27 @@ async def get_loots():
     await con.close()
 
     return loots
+
+
+async def get_scheduled():
+    # get YATA npcs loot timings
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    loots = await con.fetch(f'SELECT * FROM loot_scheduledAttack;')
+    await con.close()
+
+    return loots
+
+
+async def get_npc(id):
+    # get YATA npcs loot timings
+    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    npc = await con.fetch(f'SELECT * FROM loot_NPC WHERE "id"=$1;', id)
+    await con.close()
+
+    return npc

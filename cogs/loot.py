@@ -36,15 +36,19 @@ from discord import Embed
 # import bot functions and classes
 from inc.handy import *
 from inc.yata_db import get_loots
+from inc.yata_db import get_scheduled
+from inc.yata_db import get_npc
 
 
 class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.notify.start()
+        self.scheduled.start()
 
     def cog_unload(self):
         self.notify.cancel()
+        self.scheduled.cancel()
 
     # def botMessages(self, message):
     #     return message.author.id == self.bot.user.id and message.content[:6] == "```ARM"
@@ -177,6 +181,78 @@ class Loot(commands.Cog):
         logging.debug(f"[loot/notifications] sleep for {s} seconds")
         await asyncio.sleep(s)
 
+    @tasks.loop(minutes=10)
+    async def scheduled(self):
+        logging.debug("[loot/scheduled] start task")
+
+        loots_raw = await get_scheduled()
+
+        mentions = []
+        embeds = []
+        for loot in loots_raw:
+            if loot.get("vote") < 25:
+                continue
+
+            due = loot.get("timestamp") - ts_now()
+            # if True:
+            if due < 10 * 60:
+                # get NPC
+                npc = await get_npc(loot.get("npc_id"))
+                if not len(npc):
+                    continue
+
+                npc = npc[0]
+                notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "now")
+                mentions.append(notification)
+
+                # author field
+                author = f'{npc["name"]} [{npc["tId"]}]'
+                author_icon = f'https://yata.alwaysdata.net/media/images/loot/npc_{npc["tId"]}.png'
+                author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc["tId"]}'
+
+                # description field
+                description = f'Scheduled attack by {loot.get("vote")} players in {s_to_time(abs(due))}'
+                embed = Embed(description=description, color=my_blue)
+                embed.set_author(name=author, url=author_url, icon_url=author_icon)
+                embed = append_update(embed, loot["timestamp"], text="At ")
+
+                embeds.append(embed)
+
+        if not len(mentions):
+            return
+
+        # iteration over all guilds
+        for guild in self.bot.get_guilds_by_module("loot"):
+            try:
+                logging.debug(f"[loot/notifications] {guild}")
+
+                config = self.bot.get_guild_configuration_by_module(guild, "loot", check_key="channels_alerts")
+                if not config:
+                    continue
+
+                # get role & channel
+                role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
+
+                if channel is None:
+                    continue
+
+                # loop of npcs to mentions
+                for m, e in zip(mentions, embeds):
+                    logging.debug(f"[LOOT] guild {guild}: mention {m}.")
+                    msg = f'{m} {"" if role is None else role.mention}'
+                    await channel.send(msg, embed=e)
+
+            except BaseException as e:
+                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
+                await self.bot.send_log_main(e, headers=headers, full=True)
+
     @notify.before_loop
     async def before_notify(self):
+        await self.bot.wait_until_ready()
+
+    @scheduled.before_loop
+    async def before_scheduled(self):
         await self.bot.wait_until_ready()
