@@ -47,6 +47,11 @@ class Loot(commands.Cog):
         self.notify_5.start()
         self.scheduled.start()
 
+        self.lvl_roman = {0: "Hospitalized", 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V"}
+        self.roman_lvl = {"Hospitalized": 0, "I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}
+        self.lvl_dt = {0: 0, 1: 0, 2: 30 * 60, 3: 90 * 60, 4: 210 * 60, 5: 450 * 60}
+        self.lvl_to_display = [4, 5]
+
     def cog_unload(self):
         self.notify_4.cancel()
         self.notify_5.cancel()
@@ -72,27 +77,50 @@ class Loot(commands.Cog):
         if not allowed:
             return
 
+        now = ts_now()
+
         # get npc timings from YATA db
         loots_raw = await get_loots()
         loots = {}
+
         for loot in loots_raw:
             name = loot.get("name")
-            hospout = loot.get("hospitalTS")
-            ts = hospout + (210 * 60)
-            due = ts - ts_now()
-            level = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}.get(loot.get("status").split(" ")[-1], 0)
-            loots[loot.get("tId")] = {'name': name, 'due': due, 'ts':  ts, 'hospout': hospout, 'level': level}
+            hosp = loot.get("hospitalTS")
+
+            # get current loot level
+            lvlc = 0  # current level
+            for lv, dt in self.lvl_dt.items():
+                lvlc = lv if now > hosp + dt else lvlc
+
+            loots[loot.get("tId")] = {'name': name, 'hosp': hosp, 'lvlc': lvlc, 'timings': []}
+
+            # get all loot level timings
+            for i in self.lvl_to_display:
+                timing = {"due": hosp + self.lvl_dt[i] - now, "time": hosp + self.lvl_dt[i], "lvl": i}
+                loots[loot.get("tId")]["timings"].append(timing)
 
         # get NPC from the database and loop
         for id, npc in loots.items():
-            due = npc["due"]
-            ts = npc["ts"]
-            advance = max(100 * (ts - npc["hospout"] - max(0, due)) // (ts - npc["hospout"]), 0)
-            ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
-            lvl = npc["level"]
-            eb = Embed(description=f'**Level IV** {"since" if due < 0 else "in"} {s_to_hms(abs(due))} at {ts_to_datetime(ts).strftime("%H:%M:%S")} ({str(advance): >3}%)',color=my_blue)
-            eb.set_author(name=f'{npc["name"]} is {ll[lvl]}', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/media/images/loot/npc_{id}.png')
-            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/loot/loot{lvl}.png')
+            description_list = []
+            name = npc["name"]
+            hosp = npc["hosp"]
+            lvlc = npc["lvlc"]
+            for timing in npc["timings"]:
+                lvl = timing["lvl"]
+                due = timing["due"]
+                time = timing["time"]
+
+                if due < 0:  # level already reached
+                    description_list.append(f'*Level {self.lvl_roman[lvl]} since {s_to_hms(abs(due))} at {ts_to_datetime(time).strftime("%H:%M:%S")}*')
+                else:
+                    delta_lvl_time = self.lvl_dt[lvl] - self.lvl_dt[lvl - 1] if lvl > 1 else 30 * 60
+                    delta_due_time = delta_lvl_time - due
+                    advance = 100 * (delta_lvl_time - due) // delta_lvl_time
+                    description_list.append(f'{"**" if lvl == lvlc + 1 else ""}Level {self.lvl_roman[lvl]} in {s_to_hms(abs(due))} at {ts_to_datetime(time).strftime("%H:%M:%S")}{f" ({advance}%)" if advance > 0 else ""}{"**" if lvl == lvlc + 1 else ""}')
+
+            eb = Embed(description="\n".join(description_list),color=my_blue)
+            eb.set_author(name=f'{npc["name"]} [{id}]', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/media/images/loot/npc_{id}.png')
+            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/loot/loot{lvlc}.png')
             await ctx.send(embed=eb)
 
         # clean messages
@@ -109,8 +137,7 @@ class Loot(commands.Cog):
         loots = {}
         for loot in loots_raw:
             name = loot.get("name")
-            t_to_ll = {0: 0, 1: 0, 2: 30 * 60, 3: 90 * 60, 4: 210 * 60, 5: 450 * 60}
-            ts = loot.get("hospitalTS") + t_to_ll[level]
+            ts = loot.get("hospitalTS") + self.lvl_dt[level]
             due = ts - ts_now()
             loots[loot.get("tId")] = { 'name': name, 'due': due, 'ts':  ts }
 
@@ -132,8 +159,7 @@ class Loot(commands.Cog):
                 author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc_id}'
 
                 # description field
-                ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
-                description = f'Loot {ll[level]} {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
+                description = f'Loot {self.lvl_roman[level]} {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
                 embed = Embed(description=description, color=my_blue)
                 embed.set_author(name=author, url=author_url, icon_url=author_icon)
                 embed = append_update(embed, ts, text="At ")

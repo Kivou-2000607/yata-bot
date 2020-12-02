@@ -23,6 +23,7 @@ import pytz
 import datetime
 import re
 import traceback
+import time
 
 # import discord modules
 from discord import Embed
@@ -47,7 +48,7 @@ def now():
 
 
 def ts_now():
-    return int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
+    return int(time.time())
 
 
 def ts_format(timestamp, fmt=None):
