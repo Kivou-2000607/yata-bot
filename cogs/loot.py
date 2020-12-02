@@ -43,11 +43,13 @@ from inc.yata_db import get_npc
 class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.notify.start()
+        self.notify_4.start()
+        self.notify_5.start()
         self.scheduled.start()
 
     def cog_unload(self):
-        self.notify.cancel()
+        self.notify_4.cancel()
+        self.notify_5.cancel()
         self.scheduled.cancel()
 
     # def botMessages(self, message):
@@ -99,16 +101,16 @@ class Loot(commands.Cog):
         # async for m in ctx.channel.history(limit=10, before=ctx.message).filter(self.botMessages):
         #     await m.delete()
 
-    @tasks.loop(seconds=5)
-    async def notify(self):
-        logging.debug("[loot/notifications] start task")
+    async def notify(self, level):
+        logging.debug(f"[loot/notifications_{level}] start task")
 
         # get npc timings from YATA db
         loots_raw = await get_loots()
         loots = {}
         for loot in loots_raw:
             name = loot.get("name")
-            ts = loot.get("hospitalTS") + (210 * 60)
+            t_to_ll = {0: 0, 1: 0, 2: 30 * 60, 3: 90 * 60, 4: 210 * 60, 5: 450 * 60}
+            ts = loot.get("hospitalTS") + t_to_ll[level]
             due = ts - ts_now()
             loots[loot.get("tId")] = { 'name': name, 'due': due, 'ts':  ts }
 
@@ -130,29 +132,30 @@ class Loot(commands.Cog):
                 author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc_id}'
 
                 # description field
-                description = f'Loot level IV {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
+                ll = {0: "hospitalized", 1: "level I", 2: "level II", 3: "level III", 4: "level IV", 5: " level V"}
+                description = f'Loot {ll[level]} {"since" if due < 0 else "in"} {s_to_time(abs(due))}'
                 embed = Embed(description=description, color=my_blue)
                 embed.set_author(name=author, url=author_url, icon_url=author_icon)
                 embed = append_update(embed, ts, text="At ")
 
                 embeds.append(embed)
-                logging.debug(f'[loot/notifications] {npc["name"]}: notify (due {due})')
+                logging.debug(f'[loot/notifications_{level}] {npc["name"]}: notify (due {due})')
             elif due > 0:
                 # used for computing sleeping time
                 nextDue.append(due)
-                logging.debug(f'[loot/notifications] {npc["name"]}: ignore (due {due})')
+                logging.debug(f'[loot/notifications_{level}] {npc["name"]}: ignore (due {due})')
             else:
-                logging.debug(f'[loot/notifications] {npc["name"]}: ignore (due {due})')
+                logging.debug(f'[loot/notifications_{level}] {npc["name"]}: ignore (due {due})')
 
         # get the sleeping time (15 minutes all dues < 0 or 5 minutes before next due)
         nextDue = sorted(nextDue, reverse=False) if len(nextDue) else [15 * 60]
         s = nextDue[0] - 7 * 60 - 5  # next due - 7 minutes - 5 seconds of the task ticker
-        logging.debug(f"[loot/notifications] end task... sleeping for {s_to_hms(s)} minutes.")
+        logging.debug(f"[loot/notifications_{level}] end task... sleeping for {s_to_hms(s)} minutes.")
 
         # iteration over all guilds
         for guild in self.bot.get_guilds_by_module("loot"):
             try:
-                logging.debug(f"[loot/notifications] {guild}")
+                logging.debug(f"[loot/notifications_{level}] {guild}")
 
                 config = self.bot.get_guild_configuration_by_module(guild, "loot", check_key="channels_alerts")
                 if not config:
@@ -172,14 +175,22 @@ class Loot(commands.Cog):
                     await channel.send(msg, embed=e)
 
             except BaseException as e:
-                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
 
         # sleeps
-        logging.debug(f"[loot/notifications] sleep for {s} seconds")
+        logging.debug(f"[loot/notifications_{level}] sleep for {s} seconds")
         await asyncio.sleep(s)
+
+    @tasks.loop(seconds=5)
+    async def notify_4(self):
+        await self.notify(4)
+
+    @tasks.loop(seconds=5)
+    async def notify_5(self):
+        await self.notify(5)
 
     @tasks.loop(minutes=10)
     async def scheduled(self):
@@ -249,8 +260,12 @@ class Loot(commands.Cog):
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
 
-    @notify.before_loop
-    async def before_notify(self):
+    @notify_4.before_loop
+    async def before_notify_4(self):
+        await self.bot.wait_until_ready()
+
+    @notify_5.before_loop
+    async def before_notify_5(self):
         await self.bot.wait_until_ready()
 
     @scheduled.before_loop
