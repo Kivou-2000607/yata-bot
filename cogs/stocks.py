@@ -87,7 +87,7 @@ class Stocks(commands.Cog):
             info = 'money' if stock == "tcb" else "education"
             response, e = await self.bot.api_call("user", "", [info, "stocks", "discord", "timestamp"], key)
             if e and 'error' in response:
-                await self.bot.send_error_message(ctx, f'API error code {response["error"]["code"]}: {response["error"]["error"]}')
+                await self.bot.send_error_message(ctx, f'API error for {member.nick}\'s key: {response["error"]["error"]}')
                 continue
 
             # send pull request to member
