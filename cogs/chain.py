@@ -138,7 +138,7 @@ class Chain(commands.Cog):
 
             response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
             if e and 'error' in response:
-                eb = Embed(title=f"{factionName} chain watching", description=f'API error with master key: {response["error"]["error"]}.', color=my_red)
+                eb = Embed(title=f"{factionName} chain watching", description=f'API error code {response["error"]["code"]} with master key: {response["error"]["error"]}.', color=my_red)
                 await ctx.send(embed=eb)
                 return
 
@@ -633,7 +633,7 @@ class Chain(commands.Cog):
         # e = True; response = {'error': {'error': 'test', 'code': 8}}
         if e and 'error' in response:
             title=f'Retals tracking API key error'
-            description = f'Error with {name} [{tornId}]\'s key: {response["error"]["error"]}'
+            description = f'Error code {response["error"]["code"]} with {name} [{tornId}]\'s key: {response["error"]["error"]}'
             if response["error"]["code"] in [7]:
                 description += "\nIt means that you don't have the required AA permission (AA for API access) for this API request."
                 description += "\nThis is an in-game permission that faction leader and co-leader can grant to their members."

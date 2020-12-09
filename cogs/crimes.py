@@ -191,14 +191,14 @@ class Crimes(commands.Cog):
         response, e = await self.bot.api_call("faction", "", ["basic", "crimes"], key)
         if e and 'error' in response:
 
-            lst = [f'Problem with {name} [{tornId}]\'s key: {response["error"]["error"]}']
+            lst = [f'Error code {response["error"]["code"]} with {name} [{tornId}]\'s key: {response["error"]["error"]}']
             if response["error"]["code"] in [7]:
                 lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
                 lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
 
             if response["error"]["code"] in [1, 2, 6, 7, 10]:
                 lst += ["", "STOP"]
-                await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
+                await self.bot.send_error_message(channel, "\n".join(lst), title="OC tracking API key error")
                 return False
             else:
                 lst += ["", "CONTINUE"]
