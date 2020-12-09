@@ -392,6 +392,7 @@ class YataBot(Bot):
     async def send_error_message(self, channel, description, fields={}, title=False):
         title = title if title else "Error"
         eb = Embed(title=title, description=description, color=my_red)
+        eb = append_update(eb, ts_now(), text="At ")
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
         return await channel.send(embed=eb)
