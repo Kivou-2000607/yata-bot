@@ -116,8 +116,8 @@ class Admin(commands.Cog):
         configuration["admin"]["joined_at"] = int(datetime.datetime.timestamp(bot.joined_at))
         configuration["admin"]["guild_id"] = str(ctx.guild.id)
         configuration["admin"]["guild_name"] = ctx.guild.name
-        configuration["admin"]["owner_did"] = str(ctx.guild.owner.id)
-        configuration["admin"]["owner_dname"] = f'{ctx.guild.owner}'
+        configuration["admin"]["owner_did"] = str(ctx.guild.owner.id) if ctx.guild.owner is not None else 0
+        configuration["admin"]["owner_dname"] = f'{ctx.guild.owner}' if ctx.guild.owner is not None else "Unknown owner"
         configuration["admin"]["channels"] = channels
         configuration["admin"]["roles"] = roles
         configuration["admin"]["server_admins"] = server_admins
