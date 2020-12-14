@@ -26,6 +26,7 @@ import logging.config
 import time
 import sys
 import discord
+from decouple import config
 
 # import bot
 from bots.yata import YataBot
@@ -62,14 +63,25 @@ logging.warning("warning")
 logging.error("error")
 
 # get basic config
-bot_id = os.environ.get("YATA_ID", 1)
-github_token = os.environ.get("GITHUB_TOKEN", "")
-main_server_id = os.environ.get("MAIN_SERVER_ID", 581227228537421825)
+bot_id = config("BOT_ID", default=1)
+github_token = config("GITHUB_TOKEN", default="")
+main_server_id = config("MAIN_SERVER_ID", default=581227228537421825)
 logging.info(f'Starting bot: bot id = {bot_id}')
+
+# sentry
+if config("ENABLE_SENTRY", default=False, cast=bool):
+    logging.info(f'Sentry: enabled')
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=config("SENTRY_DSN"),
+        traces_sample_rate=config("SENTRY_SAMPLE_RATE", default=1.0, cast=float),
+        environment=config("SENTRY_ENVIRONMENT"),
+    )
+else:
+    logging.info(f'Sentry: disabled')
 
 # get configurations from YATA's database
 token, configurations = load_configurations(bot_id)
-
 
 def get_prefix(client, message):
     if message.guild:
@@ -100,16 +112,16 @@ bot.add_cog(Admin(bot))
 # 5: YATA backup (the backup version of the public bot)
 
 if int(bot_id) in [1, 3, 5]:
-    bot.add_cog(Verify(bot))
-    bot.add_cog(Loot(bot))
+    # bot.add_cog(Verify(bot))
+    # bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))
-    bot.add_cog(Racket(bot))
-    bot.add_cog(Revive(bot))
-    bot.add_cog(Crimes(bot))
-    bot.add_cog(API(bot))
+    # bot.add_cog(Racket(bot))
+    # bot.add_cog(Revive(bot))
+    # bot.add_cog(Crimes(bot))
+    # bot.add_cog(API(bot))
     bot.add_cog(Chain(bot))
-    bot.add_cog(Misc(bot))
-    bot.add_cog(Repository(bot))
+    # bot.add_cog(Misc(bot))
+    # bot.add_cog(Repository(bot))
     # bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [2]:

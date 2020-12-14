@@ -4,6 +4,7 @@ pytz
 psycopg2-binary
 asyncio
 asyncpg
+sentry-sdk
 
 # for repo
 PyGithub==1.51

@@ -108,3 +108,4 @@ export.sh
 source.bash
 *.pid
 .vscode
+*~

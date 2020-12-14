@@ -30,6 +30,7 @@ import html
 import string
 import random
 from datetime import datetime
+from decouple import config
 
 # definition of the view linking Player to Key
 # Name of the view: player_view_player_key
@@ -43,9 +44,20 @@ from datetime import datetime
 #   FROM player_key
 #     JOIN player_player ON player_key.player_id = player_player.id;
 
+def get_credentials():
+    db_credentials = {
+        "dbname": config("DB_NAME"),
+        "user": config("DB_USER"),
+        "password": config("DB_PASSWORD"),
+        "host": config("DB_HOST"),
+        "port": config("DB_PORT")
+    }
+
+    return db_credentials
+
 
 def load_configurations(bot_id):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     con = psycopg2.connect(**db_cred)
 
     # get bot
@@ -70,7 +82,7 @@ def load_configurations(bot_id):
 
 
 async def get_configuration(bot_id, discord_id):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -79,7 +91,7 @@ async def get_configuration(bot_id, discord_id):
 
 
 async def set_n_servers(bot_id, n):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -91,7 +103,7 @@ async def set_n_servers(bot_id, n):
 
 
 async def set_configuration(bot_id, discord_id, server_name, configuration):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -112,7 +124,7 @@ async def set_configuration(bot_id, discord_id, server_name, configuration):
 
 
 async def delete_configuration(bot_id, discord_id):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -128,7 +140,7 @@ async def delete_configuration(bot_id, discord_id):
 
 
 async def get_server_admins(bot_id, discord_id):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -155,7 +167,7 @@ async def get_server_admins(bot_id, discord_id):
 
 async def get_yata_user(user_id, type="T"):
     # get YATA user
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -169,7 +181,7 @@ async def get_yata_user(user_id, type="T"):
 
 
 def get_secret(name):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     con = psycopg2.connect(**db_cred)
     cur = con.cursor()
     cur.execute(f"SELECT uid, secret, hookurl FROM bot_chat WHERE name = '{name}';")
@@ -180,7 +192,7 @@ def get_secret(name):
 
 
 async def push_data(bot_id, timestamp, data, module):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -192,7 +204,7 @@ async def push_data(bot_id, timestamp, data, module):
 
 
 def get_data(bot_id, module):
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     con = psycopg2.connect(**db_cred)
     cur = con.cursor()
     if module == "rackets":
@@ -209,7 +221,7 @@ def get_data(bot_id, module):
 async def get_faction_name(tId):
     if str(tId).isdigit():
         tId = int(tId)
-        db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+        db_cred = get_credentials()
         dbname = db_cred["dbname"]
         del db_cred["dbname"]
         con = await asyncpg.connect(database=dbname, **db_cred)
@@ -222,7 +234,7 @@ async def get_faction_name(tId):
 
 async def reset_notifications(tornId):
     # get YATA user
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -232,7 +244,7 @@ async def reset_notifications(tornId):
 
 async def get_loots():
     # get YATA npcs loot timings
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -244,7 +256,7 @@ async def get_loots():
 
 async def get_scheduled():
     # get YATA npcs loot timings
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
@@ -256,7 +268,7 @@ async def get_scheduled():
 
 async def get_npc(id):
     # get YATA npcs loot timings
-    db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+    db_cred = get_credentials()
     dbname = db_cred["dbname"]
     del db_cred["dbname"]
     con = await asyncpg.connect(database=dbname, **db_cred)
