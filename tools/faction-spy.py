@@ -36,7 +36,7 @@ def get_key():
 
 # do a call for each factions
 for faction_id, faction in db["factions"].items():
-    req = requests.get(f"https://api.torn.com/faction/?selections=basic,timestamp&key={get_key()}")
+    req = requests.get(f"https://api.torn.com/faction/{faction_id}?selections=basic,timestamp&key={get_key()}")
     try:
         faction_json = req.json()
     except BaseException as e:

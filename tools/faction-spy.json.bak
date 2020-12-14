@@ -1,18 +1,21 @@
 {
     "factions": {
-        "faction_id": {
-            "members": {}
+        "ENTER_FACTION_ID": {
+            "members": {
+            }
         }
     },
     "keys": {
-        "user_id": {
-            "key": "xxx",
+        "torn_id": {
+            "key": "API_KEY",
             "last_used": 0
-        }
+        },
     },
     "last_action": 120,
     "records": {
         "attacksassisted": "attacks assisted",
+        "attacksdraw": "attacks draw",
+        "attackslost": "attacks lost",
         "bountiescollected": "bounties collected",
         "bountiesplaced": "bounties placed",
         "bountiesreceived": "bounties received",
@@ -24,6 +27,6 @@
         "revivesreceived": "revives received",
         "xantaken": "xanax taken"
     },
-    "wh_id": "x",
-    "wh_token": "x"
+    "wh_id": "web_hook_id",
+    "wh_token": "web_hook_token"
 }

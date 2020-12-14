@@ -18,6 +18,7 @@ This file is part of yata-bot.
 """
 
 # import standard modules
+import sys
 import json
 import asyncio
 import aiohttp
@@ -30,7 +31,13 @@ import html
 import string
 import random
 from datetime import datetime
-from decouple import config
+# change folder for .env file if
+if len(sys.argv) > 1:
+    from decouple import AutoConfig
+    print(os.path.join(os.getcwd(), sys.argv[1]))
+    config = AutoConfig(search_path=os.path.join(os.getcwd(), sys.argv[1]))
+else:
+    from decouple import config
 
 # definition of the view linking Player to Key
 # Name of the view: player_view_player_key

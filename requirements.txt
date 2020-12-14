@@ -5,6 +5,7 @@ psycopg2-binary
 asyncio
 asyncpg
 sentry-sdk
+python-decouple==3.3
 
 # for repo
 PyGithub==1.51

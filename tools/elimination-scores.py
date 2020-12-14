@@ -1,4 +1,4 @@
-"""
+l"""
 Copyright 2020 kivou.2000607@gmail.com
 
 This file is part of yata-bot.

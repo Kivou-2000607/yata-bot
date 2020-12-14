@@ -19,6 +19,7 @@ This file is part of yata-bot.
 
 # import standard modules
 import os
+import sys
 import json
 import psycopg2
 import logging
@@ -26,7 +27,13 @@ import logging.config
 import time
 import sys
 import discord
-from decouple import config
+# change folder for .env file if
+if len(sys.argv) > 1:
+    from decouple import AutoConfig
+    print(os.path.join(os.getcwd(), sys.argv[1]))
+    config = AutoConfig(search_path=os.path.join(os.getcwd(), sys.argv[1]))
+else:
+    from decouple import config
 
 # import bot
 from bots.yata import YataBot
@@ -112,16 +119,16 @@ bot.add_cog(Admin(bot))
 # 5: YATA backup (the backup version of the public bot)
 
 if int(bot_id) in [1, 3, 5]:
-    # bot.add_cog(Verify(bot))
-    # bot.add_cog(Loot(bot))
+    bot.add_cog(Verify(bot))
+    bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))
-    # bot.add_cog(Racket(bot))
-    # bot.add_cog(Revive(bot))
-    # bot.add_cog(Crimes(bot))
-    # bot.add_cog(API(bot))
+    bot.add_cog(Racket(bot))
+    bot.add_cog(Revive(bot))
+    bot.add_cog(Crimes(bot))
+    bot.add_cog(API(bot))
     bot.add_cog(Chain(bot))
-    # bot.add_cog(Misc(bot))
-    # bot.add_cog(Repository(bot))
+    bot.add_cog(Misc(bot))
+    bot.add_cog(Repository(bot))
     # bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [2]:
