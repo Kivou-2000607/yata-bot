@@ -70,6 +70,11 @@ class Verify(commands.Cog):
         if status == -1:
             return
 
+        # check if there is a welcome channel
+        channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
+        if channel is None:
+            return
+
         # verify member when he join
         role = self.bot.get_module_role(member.guild.roles, config.get("roles_verified", {}))
         if role is None:
@@ -77,10 +82,6 @@ class Verify(commands.Cog):
         message, success = await self._member(member, role, discordID=member.id, API_KEY=key, context=False)
 
         # send message to welcome channel
-        channel = self.bot.get_module_channel(member.guild.channels, config.get("channels_welcome", {}))
-        if channel is None:
-            return
-
         eb = Embed(color=my_green if success else my_red)
         eb.add_field(name=f'Verification {"succeeded" if success else "failed"}', value=message)
         # eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
