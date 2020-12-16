@@ -22,5 +22,9 @@ kill -9 $(cat pids/nub.pid)
 nohup python yata.py ".env-nub" > logs/nub.log 2>&1 &
 echo $! > pids/nub.pid
 
+# send the logs
+kill -9 $(cat pids/logs.pid)
+nohup python logs.py ".env-yata" > logs/logs.log 2>&1 &
+echo $! > pids/logs.pid
 
 # python yata.py
