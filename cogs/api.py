@@ -36,6 +36,7 @@ from discord.utils import get
 
 # import bot functions and classes
 from inc.yata_db import reset_notifications
+from inc.yata_db import get_credentials
 from inc.handy import *
 
 
@@ -367,7 +368,7 @@ class API(commands.Cog):
         guild = get(self.bot.guilds, id=self.bot.main_server_id)
 
         # connect to YATA database of notifiers
-        db_cred = json.loads(os.environ.get("DB_CREDENTIALS"))
+        db_cred = get_credentials()
         dbname = db_cred["dbname"]
         del db_cred["dbname"]
         sql = 'SELECT "tId", "dId", "notifications", "value" FROM player_view_player_key WHERE "activateNotifications" = True;'
@@ -382,7 +383,8 @@ class API(commands.Cog):
                     logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
                     # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                     # await self.bot.send_log_main("member not found", headers=headers)
-                    await reset_notifications(record["tId"])
+                    if self.bot.bot_id == 3:
+                        await reset_notifications(record["tId"])
                     continue
 
                 try:
