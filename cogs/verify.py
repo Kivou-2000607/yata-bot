@@ -415,21 +415,17 @@ class Verify(commands.Cog):
                 for faction_role in faction_roles:
                     # add faction role if role exists
                     await author.add_roles(faction_role)
-                    roles_list.append(f'@{html.unescape(faction_role.name)}')
+                    roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
+                # get positions roles
                 if fId in config.get("factions", {}) and fId in config.get("positions", {}):
-                    try:
-                        position_name = f'{html.unescape(response.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
-                        position_role = get(ctx.guild.roles, name=position_name)
-                        if position_role is None:
-                            position_role = await ctx.guild.create_role(name=position_name)
-                            position_role = get(ctx.guild.roles, name=position_name)
-                        for r in [r for r in author.roles if " of " in r.name and r.name.split(" of ")[-1] == html.unescape(fNa)]:
-                            await author.remove_roles(r)
+                    position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
+                    position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
+                    position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, position_roles_id, all=True) if _ is not None]
+                    for position_role in position_roles:
+                        # add faction role if role exists
                         await author.add_roles(position_role)
-                        roles_list.append(f'@{html.unescape(position_role.name)}')
-                    except BaseException as e:
-                        logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
+                        roles_list.append(f'@{html.unescape(position_role.name)} (position {position_name})')
 
                 nl = '\n- '
                 return f'{author}, you have been verified and are now known as **{author.display_name}**.\nYou have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
@@ -457,21 +453,17 @@ class Verify(commands.Cog):
                         for faction_role in faction_roles:
                             # add faction role if role exists
                             await member.add_roles(faction_role)
-                            roles_list.append(f'@{faction_role}')
+                            roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
+                        # get positions roles
                         if fId in config.get("factions", {}) and fId in config.get("positions", {}):
-                            try:
-                                position_name = f'{html.unescape(response.get("faction", {}).get("position"))} of {html.unescape(fNa)}'
-                                position_role = get(ctx.guild.roles, name=position_name)
-                                if position_role is None:
-                                    position_role = await ctx.guild.create_role(name=position_name)
-                                    position_role = get(ctx.guild.roles, name=position_name)
-                                for r in [r for r in member.roles if " of " in r.name and r.name.split(" of ")[-1] == html.unescape(fNa)]:
-                                    await member.remove_roles(r)
+                            position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
+                            position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
+                            position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, position_roles_id, all=True) if _ is not None]
+                            for position_role in position_roles:
+                                # add faction role if role exists
                                 await member.add_roles(position_role)
-                                roles_list.append(f'@{html.unescape(position_role.name)}')
-                            except BaseException as e:
-                                logging.error(f'[verify/_member] {guild} [{guild.id}]: positions {hide_key(e)}')
+                                roles_list.append(f'@{html.unescape(position_role.name)} (position {position_name})')
 
                         nl = '\n- '
                         return f'{member} have been verified and are now known as **{member.display_name}**.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
