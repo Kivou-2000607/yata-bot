@@ -176,7 +176,7 @@ class Chain(commands.Cog):
             # if warning
             elif timeout < deltaW:
                 eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
-                await ctx.send("" if role is None else role, embed=eb)
+                await ctx.send("" if role is None else f'{role} chain timeout {timeout}s', embed=eb)
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
