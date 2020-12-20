@@ -418,13 +418,16 @@ class Verify(commands.Cog):
                     roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
                 # get positions roles
+                all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
+                all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
+                await author.remove_roles(*all_position_roles)
                 if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                     position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
                     position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
-                    position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, position_roles_id, all=True) if _ is not None]
+                    position_roles = [r for r in all_position_roles if str(r.id) in position_roles_id]
+                    await author.add_roles(*position_roles)
                     for position_role in position_roles:
                         # add faction role if role exists
-                        await author.add_roles(position_role)
                         roles_list.append(f'@{html.unescape(position_role.name)} (position {position_name})')
 
                 nl = '\n- '
@@ -456,13 +459,16 @@ class Verify(commands.Cog):
                             roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
                         # get positions roles
+                        all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
+                        all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
+                        await member.remove_roles(*all_position_roles)
                         if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                             position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
                             position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
-                            position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, position_roles_id, all=True) if _ is not None]
+                            position_roles = [r for r in all_position_roles if str(r.id) in position_roles_id]
+                            await member.add_roles(*position_roles)
                             for position_role in position_roles:
                                 # add faction role if role exists
-                                await member.add_roles(position_role)
                                 roles_list.append(f'@{html.unescape(position_role.name)} (position {position_name})')
 
                         nl = '\n- '
