@@ -405,22 +405,30 @@ class Verify(commands.Cog):
                         pass
                 await author.add_roles(verified_role)
 
+                # init role list for display
+                roles_list = [f'@{html.unescape(verified_role.name)}']
+
+                # get all faction and position roles
+                all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
+                all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
+                all_faction_roles_id = list(set([role_id for faction_id, roles  in config.get("factions", {}).items() for role_id in roles]))
+                all_faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_faction_roles_id, all=True) if _ is not None]
+                all_roles_to_clean = list(set(all_faction_roles + all_position_roles))
+
+                # clean all roles
+                await author.remove_roles(*all_roles_to_clean)
+
                 # Get faction roles
                 fId = str(response['faction']['faction_id'])
                 fNa = str(response['faction']['faction_name'])
                 faction_roles_id = config.get("factions", {}).get(fId, {})
-                faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
-
-                roles_list = [f'@{html.unescape(verified_role.name)}']
+                faction_roles = [r for r in all_position_roles if str(r.id) in faction_roles_id]
+                await author.add_roles(*faction_roles)
                 for faction_role in faction_roles:
                     # add faction role if role exists
-                    await author.add_roles(faction_role)
                     roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
                 # get positions roles
-                all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
-                all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
-                await author.remove_roles(*all_position_roles)
                 if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                     position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
                     position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
@@ -446,22 +454,30 @@ class Verify(commands.Cog):
                                 pass
                         await member.add_roles(verified_role)
 
+                        # init role list for display
+                        roles_list = [f'@{html.unescape(verified_role.name)}']
+
+                        # get all faction and position roles
+                        all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
+                        all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
+                        all_faction_roles_id = list(set([role_id for faction_id, roles  in config.get("factions", {}).items() for role_id in roles]))
+                        all_faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_faction_roles_id, all=True) if _ is not None]
+                        all_roles_to_clean = list(set(all_faction_roles + all_position_roles))
+
+                        # clean all roles
+                        await member.remove_roles(*all_roles_to_clean)
+
                         # Get faction roles
                         fId = str(response['faction']['faction_id'])
                         fNa = str(response['faction']['faction_name'])
                         faction_roles_id = config.get("factions", {}).get(fId, {})
-                        faction_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, faction_roles_id, all=True) if _ is not None]
-
-                        roles_list = [f'@{verified_role}']
+                        faction_roles = [r for r in all_position_roles if str(r.id) in faction_roles_id]
+                        await member.add_roles(*faction_roles)
                         for faction_role in faction_roles:
                             # add faction role if role exists
-                            await member.add_roles(faction_role)
                             roles_list.append(f'@{faction_role} (faction {html.unescape(fNa)})')
 
                         # get positions roles
-                        all_position_roles_id = list(set([role_id for faction_id, positions  in config.get("positions", {}).items() for _ in positions.values() for role_id in _]))
-                        all_position_roles = [_ for _ in self.bot.get_module_role(ctx.guild.roles, all_position_roles_id, all=True) if _ is not None]
-                        await member.remove_roles(*all_position_roles)
                         if fId in config.get("factions", {}) and fId in config.get("positions", {}):
                             position_name = f'{html.unescape(response.get("faction", {}).get("position"))}'
                             position_roles_id = config.get("positions", {}).get(fId, {}).get(position_name)
@@ -471,8 +487,8 @@ class Verify(commands.Cog):
                                 # add faction role if role exists
                                 roles_list.append(f'@{html.unescape(position_role.name)} (position {position_name})')
 
-                        nl = '\n- '
-                        return f'{member} have been verified and are now known as **{member.display_name}**.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+                                nl = '\n- '
+                                return f'{member} have been verified and are now known as **{member.display_name}**.\nThey have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
                 # if no match in this loop it means that the member is not in this server
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
