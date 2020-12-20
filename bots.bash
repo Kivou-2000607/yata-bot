@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # load virtual env
-source ~/venvbot/bin/activate
+source /usr/local/share/venv_py3.9/bin/activate
 #pip install -U cloudscraper
 
 # move to appropriate folder
