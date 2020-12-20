@@ -422,7 +422,7 @@ class Verify(commands.Cog):
                 fId = str(response['faction']['faction_id'])
                 fNa = str(response['faction']['faction_name'])
                 faction_roles_id = config.get("factions", {}).get(fId, {})
-                faction_roles = [r for r in all_position_roles if str(r.id) in faction_roles_id]
+                faction_roles = [r for r in all_faction_roles if str(r.id) in faction_roles_id]
                 await author.add_roles(*faction_roles)
                 for faction_role in faction_roles:
                     # add faction role if role exists
@@ -471,7 +471,7 @@ class Verify(commands.Cog):
                         fId = str(response['faction']['faction_id'])
                         fNa = str(response['faction']['faction_name'])
                         faction_roles_id = config.get("factions", {}).get(fId, {})
-                        faction_roles = [r for r in all_position_roles if str(r.id) in faction_roles_id]
+                        faction_roles = [r for r in all_faction_roles if str(r.id) in faction_roles_id]
                         await member.add_roles(*faction_roles)
                         for faction_role in faction_roles:
                             # add faction role if role exists
