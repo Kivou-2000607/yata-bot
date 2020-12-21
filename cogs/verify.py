@@ -399,7 +399,7 @@ class Verify(commands.Cog):
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
             try:
-                await author.edit(nick=nickname)
+                await member.edit(nick=nickname)
             except BaseException:
                 pass
 
