@@ -461,12 +461,6 @@ class Verify(commands.Cog):
         if not config:
             return
 
-        # get key
-        status, tornId, key = await self.bot.get_master_key(guild)
-        if status == -1:
-            await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
-            return
-
         # Get Verified role
         role = self.bot.get_module_role(guild.roles, config.get("roles_verified", {}))
         if role is None:
@@ -483,6 +477,12 @@ class Verify(commands.Cog):
         for i, member in enumerate(members):
             if member.bot:
                 continue
+
+            # get key
+            status, tornId, key = await self.bot.get_master_key(guild)
+            if status == -1:
+                await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
+                return
 
             if force:
                 if ctx:
