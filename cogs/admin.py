@@ -106,7 +106,9 @@ class Admin(commands.Cog):
 
         # get list of roles
         roles = {}
-        for role in ctx.guild.roles:
+        role_list = ctx.guild.roles
+        role_list.reverse()
+        for role in role_list:
             roles[str(role.id)] = f'{role}'
 
         # set admin section of the configuration
