@@ -86,6 +86,10 @@ class Marvin(commands.Cog):
             # beta tester: [ios android]
             792136004684480532: {
                 788182653101670411: [791813881545883709, 791813997372243969],
+            },
+            # Chappie
+            792138838327296011: {
+                789249798674055168: [755352458833821727],
             }
 
         }
@@ -196,7 +200,9 @@ class Marvin(commands.Cog):
 
                     eb = Embed(description=f'Role @{role.name} **{"added" if add else "removed"}**', color=my_green if add else my_red)
                     eb.set_author(name=member.display_name, icon_url=member.avatar_url)
+                    msgs = []
                     msg = await channel.send(embed=eb)
+                    msgs.append(msg)
 
                     # check if user have at least one helper role
                     cascading_roles = self.guilds_cascading_roles.get(payload.message_id, {})
@@ -215,9 +221,11 @@ class Marvin(commands.Cog):
                         eb = Embed(description=f'Main role @{main_role.name} **{"added" if add else "removed"}**', color=my_green if add else my_red)
                         eb.set_author(name=member.display_name, icon_url=member.avatar_url)
                         msg = await channel.send(embed=eb)
+                        msgs.append(msg)
 
                     await asyncio.sleep(10)
-                    await msg.delete()
+                    for msg in msgs:
+                        await msg.delete()
 
                 except BaseException as e:
                     msg = await self.bot.send_error_message(channel, f"{e}", title=f'Error {"adding" if add else "removing"} role @{role}')
