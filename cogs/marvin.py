@@ -55,7 +55,7 @@ class Marvin(commands.Cog):
         self.quotes = []
 
         self.guilds_reactions = {
-            760796567484629002: {
+            792138838327296011: {
                 'pico': 755352458833821727,
                 'dollarbill': 755352458833821727
             },
@@ -70,15 +70,32 @@ class Marvin(commands.Cog):
                 'yata': 776353120912408588,
                 'python': 776351392209567764,
                 'js': 776351375411380225,
+            },
+            792136004684480532: {
+                'Metal_Left': 791813881545883709,
+                'Metal_Right': 791813997372243969,
             }
         }
         self.guilds_cascading_roles = {
+            # YATA
             # helper: [yata helper, python helper, js helper, torn helper]
-            776354040414076950: [776353120912408588, 776351392209567764, 776351375411380225, 776387850689314836],
+            760807943762739230: {
+                776354040414076950: [776353120912408588, 776351392209567764, 776351375411380225, 776387850689314836],
+            },
+            # torn PDA
+            # beta tester: [ios android]
+            792136004684480532: {
+                788182653101670411: [791813881545883709, 791813997372243969],
+            }
+
         }
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        # only blab for yata and chappie server
+        if message.guild.id not in [581227228537421825, 650701692853288991]:
+            return
+
         # return if bot
         if message.author.bot:
             return
@@ -182,15 +199,22 @@ class Marvin(commands.Cog):
                     msg = await channel.send(embed=eb)
 
                     # check if user have at least one helper role
-                    for role_main_id, role_casc_ids in self.guilds_cascading_roles.items():
+                    cascading_roles = self.guilds_cascading_roles.get(payload.message_id, {})
+                    for role_main_id, role_casc_ids in cascading_roles.items():
                         main_role = get(guild.roles, id=role_main_id)
                         if main_role is None:
                             continue
-                        
+
                         if len([r for r in member.roles if r.id in role_casc_ids]):
                             await member.add_roles(main_role)
+                            add = True
                         else:
                             await member.remove_roles(main_role)
+                            add = False
+
+                        eb = Embed(description=f'Main role @{main_role.name} **{"added" if add else "removed"}**', color=my_green if add else my_red)
+                        eb.set_author(name=member.display_name, icon_url=member.avatar_url)
+                        msg = await channel.send(embed=eb)
 
                     await asyncio.sleep(10)
                     await msg.delete()
