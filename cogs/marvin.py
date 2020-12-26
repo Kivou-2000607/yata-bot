@@ -59,19 +59,19 @@ class Marvin(commands.Cog):
 
         # list of staff roles id per server
         self.staff_id = {
-            760807943762739230: [679669933680230430],
+            581227228537421825: [679669933680230430],
             650701692853288991: [755352458833821727]
         }
 
         # list of channels id for message per server
-        self.channel_for_message = {
-            760807943762739230: [703587583862505483],
+        self.channel_for_help = {
+            581227228537421825: [703587583862505483],
             650701692853288991: [650701692853288997]
         }
 
         # list of channels id not meant for help (sends message if staff is pinged there)
         self.not_for_help = {
-            760807943762739230: [581227228537421829],
+            581227228537421825: [581227228537421829],
             650701692853288991: [737055053608910952]
         }
 
@@ -126,7 +126,7 @@ class Marvin(commands.Cog):
         staff_id = self.staff_id.get(message.guild.id, [])
         staff_mentionned = any([str(i) in message.content for i in staff_id])
         bot_mentionned = str(self.bot.user.id) in message.content
-        help_channel = message.channel.id in self.channel_for_message.get(message.guild.id, [])
+        help_channel = message.channel.id in self.channel_for_help.get(message.guild.id, [])
 
         if bot_mentionned:  # if bot is mentionned
             await message.channel.send("*sigh*")
@@ -155,8 +155,8 @@ class Marvin(commands.Cog):
                 await message.channel.send("\n".join(lst))
                 return
 
-        elif not help_channel:
-            if random.random() > 0.9:
+        if not help_channel:
+            if random.random() > 0.0:
                 if not len(self.quotes_used):
                     self.quotes_used = list(self.quotes_lib)
 
@@ -252,7 +252,7 @@ class Marvin(commands.Cog):
                     msg = await self.bot.send_error_message(channel, f"{e}", title=f'Error {"adding" if add else "removing"} role @{role}')
                     await asyncio.sleep(10)
                     await msg.delete()
-                    
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
