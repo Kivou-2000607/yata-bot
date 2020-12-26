@@ -52,8 +52,30 @@ class Marvin(commands.Cog):
             "Life. Loathe it or ignore it. You can’t like it.",
             "*Now the world has gone to bed,*\n*Darkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
 
-        self.quotes = []
+        self.quotes_used = []
 
+        # servers where marvin can talk
+        self.blab_servers = [581227228537421825, 650701692853288991]
+
+        # list of staff roles id per server
+        self.staff_id = {
+            760807943762739230: [679669933680230430],
+            650701692853288991: [755352458833821727]
+        }
+
+        # list of channels id for message per server
+        self.channel_for_message = {
+            760807943762739230: [703587583862505483],
+            650701692853288991: [650701692853288997]
+        }
+
+        # list of channels id not meant for help (sends message if staff is pinged there)
+        self.not_for_help = {
+            760807943762739230: [581227228537421829],
+            650701692853288991: [737055053608910952]
+        }
+
+        # list of emoji and roles for reactions
         self.guilds_reactions = {
             792138838327296011: {
                 'pico': 755352458833821727,
@@ -96,34 +118,33 @@ class Marvin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        # only blab for yata and chappie server
-        if message.guild.id not in [581227228537421825, 650701692853288991]:
+        # only blab for yata and chappie server or author is bot
+        if message.guild.id not in self.blab_servers or message.author.bot:
             return
 
-        # return if bot
-        if message.author.bot:
-            return
+        bot_user_id = str(self.bot.user.id)
+        staff_id = self.staff_id.get(message.guild.id, [])
+        staff_mentionned = any([str(i) in message.content for i in staff_id])
+        bot_mentionned = str(self.bot.user.id) in message.content
+        help_channel = message.channel.id in self.channel_for_message.get(message.guild.id, [])
 
-        # if it's pinged
-        print(message.content)
-        if '<@&735047465220440075>' in message.content:
+        if bot_mentionned:  # if bot is mentionned
             await message.channel.send("*sigh*")
 
-        # in #lobby
-        if message.channel.id in [581227228537421829]:
-            readme = get(message.guild.channels, id=623906124428476427)
-            if "<@&679669933680230430>" in message.content:
-                await message.channel.send(f"It's not a good channel to ask for help. Please read {readme.mention}.")
+        elif staff_mentionned:  # if staff is mentionned
+
+            # wrong channel
+            if message.channel.id in self.not_for_help.get(message.guild.id, []):
+                await message.channel.send(f"{message.author.mention}, it's not a good channel to ask for help. Please read server's rules.")
                 return
 
-        # only ping
-        if message.content == "<@&679669933680230430>":
-            await message.channel.send(f"Don't just ping. Say what you want.")
-            return
+            # only ping
+            if message.content.replace("&", "") in [f'<@{i}>' for i in staff_id]:
+                await message.channel.send(f"{message.author.mention}, don't just ping staff, try to formulate your request with a complete sentence.")
+                return
 
-        # in #yata-bot-setup
-        if message.channel.id in [703587583862505483] and 679669933680230430 not in message.author.roles:
-            if "<@&679669933680230430>" in message.content:
+            # in #yata-bot-setup
+            if help_channel:
                 lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume.",
                        "Please wait a moment for a staff member. They like to pretend they are busy...",
                        "In the meantime they asked me to tell you to:",
@@ -132,17 +153,18 @@ class Marvin(commands.Cog):
                        "",
                        "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]
                 await message.channel.send("\n".join(lst))
-            return
+                return
 
-        if random.random() > 0.9:
-            if not len(self.quotes):
-                self.quotes = list(self.quotes_lib)
+        elif not help_channel:
+            if random.random() > 0.9:
+                if not len(self.quotes_used):
+                    self.quotes_used = list(self.quotes_lib)
 
-            quote = random.choice(self.quotes)
-            self.quotes.remove(quote)
+                quote = random.choice(self.quotes_used)
+                self.quotes_used.remove(quote)
 
-            await message.channel.send(quote)
-            return
+                await message.channel.send(quote)
+                return
 
     async def toggle_role(self, payload):
         add = payload.event_type == 'REACTION_ADD'
@@ -177,7 +199,6 @@ class Marvin(commands.Cog):
             user = self.bot.get_user(payload.user_id)
             if user is None or user.bot:
                 return
-
 
             if payload.emoji.name in emoji_role:
                 # get guild and roles
@@ -231,9 +252,7 @@ class Marvin(commands.Cog):
                     msg = await self.bot.send_error_message(channel, f"{e}", title=f'Error {"adding" if add else "removing"} role @{role}')
                     await asyncio.sleep(10)
                     await msg.delete()
-
-
-
+                    
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
