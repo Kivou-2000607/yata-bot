@@ -166,6 +166,11 @@ class Marvin(commands.Cog):
                 await message.channel.send(quote)
                 return
 
+        if '!looter' in message.content:
+            responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shurg*"]
+            await message.channel.send(random.choice(responses))
+
+
     async def toggle_role(self, payload):
         add = payload.event_type == 'REACTION_ADD'
 
