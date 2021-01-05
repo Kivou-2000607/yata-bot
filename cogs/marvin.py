@@ -156,7 +156,7 @@ class Marvin(commands.Cog):
                 return
 
         if '!looter' in message.content:
-            responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shurg*"]
+            responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shrug*"]
             await message.channel.send(random.choice(responses))
             return
 
