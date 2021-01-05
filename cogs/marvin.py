@@ -155,8 +155,13 @@ class Marvin(commands.Cog):
                 await message.channel.send("\n".join(lst))
                 return
 
+        if '!looter' in message.content:
+            responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shurg*"]
+            await message.channel.send(random.choice(responses))
+            return
+
         if not help_channel:
-            if random.random() > 0.0:
+            if random.random() > 0.9:
                 if not len(self.quotes_used):
                     self.quotes_used = list(self.quotes_lib)
 
@@ -165,10 +170,6 @@ class Marvin(commands.Cog):
 
                 await message.channel.send(quote)
                 return
-
-        if '!looter' in message.content:
-            responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shurg*"]
-            await message.channel.send(random.choice(responses))
 
 
     async def toggle_role(self, payload):
