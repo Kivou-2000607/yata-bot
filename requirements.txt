@@ -6,6 +6,7 @@ asyncio
 asyncpg
 sentry-sdk
 python-decouple>=3.3
+sh
 
 # for repo
 PyGithub>=1.51
