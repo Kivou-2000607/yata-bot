@@ -32,6 +32,7 @@ from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
+from inc.yata_db import set_configuration
 
 
 class Revive(commands.Cog):
@@ -140,11 +141,20 @@ class Revive(commands.Cog):
         msgList.append([m, ctx.channel, delete])
 
         # loop over all server to send the calls
-        for id in config.get("sending", []):
+        to_delete = []
+        sending_ids = config.get("sending", {})
+        for server_id, server_name in sending_ids.items():
+            logging.debug(f'[revive/revive] {ctx.guild} -> {server_name} [{server_id}]')
             eb_remote = eb
             try:
                 # get remote server coonfig
-                remote_guild = get(self.bot.guilds, id=int(id))
+                remote_guild = get(self.bot.guilds, id=int(server_id))
+                remote_guild = True
+                if remote_guild is None or isinstance(remote_guild, bool):
+                    logging.debug(f'[revive/revive] Delete unknown server: {ctx.guild} -> {server_name} [{server_id}]')
+                    to_delete.append(server_id)
+                    continue
+
                 logging.debug(f'[revive/revive] Sending call: {ctx.guild} -> {remote_guild}')
                 remote_config = self.bot.get_guild_configuration_by_module(remote_guild, "revive")
 
@@ -168,6 +178,15 @@ class Revive(commands.Cog):
 
             except BaseException as e:
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
+
+
+        if len(to_delete):
+            for server_id in to_delete:
+                del sending_ids[server_id]
+
+            self.bot.configurations[ctx.guild.id]["revive"]["sending"] = sending_ids
+            await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+            logging.debug(f"[revive/revive] <{ctx.guild}> push new sending list")
 
         # delete messages
         # wait for 5 minutes
