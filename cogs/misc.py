@@ -58,4 +58,4 @@ class Misc(commands.Cog):
     @commands.guild_only()
     async def crimes2(self, ctx):
         """gives latest update on crimes 2.0"""
-        await ctx.send("https://yata.alwaysdata.net/media/images/crimes2.gif")
+        await ctx.send("https://yata.yt/media/images/crimes2.gif")

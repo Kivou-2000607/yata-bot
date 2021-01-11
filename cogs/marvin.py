@@ -148,7 +148,7 @@ class Marvin(commands.Cog):
                 lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume.",
                        "Please wait a moment for a staff member. They like to pretend they are busy...",
                        "In the meantime they asked me to tell you to:",
-                       "- make sure you followed these steps https://yata.alwaysdata.net/bot/host/",
+                       "- make sure you followed these steps https://yata.yt/bot/host/",
                        "- give us the **name of the server**",
                        "",
                        "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]

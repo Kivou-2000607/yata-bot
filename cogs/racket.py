@@ -63,7 +63,7 @@ class Racket(commands.Cog):
             logging.error(f"[racket/notifications] Error {e}")
             return
 
-        _, randt_p = get_data(self.bot.bot_id, "rackets")        
+        _, randt_p = get_data(self.bot.bot_id, "rackets")
         rackets_p = randt_p["rackets"] if "rackets" in randt_p else {}
         territory_p = randt_p["territory"] if "territory" in randt_p else {}
 
@@ -92,7 +92,7 @@ class Racket(commands.Cog):
                     factionA = await get_faction_name(warId)
                     embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
 
-                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/citymap/territories/50x50/{k}.png')
+                embed.set_thumbnail(url=f'https://yata.yt/media/images/citymap/territories/50x50/{k}.png')
                 # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
                 embed.set_footer(text=f'{ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
@@ -107,7 +107,7 @@ class Racket(commands.Cog):
 
                 embed.add_field(name='Owner', value=f'[{html.unescape(factionO)}](https://www.torn.com/factions.php?step=profile&ID={v["faction"]})')
 
-                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/citymap/territories/50x50/{k}.png')
+                embed.set_thumbnail(url=f'https://yata.yt/media/images/citymap/territories/50x50/{k}.png')
                 # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
                 embed.set_footer(text=f'{ts_to_datetime(v["changed"], fmt="short")}')
                 mentions.append(embed)
@@ -136,7 +136,7 @@ class Racket(commands.Cog):
                 warId = v["war"]["assaulting_faction"]
                 embed.add_field(name='Assaulting', value=f'[{html.unescape(factionA)}](https://www.torn.com/factions.php?step=profile&ID={warId})')
 
-                embed.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/citymap/territories/50x50/{k}.png')
+                embed.set_thumbnail(url=f'https://yata.yt/media/images/citymap/territories/50x50/{k}.png')
                 # embed.set_footer(text=f'Created {ts_to_datetime(v["created"], fmt="short")} Changed {ts_to_datetime(v["changed"], fmt="short")}')
                 embed.set_footer(text=f'{ts_to_datetime(racket["changed"], fmt="short")}')
                 mentions.append(embed)

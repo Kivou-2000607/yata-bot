@@ -84,7 +84,7 @@ class Verify(commands.Cog):
         # send message to welcome channel
         eb = Embed(color=my_green if success else my_red)
         eb.add_field(name=f'Verification {"succeeded" if success else "failed"}', value=message)
-        # eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        # eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/documentation/", icon_url=self.bot.user.avatar_url)
         # eb.set_thumbnail(url=member.avatar_url)
         eb.set_author(name=member.display_name, icon_url=member.avatar_url)
         await channel.send(embed=eb)
@@ -99,7 +99,7 @@ class Verify(commands.Cog):
             msg.append(f'Either way, this process changes your nickname to your Torn name, gives you the {role} role and roles corresponding to your faction (depending on the server configuration). If you change your name or faction you can type `!verify` again whenever you want.')
 
             eb = Embed(title=f'Welcome to the {member.guild}\'s discord server', description="\n\n".join(msg), color=my_blue)
-            eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+            eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/documentation/", icon_url=self.bot.user.avatar_url)
             eb.set_thumbnail(url=member.guild.icon_url)
             await member.send(embed=eb)
 

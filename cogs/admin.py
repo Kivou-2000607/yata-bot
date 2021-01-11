@@ -86,7 +86,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=eb)
 
         if str(ctx.author.id) not in server_admins:
-            updates.append("You need to be an administrator to continue, ask a @Staff for help on the [YATA discord server](https://yata.alwaysdata.net/discord).")
+            updates.append("You need to be an administrator to continue, ask a @Staff for help on the [YATA discord server](https://yata.yt/discord).")
             eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
             await ctx.send(embed=eb)
             return
@@ -171,7 +171,7 @@ class Admin(commands.Cog):
 
         if not len(updates):
             updates.append("None")
-        updates.append("\nCheck out [your dashboard](https://yata.alwaysdata.net/bot/dashboard/).")
+        updates.append("\nCheck out [your dashboard](https://yata.yt/bot/dashboard/).")
         eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_blue)
         await ctx.send(embed=eb)
 
@@ -305,7 +305,7 @@ class Admin(commands.Cog):
     async def rtfm(self, ctx, *args):
         modules = ["admin", "verify", "loot", "chain", "rackets", "stocks", "revive", "crimes", "api"]
         hash = f"#{args[0]}" if len(args) and args[0] in modules else ""
-        await ctx.send(f"https://yata.alwaysdata.net/bot/documentation/{hash}")
+        await ctx.send(f"https://yata.yt/bot/documentation/{hash}")
 
     @commands.command()
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
@@ -350,13 +350,13 @@ class Admin(commands.Cog):
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         lst = [
-            "Have a look at the [online documentation](https://yata.alwaysdata.net/bot/documentation/) or browse the links.",
-            "If you need more information ping a @Staff in the [YATA server](https://yata.alwaysdata.net/discord).", ]
+            "Have a look at the [online documentation](https://yata.yt/bot/documentation/) or browse the links.",
+            "If you need more information ping a @Staff in the [YATA server](https://yata.yt/discord).", ]
         embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
 
-        lst = ["[General information](https://yata.alwaysdata.net/bot/)",
-               f"[Host the bot](https://yata.alwaysdata.net/bot/host/)",
-               # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.alwaysdata.net/bot/dashboard/)"
+        lst = ["[General information](https://yata.yt/bot/)",
+               f"[Host the bot](https://yata.yt/bot/host/)",
+               # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.yt/bot/dashboard/)"
                # "[FAQ]() soon...",
                ]
         embed.add_field(name='About the bot', value='\n'.join(lst))
@@ -366,10 +366,10 @@ class Admin(commands.Cog):
         embed.add_field(name='Links', value='\n'.join(lst))
 
         lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
-               "[Loot level timers](https://yata.alwaysdata.net/loot/)", ]
+               "[Loot level timers](https://yata.yt/loot/)", ]
         embed.add_field(name='Loot', value='\n'.join(lst))
 
-        embed.set_thumbnail(url="https://yata.alwaysdata.net/media/images/logo.png")
+        embed.set_thumbnail(url="https://yata.yt/media/images/logo.png")
 
         await ctx.send("", embed=embed)
 
@@ -560,7 +560,7 @@ class Admin(commands.Cog):
             msg.append(" ".join(discord_line))
 
         eb = Embed(description="\n".join(msg), color=my_blue)
-        # eb.set_author(name=self.bot.user.display_name, url="https://yata.alwaysdata.net/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        # eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/documentation/", icon_url=self.bot.user.avatar_url)
         # eb.set_thumbnail(url=member.avatar_url)
         await welcome_channel.send(embed=eb)
 

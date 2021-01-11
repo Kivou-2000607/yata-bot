@@ -11,7 +11,7 @@
 - Torn API
 
 ### Documentation
-https://yata.alwaysdata.net/bot/
+https://yata.yt/bot/
 
 ### Host the bot
 If you want to host the bot on your server read the documentation, join the YATA discord and ping a @Staff for a setup.

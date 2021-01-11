@@ -119,8 +119,8 @@ class Loot(commands.Cog):
                     description_list.append(f'{"**" if lvl == lvlc + 1 else ""}Level {self.lvl_roman[lvl]} in {s_to_hms(abs(due))} at {ts_to_datetime(time).strftime("%H:%M:%S")}{f" ({advance}%)" if advance > 0 else ""}{"**" if lvl == lvlc + 1 else ""}')
 
             eb = Embed(description="\n".join(description_list),color=my_blue)
-            eb.set_author(name=f'{npc["name"]} [{id}]', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.alwaysdata.net/media/images/loot/npc_{id}.png')
-            eb.set_thumbnail(url=f'https://yata.alwaysdata.net/media/images/loot/loot{lvlc}.png')
+            eb.set_author(name=f'{npc["name"]} [{id}]', url=f'https://www.torn.com/loader.php?sid=attack&user2ID={id}', icon_url=f'https://yata.yt/media/images/loot/npc_{id}.png')
+            eb.set_thumbnail(url=f'https://yata.yt/media/images/loot/loot{lvlc}.png')
             await ctx.send(embed=eb)
 
         # clean messages
@@ -155,7 +155,7 @@ class Loot(commands.Cog):
 
                 # author field
                 author = f'{npc["name"]} [{npc_id}]'
-                author_icon = f"https://yata.alwaysdata.net/media/images/loot/npc_{npc_id}.png"
+                author_icon = f"https://yata.yt/media/images/loot/npc_{npc_id}.png"
                 author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc_id}'
 
                 # description field
@@ -244,7 +244,7 @@ class Loot(commands.Cog):
 
                 # author field
                 author = f'{npc["name"]} [{npc["tId"]}]'
-                author_icon = f'https://yata.alwaysdata.net/media/images/loot/npc_{npc["tId"]}.png'
+                author_icon = f'https://yata.yt/media/images/loot/npc_{npc["tId"]}.png'
                 author_url = f'https://www.torn.com/loader.php?sid=attack&user2ID={npc["tId"]}'
 
                 # description field

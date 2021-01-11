@@ -159,7 +159,7 @@ class YataBot(Bot):
         if not len(user):
             # logging.info(f"[GET MEMBER KEY] torn id {tornId} not in YATA")
             if ctx:
-                m = await self.send_error_message(ctx, f'{member} is not in the YATA database. They have to log in the [website](https://yata.alwaysdata.net) so that I can use their key.', title="Error getting user API key")
+                m = await self.send_error_message(ctx, f'{member} is not in the YATA database. They have to log in the [website](https://yata.yt) so that I can use their key.', title="Error getting user API key")
 
                 if delError:
                     await asyncio.sleep(5)
@@ -208,7 +208,7 @@ class YataBot(Bot):
             if len(allowed_channels):
                 msg = await self.send_error_message(ctx, f'Command not allowed in this channel. Try {", ".join(allowed_channels)}.')
             else:
-                msg = await self.send_error_message(ctx, f'Command not allowed in this channel. No channels have been setup.\nCheckout your [dashboard](https://yata.alwaysdata.net/bot/dashboard/).')
+                msg = await self.send_error_message(ctx, f'Command not allowed in this channel. No channels have been setup.\nCheckout your [dashboard](https://yata.yt/bot/dashboard/).')
 
             await asyncio.sleep(5)
             try:
