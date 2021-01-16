@@ -24,13 +24,80 @@ import datetime
 import re
 import traceback
 import time
+import textwrap
 
 # import discord modules
+import discord
 from discord import Embed
 
 my_blue = 4488859
 my_red = 15544372
 my_green = 4175668
+
+# split message if needed
+async def send(ctx, content, embed=None):
+    def lookahead(iterable):
+        """Pass through all values from the given iterable, augmented by the
+        information if there are more values to come after the current one
+        (True), or if it is the last value (False).
+        """
+        # Get an iterator and pull the first value.
+        it = iter(iterable)
+        last = next(it)
+        # Run the iterator to exhaustion (starting from the second value).
+        for val in it:
+            # Report the *previous* value (more to come).
+            yield last, True
+            last = val
+        # Report the last value.
+        yield last, False
+
+
+    try:
+        await ctx.send(content, embed=embed)
+    except BaseException as e:
+        if isinstance(e, discord.errors.HTTPException) and e.code == 50035:
+            contents = textwrap.wrap(content, 2000)
+            for i, (content, in_between) in enumerate(lookahead(contents)):
+
+                if in_between:
+                    await ctx.send(content, embed=None)
+
+                elif embed is not None:
+
+                    # +-------------+------------------------+
+                    # |    Field    |         Limit          |
+                    # +-------------+------------------------+
+                    # | title       | 256 characters         |
+                    # | description | 2048 characters        |
+                    # | fields      | Up to 25 field objects |
+                    # | field.name  | 256 characters         |
+                    # | field.value | 256 characters         |
+                    # | footer.text | 2048 characters        |
+                    # | author.name | 256 characters         |
+                    # +-------------+------------------------+
+
+                    d = embed.to_dict()
+                    new_embed = Embed(title=textwrap.shorten(d.get("titled", "qsdf qsdfq sdfqsdfsdfqsdfqsdfdfqsd"), width=256),
+                                      description=textwrap.shorten(d.get("description", ""), width=2048),
+                                      color=d.get("color"))
+
+                    for f in d.get("fields", []):
+                        new_embed.add_field(name=textwrap.shorten(f.get("name", ""), width=256), value=textwrap.shorten(f.get("value", ""), width=256))
+
+                    if d.get('footer', False):
+                        new_embed.set_footer(text=textwrap.shorten(d["footer"].get("text", ""), width=2048))
+
+                    if d.get('author', False):
+                        new_embed.set_author(name=textwrap.shorten(d["author"].get("name", ""), width=256), url=d["author"].get("url", ""), icon_url=d["author"].get("icon_url", ""))
+
+                    embed = new_embed if len(new_embed) < 6000 else None
+
+                    await ctx.send(content, embed=embed)
+
+        else:
+            print(f"Unhandled error {e}, {type(e)}, {e.code}")
+
 
 def permissions_rsm(permissions):
     perm = []
