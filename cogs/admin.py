@@ -27,6 +27,7 @@ import logging
 import html
 import asyncio
 import datetime
+import lorem
 
 # import discord modules
 import discord
@@ -54,6 +55,20 @@ class Admin(commands.Cog):
     def cog_unload(self):
         self.assignRoles.cancel()
         self.cleanServers.cancel()
+
+    @commands.command()
+    @commands.guild_only()
+    async def debug(self, ctx):
+        content = "A " * 10000
+        eb = Embed(title="Hello", color=my_blue)
+        for i in range(2):
+            eb.add_field(name=f'Field {i}'*200, value=f'YOLO' * 10000)
+
+        eb.set_footer(text="way to long text for a footer" * 100)
+        # eb.set_author(name="My name is way too long" * 100, url="https://www.torn.com/loader.php?sid=attack&user2ID=4", icon_url="https://yata.yt/media/loot/npc_4.png")
+        eb.set_author(name="My name is way too long" * 100)
+        await send(ctx, content, embed=eb)
+
 
     @commands.command()
     @commands.guild_only()
@@ -369,7 +384,7 @@ class Admin(commands.Cog):
                "[Loot level timers](https://yata.yt/loot/)", ]
         embed.add_field(name='Loot', value='\n'.join(lst))
 
-        embed.set_thumbnail(url="https://yata.yt/media/images/logo.png")
+        embed.set_thumbnail(url="https://yata.yt/media/yata.png")
 
         await ctx.send("", embed=embed)
 
