@@ -405,7 +405,6 @@ class YataBot(Bot):
 
     async def api_call(self, section, id, selections, key, check_key=[], error_channel=False):
 
-        print(key, section, id, selections)
         # proxy = True if len(key) == 32 else False
         # url = f'https://{"torn-proxy.com" if proxy else "api.torn.com"}/{section}/{id}?selections={",".join(selections)}&key={key}'
         proxy = False
