@@ -43,9 +43,19 @@ class Revive(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def revive(self, ctx, *args):
+        await self._revive(ctx, free=False, *args)
+
+    @commands.command(aliases=["fr", "FR"])
+    @commands.bot_has_permissions(send_messages=True, manage_messages=True)
+    @commands.guild_only()
+    async def freevive(self, ctx, *args):
+        await self._revive(ctx, free=True, *args)
+
+    async def _revive(self, ctx, free=False, *args):
         """ send revive message to @Reviver
         """
         logging.info(f'[revive/revive] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[revive/revive] Free = {free}')
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "revive")
@@ -113,12 +123,16 @@ class Revive(commands.Cog):
         else:
             lst.append(f'[{name} [{tornId}]](https://www.torn.com/profiles.php?XID={tornId}) needs a revive.')
 
+        if free:
+            lst.append("**This is a call for a free revive** :kissing_heart:")
+
         # add status
         if response.get('status', False) and response["status"]["state"] == "Hospital":
             lst.append(f'{response["status"]["description"]} ({cleanhtml(response["status"]["details"])}).')
 
         eb = Embed(description='\n'.join(lst), color=my_blue)
-        eb.set_author(name=f'Revive call from {ctx.author.display_name}', icon_url=ctx.author.avatar_url)
+
+        eb.set_author(name=f'{"Freevive" if free else "Revive"} call from {ctx.author.display_name}', icon_url=ctx.author.avatar_url)
         eb.timestamp = now()
 
         # list of messages to delete them after
@@ -149,7 +163,6 @@ class Revive(commands.Cog):
             try:
                 # get remote server coonfig
                 remote_guild = get(self.bot.guilds, id=int(server_id))
-                remote_guild = True
                 if remote_guild is None or isinstance(remote_guild, bool):
                     logging.debug(f'[revive/revive] Delete unknown server: {ctx.guild} -> {server_name} [{server_id}]')
                     to_delete.append(server_id)
