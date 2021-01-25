@@ -121,7 +121,7 @@ class Admin(commands.Cog):
 
         # get list of roles
         roles = {}
-        role_list = ctx.guild.roles
+        role_list = [r for r in ctx.guild.roles if not any([r.managed, r.is_default(), r.is_bot_managed(), r.is_premium_subscriber(), r.is_integration()])]
         role_list.reverse()
         for role in role_list:
             roles[str(role.id)] = f'{role}'
