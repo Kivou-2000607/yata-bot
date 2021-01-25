@@ -110,12 +110,12 @@ class Verify(commands.Cog):
         if len(args):
             tag = str(args[0])[:4].upper()
             # option: can tag someone else
-            args = args[1:]
+            # args = args[1:]
             # await self._verify(ctx, *args, tag=tag)
             # option 2: only tag self
             await self._verify(ctx, tag=tag)
         else:
-            await self._verify(ctx, tag=False)
+            await self.bot.send_error_message(ctx.channel, "You need to enter a tag: `!tag uk`")
 
     @commands.command(aliases=["v"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
@@ -125,7 +125,7 @@ class Verify(commands.Cog):
 
     async def _verify(self, ctx, *args, tag=False):
         """Verify member based on discord ID"""
-        logging.info(f'[verify/verify] {ctx.guild}: {ctx.author} tag={tag}')
+        logging.info(f'[verify/verify] {ctx.guild}: {ctx.author} tag={tag}, args={args}')
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "verify")
@@ -407,12 +407,14 @@ class Verify(commands.Cog):
             # check if registered in torn discord
             discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
             name = response.get("name", "???")
-            nickname_parts =[name]
-            if not config.get("other", {}).get("disable_id", False):
-                nickname_parts.append(f'[{userID}]')
+            nickname = f'{name}'
+            add_ID = not config.get("other", {}).get("disable_id", False)
+            if add_ID:
+                nickname += f' [{userID}]'
             if tag:
-                nickname_parts.append(f'[{tag}]')
-            nickname = ' '.join(nickname_parts)
+                tag_str = f"{'' if add_ID else ' '}[{tag}]"
+                nickname += tag_str
+            logging.debug(f'[verify/_member] {ctx.guild}: {ctx.author} nickname={nickname}, add_id={add_ID}, tag={tag}')
 
             if discordID is None:
                 # the guy did not log into torn discord
@@ -425,7 +427,9 @@ class Verify(commands.Cog):
 
             try:
                 await member.edit(nick=nickname)
-            except BaseException:
+            except BaseException as e:
+                logging.debug(f"[verify/_member] {ctx.guild}: {ctx.author} can't edit nickname: {e}")
+                await self.bot.send_error_message(ctx.channel, f"Can't edit nickname to **{nickname}**\n`{e}`")
                 pass
 
             # Get faction id and name
