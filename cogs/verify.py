@@ -109,9 +109,11 @@ class Verify(commands.Cog):
     async def tag(self, ctx, *args):
         if len(args):
             tag = str(args[0])[:4].upper()
+
             # option: can tag someone else
             # args = args[1:]
             # await self._verify(ctx, *args, tag=tag)
+
             # option 2: only tag self
             await self._verify(ctx, tag=tag)
         else:
@@ -133,6 +135,7 @@ class Verify(commands.Cog):
             return
 
         if tag and not config.get("other", {}).get("tag", False):
+            await self.bot.send_error_message(ctx.channel, f"Nickname tags are not enabled on this server")
             return
 
         # check if channel is allowed
