@@ -103,16 +103,36 @@ class Verify(commands.Cog):
             eb.set_thumbnail(url=member.guild.icon_url)
             await member.send(embed=eb)
 
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
+    @commands.guild_only()
+    async def tag(self, ctx, *args):
+        if len(args):
+            tag = str(args[0])[:4].upper()
+            # option: can tag someone else
+            # args = args[1:]
+            # await self._verify(ctx, *args, tag=tag)
+            # option 2: only tag self
+            await self._verify(ctx, tag=tag)
+        else:
+            await self._verify(ctx, tag=False)
+
     @commands.command(aliases=["v"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
     @commands.guild_only()
     async def verify(self, ctx, *args):
+        await self._verify(ctx, *args)
+
+    async def _verify(self, ctx, *args, tag=False):
         """Verify member based on discord ID"""
-        logging.info(f'[verify/verify] {ctx.guild}: {ctx.author}')
+        logging.info(f'[verify/verify] {ctx.guild}: {ctx.author} tag={tag}')
 
         # get configuration
         config = self.bot.get_guild_configuration_by_module(ctx.guild, "verify")
         if not config:
+            return
+
+        if tag and not config.get("other", {}).get("tag", False):
             return
 
         # check if channel is allowed
@@ -139,11 +159,11 @@ class Verify(commands.Cog):
                 userID = int(args[0])
                 logging.debug(f'[verify/verify] {ctx.guild}: user ID {userID}')
 
-                message, success = await self._member(ctx, role, userID=userID, API_KEY=key)
+                message, success = await self._member(ctx, role, userID=userID, API_KEY=key, tag=tag)
 
                 # try with discord ID instead of torn ID
                 if not success and get(ctx.guild.members, id=int(userID)):
-                    message, success = await self._member(ctx, role, discordID=userID, API_KEY=key)
+                    message, success = await self._member(ctx, role, discordID=userID, API_KEY=key, tag=tag)
 
 
             # check if arg is a mention of a discord user ID
@@ -152,7 +172,7 @@ class Verify(commands.Cog):
 
                 if len(discordID) and discordID[0].isdigit():
                     logging.debug(f'[verify/verify] {ctx.guild}: discord ID {discordID[0]}')
-                    message, success = await self._member(ctx, role, discordID=discordID[0], API_KEY=key)
+                    message, success = await self._member(ctx, role, discordID=discordID[0], API_KEY=key, tag=tag)
                 else:
                     logging.debug(f'[verify/verify] {ctx.guild}: discord ID unreadable {discordID}')
                     message = f"Could not find discord ID in mention {args[0]}... Either I'm stupid or somthing very wrong is going on."
@@ -163,7 +183,7 @@ class Verify(commands.Cog):
                 success = False
 
         else:  # no args
-            message, success = await self._member(ctx, role, API_KEY=key)
+            message, success = await self._member(ctx, role, API_KEY=key, tag=tag)
 
         eb = Embed(title=f'Verification {"succeeded" if success else "failed"}', description=message, color=my_green if success else my_red)
         eb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
@@ -312,7 +332,7 @@ class Verify(commands.Cog):
 
         await self._loop_check(ctx.guild, ctx.channel, ctx=ctx, force=force)
 
-    async def _member(self, ctx, verified_role, userID=None, discordID=None, API_KEY="", context=True):
+    async def _member(self, ctx, verified_role, userID=None, discordID=None, API_KEY="", context=True, tag=False):
         """ Verifies one member
             Returns what the bot should say
         """
@@ -387,7 +407,12 @@ class Verify(commands.Cog):
             # check if registered in torn discord
             discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
             name = response.get("name", "???")
-            nickname = f"{name} [{userID}]"
+            nickname_parts =[name]
+            if not config.get("other", {}).get("disable_id", False):
+                nickname_parts.append(f'[{userID}]')
+            if tag:
+                nickname_parts.append(f'[{tag}]')
+            nickname = ' '.join(nickname_parts)
 
             if discordID is None:
                 # the guy did not log into torn discord
