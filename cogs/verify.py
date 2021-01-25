@@ -110,7 +110,7 @@ class Verify(commands.Cog):
         if len(args):
             tag = str(args[0])[:4].upper()
             # option: can tag someone else
-            # args = args[1:]
+            args = args[1:]
             # await self._verify(ctx, *args, tag=tag)
             # option 2: only tag self
             await self._verify(ctx, tag=tag)
