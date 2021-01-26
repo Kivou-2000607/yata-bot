@@ -193,108 +193,6 @@ class Verify(commands.Cog):
 
         await ctx.send(embed=eb)
 
-
-    # @commands.command(aliases=['addkey'])
-    # async def verifyKey(self, ctx, key):
-    #     """Verify member with API key"""
-    #     if ctx.guild is None:
-    #         logging.info(f'[verify/verifyKey] DM: {ctx.author}')
-    #     else:
-    #         logging.info(f'[verify/verifyKey] {ctx.guild}: {ctx.author.display_name} / {ctx.author}')
-    #
-    #     if not isinstance(ctx.channel, PrivateChannel):
-    #         await ctx.message.delete()
-    #         await ctx.send(f'{ctx.author.mention}, you have to type your API key in a private chat with me...')
-    #         await ctx.author.send('Type your API key here!')
-    #         return
-    #
-    #     url = "https://api.torn.com/user/?selections=profile&key={}".format(key)
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(url) as r:
-    #             user = await r.json()
-    #
-    #     # deal with api error
-    #     if "error" in user:
-    #         await ctx.author.send(f'I\'m sorry but an error occured with your API key `{key}`: *{user["error"]["error"]}*')
-    #         return
-    #
-    #     # loop over bot guilds and lookup of the discord user
-    #     for guild in self.bot.guilds:
-    #         # continue if author not in the guild
-    #         if ctx.author not in guild.members:
-    #             continue
-    #
-    #         await ctx.author.send(f'Verification for server **{guild}**')
-    #
-    #         # return if verify not active
-    #         if not self.bot.check_module(guild, "verify"):
-    #             await ctx.author.send(":x: Verify module not activated")
-    #             continue
-    #
-    #         # get verified role
-    #         role = get(guild.roles, name="Verified")
-    #
-    #         # get member of server from author id
-    #         member = guild.get_member(ctx.author.id)
-    #
-    #         # skip verification if member not part of the guild
-    #         if member is None:
-    #             continue
-    #
-    #         # get config
-    #         config = self.bot.get_config(guild)
-    #
-    #         # get verify channel and send message
-    #         verify_channel = get(guild.channels, name=config["verify"].get("channels", ["verify-id"])[0])
-    #
-    #         # try to modify the nickname
-    #         try:
-    #             nickname = "{} [{}]".format(user["name"], user["player_id"])
-    #             await member.edit(nick=nickname)
-    #             await ctx.author.send(f':white_check_mark: Your name as been changed to {member.display_name}')
-    #         except BaseException:
-    #             await ctx.author.send(f'*I don\'t have the permission to change your nickname.*')
-    #             # continue
-    #
-    #         # assign verified role
-    #         try:
-    #             await member.add_roles(role)
-    #             await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {role.name}')
-    #         except BaseException as e:
-    #             await ctx.author.send(f':x: Something went wrong when assigning you the {role} role ({hide_key(e)}).')
-    #             continue
-    #
-    #         # Set Faction role
-    #         fId = str(user['faction']['faction_id'])
-    #         if fId in config["factions"]:
-    #             faction_name = f'{config["factions"][fId]} [{fId}]' if config["verify"].get("id", False) else f'{config["factions"][fId]}'
-    #         else:
-    #             faction_name = "{faction_name} [{faction_id}]".format(**user["faction"]) if config["verify"].get("id", False) else "{faction_name}".format(**user["faction"])
-    #
-    #         faction_role = get(guild.roles, name=faction_name)
-    #         if faction_role is not None:
-    #             # add faction role if role exists
-    #             await member.add_roles(faction_role)
-    #             await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {faction_role}')
-    #             # add a common faction role
-    #             common_role = get(guild.roles, name=config["verify"].get("common"))
-    #             if common_role is not None and str(user['faction']['faction_id']) in config.get("factions"):
-    #                 await member.add_roles(common_role)
-    #                 if verify_channel is not None:
-    #                     await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}* which is part of *{common_role}*. o7")
-    #                 await ctx.author.send(f':white_check_mark: You\'ve been assigned the role {common_role}')
-    #             else:
-    #                 if verify_channel is not None:
-    #                     await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}** from *{faction_name}*. o7")
-    #         else:
-    #             if verify_channel is not None:
-    #                 await verify_channel.send(f":white_check_mark: **{member}**, has been verified and is now known as **{member.display_name}**. o/")
-    #             await ctx.author.send(f':grey_question: You haven\'t been assigned any faction role. If you think you should, ask the owner of this server if it\'s normal.')
-    #
-    #         # final message to member
-    #         await ctx.author.send(f':white_check_mark: All good for me!\n**Welcome to {guild}** o/')
-
-
     @commands.command(aliases=["verifyall"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
     @commands.guild_only()
@@ -417,7 +315,6 @@ class Verify(commands.Cog):
             if tag:
                 tag_str = f"{'' if add_ID else ' '}[{tag}]"
                 nickname += tag_str
-            logging.debug(f'[verify/_member] {ctx.guild}: {ctx.author} nickname={nickname}, add_id={add_ID}, tag={tag}')
 
             if discordID is None:
                 # the guy did not log into torn discord
@@ -428,10 +325,11 @@ class Verify(commands.Cog):
             if member is None:
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
+            logging.debug(f'[verify/_member] {ctx.guild}: {member} nickname={nickname}, add_id={add_ID}, tag={tag}')
             try:
                 await member.edit(nick=nickname)
             except BaseException as e:
-                logging.debug(f"[verify/_member] {ctx.guild}: {ctx.author} can't edit nickname: {e}")
+                logging.debug(f"[verify/_member] {ctx.guild}: {member} can't edit nickname: {e}")
                 await self.bot.send_error_message(ctx.channel, f"Can't edit nickname to **{nickname}**\n`{e}`")
                 pass
 
