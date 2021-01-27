@@ -101,7 +101,7 @@ class Stocks(commands.Cog):
             eb.set_footer(text=ts_to_datetime(response["timestamp"], fmt="short"))
             eb.set_thumbnail(url=url)
             try:
-                await member.send(embed=eb)
+                await send(member, embed=eb)
             except BaseException:
                 await self.bot.send_error_message(ctx, f'DM couldn\'t be sent to {member.nick} (most probably because they disable dms in privacy settings). For security reasons their information will not be shown.')
                 continue
@@ -123,7 +123,7 @@ class Stocks(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     async def wssb(self, ctx):
         """Display information for the WSSB sharing group"""
-        logging.info(f'[stock/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[stocks/wssb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="wssb")
         lst = ["```md"]
@@ -139,13 +139,13 @@ class Stocks(commands.Cog):
             lst.append("```")
             eb = Embed(title="List of education time left and WSSB/ISTC owners", description="\n".join(lst), color=my_blue)
             eb.set_thumbnail(url="https://yata.yt/media/stocks/25.png")
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     async def tcb(self, ctx):
         """Display information for the TCB sharing group"""
-        logging.info(f'[stock/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+        logging.info(f'[stocks/tcb] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         timeLeft, stockOwners = await self.get_times(ctx, stock="tcb")
         lst = ["```md"]
@@ -161,55 +161,59 @@ class Stocks(commands.Cog):
             lst.append("```")
             eb = Embed(title="List of investment time left and TCB owners", description="\n".join(lst), color=my_blue)
             eb.set_thumbnail(url="https://yata.yt/media/stocks/2.png")
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
 
 
     # @tasks.loop(seconds=5)
     @tasks.loop(seconds=600)
     async def notify(self):
-        logging.debug(f"[stock/notify] start task")
+        logging.debug(f"[stocks/alerts] start task")
 
         _, mentions_keys_prev = get_data(self.bot.bot_id, "stocks")
         mentions_keys_prev = mentions_keys_prev if len(mentions_keys_prev) else []  # make sure it's a list if empty
+        for k in mentions_keys_prev:
+            logging.debug(f"[stocks/alerts] previous alerts: {k}")
         mentions_keys = []
         mentions = []
         try:
             stockInfo = {
-                "TCSE": {"id": 0, "name": "Torn City Stock Exchange", "acronym": "TCSE", "director": "None", "benefit": {"requirement": 0, "description": "None"}},
-                "TSBC": {"id": 1, "name": "Torn City and Shanghai Banking Corporation", "acronym": "TSBC", "director": "Mr. Gareth Davies", "benefit": {"requirement": 4000000, "description": "Entitled to receive occasional dividends"}},
-                "TCB": {"id": 2, "name": "Torn City Investment Banking", "acronym": "TCB", "director": "Mr. Paul Davies", "benefit": {"requirement": 1500000, "description": "Entitled to receive improved interest rates"}},
-                "SYS": {"id": 3, "name": "Syscore MFG", "acronym": "SYS", "director": "Mr. Stuart Bridgens", "benefit": {"requirement": 3000000, "description": "Entitled to receive supreme firewall software for you and your company"}},
-                "SLAG": {"id": 4, "name": "Society and Legal Authorities Group", "acronym": "SLAG", "director": "Mr. Samuel Washington", "benefit": {"requirement": 1500000, "description": "Entitled to receive business cards from our lawyers"}},
-                "IOU": {"id": 5, "name": "Insured On Us", "acronym": "IOU", "director": "Mr. Jordan Blake", "benefit": {"requirement": 3000000, "description": "Entitled to receive occasional dividends"}},
-                "GRN": {"id": 6, "name": "Grain", "acronym": "GRN", "director": "Mr. Harry Abbott", "benefit": {"requirement": 500000, "description": "Entitled to receive occasional dividends"}},
-                "TCHS": {"id": 7, "name": "Torn City Health Service", "acronym": "TCHS", "director": "Dr. Rick Lewis", "benefit": {"requirement": 150000, "description": "Entitled to receive occasional medical packs"}},
-                "YAZ": {"id": 8, "name": "Yazoo", "acronym": "YAZ", "director": "Mr. Godfrey Cadberry", "benefit": {"requirement": 1000000, "description": "Entitled to receive free banner advertisement in the local newspaper"}},
-                "TCT": {"id": 9, "name": "The Torn City Times", "acronym": "TCT", "director": "Mr. Micheal Cassinger", "benefit": {"requirement": 125000, "description": "Entitled to receive free personal placements in the newspaper"}},
-                "CNC": {"id": 10, "name": "Crude & Co.", "acronym": "CNC", "director": "Mr. Bruce Hunter", "benefit": {"requirement": 5000000, "description": "Entitled to receive oil rig company sales boost"}},
-                "MSG": {"id": 11, "name": "Messaging Inc.", "acronym": "MSG", "director": "Mr. Yazukini Chang", "benefit": {"requirement": 300000, "description": "Entitled to receive free advertisement placements in the newspaper"}},
-                "TMI": {"id": 12, "name": "TC Music Industries", "acronym": "TMI", "director": "Mr. Benjamin Palmer", "benefit": {"requirement": 6000000, "description": "Entitled to receive occasional dividends"}},
-                "TCP": {"id": 13, "name": "TC Media Productions", "acronym": "TCP", "director": "Mr. Richard Button", "benefit": {"requirement": 1000000, "description": "Entitled to receive support for your company (if you are the director) which should result in a 10% bonus to profits"}},
-                "IIL": {"id": 14, "name": "I Industries Ltd.", "acronym": "IIL", "director": "Mr. Micheal Ibbs", "benefit": {"requirement": 100000, "description": "Entitled to receive software to improve coding time by 50%"}},
-                "FHG": {"id": 15, "name": "Feathery Hotels Group", "acronym": "FHG", "director": "Mr. Jeremy Hedgemaster", "benefit": {"requirement": 2000000, "description": "Entitled to receive occasional coupons to stay in our hotels"}},
-                "SYM": {"id": 16, "name": "Symbiotic Ltd.", "acronym": "SYM", "director": "Dr. Daniel Pieczko", "benefit": {"requirement": 500000, "description": "Entitled to receive occasional drug packs"}},
-                "LSC": {"id": 17, "name": "Lucky Shots Casino", "acronym": "LSC", "director": "Mr. Martin Wong", "benefit": {"requirement": 100000, "description": "Entitled to receive occasional packs of 100x lottery tickets"}},
-                "PRN": {"id": 18, "name": "Performance Ribaldry Network", "acronym": "PRN", "director": "Mr. Dylan 'Dick Ironhammer' Tansey", "benefit": {"requirement": 1500000, "description": "Entitled to receive occasional erotic DVDs"}},
-                "EWM": {"id": 19, "name": "Eaglewood Mercenary", "acronym": "EWM", "director": "Mr. Jamie Frere Smith", "benefit": {"requirement": 2000000, "description": "Entitled to receive occasional grenade packs"}},
-                "TCM": {"id": 20, "name": "Torn City Motors", "acronym": "TCM", "director": "Mr. George Blanksby", "benefit": {"requirement": 1000000, "description": "Entitled to receive a 25% discount when buying car parts"}},
-                "ELBT": {"id": 21, "name": "The Empty Lunchbox Building Traders", "acronym": "ELBT", "director": "Mr. Jack Turner", "benefit": {"requirement": 5000000, "description": "Entitled to receive a 10% discount on all home upgrades (not including staff)"}},
-                "HRG": {"id": 22, "name": "Home Retail Group", "acronym": "HRG", "director": "Mr. Owain Hughes", "benefit": {"requirement": 1500000, "description": "Entitled to receive occasional free properties"}},
-                "TGP": {"id": 23, "name": "Tell Group Plc.", "acronym": "TGP", "director": "Mr. Jordan Urch", "benefit": {"requirement": 2500000, "description": "Entitled to receive a significant boost in company advertising (if you are the director)"}},
-                "WSSB": {"id": 25, "name": "West Side South Bank University", "acronym": "WSSB", "director": "Mrs. Katherine Hamjoint", "benefit": {"requirement": 1000000, "description": "Entitled to receive a 10% time reduction for all newly started courses"}},
-                "ISTC": {"id": 26, "name": "International School TC", "acronym": "ISTC", "director": "Miss. Mary Huff", "benefit": {"requirement": 100000, "description": "Entitled to receive free education"}},
-                "BAG": {"id": 27, "name": "Big Al's Gun Shop", "acronym": "BAG", "director": "Mr. Jim Chapman", "benefit": {"requirement": 3000000, "description": "Entitled to receive occasional special ammunition packs"}},
-                "EVL": {"id": 28, "name": "Evil Ducks Candy Corp", "acronym": "EVL", "director": "Mr. Adam French", "benefit": {"requirement": 1750000, "description": "Entitled to receive occasional happy boosts"}},
-                "MCS": {"id": 29, "name": "Mc Smoogle Corp", "acronym": "MCS", "director": "Mr. Gofer Gloop", "benefit": {"requirement": 1750000, "description": "Entitled to receive occasional free meals"}},
-                "WLT": {"id": 30, "name": "Wind Lines Travel", "acronym": "WLT", "director": "Sir. Fred Dunce", "benefit": {"requirement": 9000000, "description": "Entitled to receive access to our free private jet"}},
-                "TCC": {"id": 31, "name": "Torn City Clothing", "acronym": "TCC", "director": "Mrs. Stella Patrick", "benefit": {"requirement": 350000, "description": "Entitled to receive occasional dividends"}}
+                "0": {"id": 0, "acro": "TCSE", "name": "Torn City Stock Exchange", "acronym": "TCSE", "director": "None", "benefit": {"requirement": 0, "description": "None"}},
+                "1": {"id": 1, "acro": "TSBC", "name": "Torn City and Shanghai Banking Corporation", "acronym": "TSBC", "director": "Mr. Gareth Davies", "benefit": {"requirement": 4000000, "description": "Entitled to receive occasional dividends"}},
+                "2": {"id": 2, "acro": "TCB", "name": "Torn City Investment Banking", "acronym": "TCB", "director": "Mr. Paul Davies", "benefit": {"requirement": 1500000, "description": "Entitled to receive improved interest rates"}},
+                "3": {"id": 3, "acro": "SYS", "name": "Syscore MFG", "acronym": "SYS", "director": "Mr. Stuart Bridgens", "benefit": {"requirement": 3000000, "description": "Entitled to receive supreme firewall software for you and your company"}},
+                "4": {"id": 4, "acro": "SLAG", "name": "Society and Legal Authorities Group", "acronym": "SLAG", "director": "Mr. Samuel Washington", "benefit": {"requirement": 1500000, "description": "Entitled to receive business cards from our lawyers"}},
+                "5": {"id": 5, "acro": "IOU", "name": "Insured On Us", "acronym": "IOU", "director": "Mr. Jordan Blake", "benefit": {"requirement": 3000000, "description": "Entitled to receive occasional dividends"}},
+                "6": {"id": 6, "acro": "GRN", "name": "Grain", "acronym": "GRN", "director": "Mr. Harry Abbott", "benefit": {"requirement": 500000, "description": "Entitled to receive occasional dividends"}},
+                "7": {"id": 7, "acro": "TCHS", "name": "Torn City Health Service", "acronym": "TCHS", "director": "Dr. Rick Lewis", "benefit": {"requirement": 150000, "description": "Entitled to receive occasional medical packs"}},
+                "8": {"id": 8, "acro": "YAZ", "name": "Yazoo", "acronym": "YAZ", "director": "Mr. Godfrey Cadberry", "benefit": {"requirement": 1000000, "description": "Entitled to receive free banner advertisement in the local newspaper"}},
+                "9": {"id": 9, "acro": "TCT", "name": "The Torn City Times", "acronym": "TCT", "director": "Mr. Micheal Cassinger", "benefit": {"requirement": 125000, "description": "Entitled to receive free personal placements in the newspaper"}},
+                "10": {"id": 10, "acro": "CNC", "name": "Crude & Co.", "acronym": "CNC", "director": "Mr. Bruce Hunter", "benefit": {"requirement": 5000000, "description": "Entitled to receive oil rig company sales boost"}},
+                "11": {"id": 11, "acro": "MSG", "name": "Messaging Inc.", "acronym": "MSG", "director": "Mr. Yazukini Chang", "benefit": {"requirement": 300000, "description": "Entitled to receive free advertisement placements in the newspaper"}},
+                "12": {"id": 12, "acro": "TMI", "name": "TC Music Industries", "acronym": "TMI", "director": "Mr. Benjamin Palmer", "benefit": {"requirement": 6000000, "description": "Entitled to receive occasional dividends"}},
+                "13": {"id": 13, "acro": "TCP", "name": "TC Media Productions", "acronym": "TCP", "director": "Mr. Richard Button", "benefit": {"requirement": 1000000, "description": "Entitled to receive support for your company (if you are the director) which should result in a 10% bonus to profits"}},
+                "14": {"id": 14, "acro": "IIL", "name": "I Industries Ltd.", "acronym": "IIL", "director": "Mr. Micheal Ibbs", "benefit": {"requirement": 100000, "description": "Entitled to receive software to improve coding time by 50%"}},
+                "15": {"id": 15, "acro": "FHG", "name": "Feathery Hotels Group", "acronym": "FHG", "director": "Mr. Jeremy Hedgemaster", "benefit": {"requirement": 2000000, "description": "Entitled to receive occasional coupons to stay in our hotels"}},
+                "16": {"id": 16, "acro": "SYM", "name": "Symbiotic Ltd.", "acronym": "SYM", "director": "Dr. Daniel Pieczko", "benefit": {"requirement": 500000, "description": "Entitled to receive occasional drug packs"}},
+                "17": {"id": 17, "acro": "LSC", "name": "Lucky Shots Casino", "acronym": "LSC", "director": "Mr. Martin Wong", "benefit": {"requirement": 100000, "description": "Entitled to receive occasional packs of 100x lottery tickets"}},
+                "18": {"id": 18, "acro": "PRN", "name": "Performance Ribaldry Network", "acronym": "PRN", "director": "Mr. Dylan 'Dick Ironhammer' Tansey", "benefit": {"requirement": 1500000, "description": "Entitled to receive occasional erotic DVDs"}},
+                "19": {"id": 19, "acro": "EWM", "name": "Eaglewood Mercenary", "acronym": "EWM", "director": "Mr. Jamie Frere Smith", "benefit": {"requirement": 2000000, "description": "Entitled to receive occasional grenade packs"}},
+                "20": {"id": 20, "acro": "TCM", "name": "Torn City Motors", "acronym": "TCM", "director": "Mr. George Blanksby", "benefit": {"requirement": 1000000, "description": "Entitled to receive a 25% discount when buying car parts"}},
+                "21": {"id": 21, "acro": "ELBT", "name": "The Empty Lunchbox Building Traders", "acronym": "ELBT", "director": "Mr. Jack Turner", "benefit": {"requirement": 5000000, "description": "Entitled to receive a 10% discount on all home upgrades (not including staff)"}},
+                "22": {"id": 22, "acro": "HRG", "name": "Home Retail Group", "acronym": "HRG", "director": "Mr. Owain Hughes", "benefit": {"requirement": 1500000, "description": "Entitled to receive occasional free properties"}},
+                "23": {"id": 23, "acro": "TGP", "name": "Tell Group Plc.", "acronym": "TGP", "director": "Mr. Jordan Urch", "benefit": {"requirement": 2500000, "description": "Entitled to receive a significant boost in company advertising (if you are the director)"}},
+                "25": {"id": 25, "acro": "WSSB", "name": "West Side South Bank University", "acronym": "WSSB", "director": "Mrs. Katherine Hamjoint", "benefit": {"requirement": 1000000, "description": "Entitled to receive a 10% time reduction for all newly started courses"}},
+                "26": {"id": 26, "acro": "ISTC", "name": "International School TC", "acronym": "ISTC", "director": "Miss. Mary Huff", "benefit": {"requirement": 100000, "description": "Entitled to receive free education"}},
+                "27": {"id": 27, "acro": "BAG", "name": "Big Al's Gun Shop", "acronym": "BAG", "director": "Mr. Jim Chapman", "benefit": {"requirement": 3000000, "description": "Entitled to receive occasional special ammunition packs"}},
+                "28": {"id": 28, "acro": "EVL", "name": "Evil Ducks Candy Corp", "acronym": "EVL", "director": "Mr. Adam French", "benefit": {"requirement": 1750000, "description": "Entitled to receive occasional happy boosts"}},
+                "29": {"id": 29, "acro": "MCS", "name": "Mc Smoogle Corp", "acronym": "MCS", "director": "Mr. Gofer Gloop", "benefit": {"requirement": 1750000, "description": "Entitled to receive occasional free meals"}},
+                "30": {"id": 30, "acro": "WLT", "name": "Wind Lines Travel", "acronym": "WLT", "director": "Sir. Fred Dunce", "benefit": {"requirement": 9000000, "description": "Entitled to receive access to our free private jet"}},
+                "31": {"id": 31, "acro": "TCC", "name": "Torn City Clothing", "acronym": "TCC", "director": "Mrs. Stella Patrick", "benefit": {"requirement": 350000, "description": "Entitled to receive occasional dividends"}},
+                "42": {"id": 42, "acro": "BUG", "name": "DEBUG", "benefit": {"requirement": 69, "description": "Entitled to a nice debug"}}
                 }
 
             # YATA api
-            url = "https://yata.yt/stock/alerts/"
+            # url = "http://127.0.0.1:8000/api/v1/stocks/alerts/?debug=true"
+            url = "https://yata.yt/api/v1/stocks/alerts/"
             # req = requests.get(url).json()
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
@@ -217,27 +221,24 @@ class Stocks(commands.Cog):
 
             # set alerts
             for k, v in req.items():
-                if "graph" in v:
-                    del v["graph"]
+                logging.debug(f"[stocks/alerts] {k}: {v}")
 
-                v["key"] = k
-
-                if v in mentions_keys_prev:
+                v["id"] = k  # needed for unique key
+                if v in mentions_keys_prev and k != "42":
                     mentions_keys.append(v)
-                    print("skip", k, v)
+                    logging.debug(f"[stocks/alerts] skip {k}: {v}")
                     continue
 
                 alerts = v.get("alerts", dict({}))
 
                 title = False
-                # if alerts.get("below", False):
+                if k == "42":
+                    title = f'{stockInfo[k]["name"]}'
+                    description = f'Debug alert'
+
                 if alerts.get("below", False) and alerts.get("forecast", False) and v.get("shares"):
                     title = f'{stockInfo[k]["name"]}'
                     description = f'Below average and forecast moved from bad to good'
-
-                # if alerts.get("below", False):
-                # if alerts.get("below", False) and v.get("shares"):
-                # if alerts.get("new", False) and alerts.get("enough", False):
 
                 if alerts.get("injection", False):
                     title = f'{stockInfo[k]["name"]}'
@@ -248,7 +249,7 @@ class Stocks(commands.Cog):
                     embed = Embed(title=title, description=f"[{description}](https://www.torn.com/stockexchange.php)")
 
                     # stock price and shares
-                    embed.add_field(name='Code', value=f'{k}')
+                    # embed.add_field(name='Code', value=f'{k}')
                     embed.add_field(name='Shares', value=f'{v["shares"]:,.0f}')
                     embed.add_field(name='Share price', value=f'${v["price"]:,.2f}')
 
@@ -266,48 +267,49 @@ class Stocks(commands.Cog):
                     # thumbnail
                     embed.set_thumbnail(url=f'https://yata.yt/media/stocks/{stockInfo[k]["id"]}.png')
                     mentions.append(embed)
-                    mentions_keys.append(v)
+                    if k != "42":
+                        mentions_keys.append(v)
 
             await push_data(self.bot.bot_id, ts_now(), mentions_keys, "stocks")
 
             # create message to send
             if not len(mentions):
-                logging.debug("[stock/notify] no alerts")
+                logging.debug("[stocks/alerts] no alerts")
                 return
 
         except BaseException as e:
-            logging.error("[stock/notify] error on stock notification (YATA CALL)")
+            logging.error("[stocks/alerts] error on stock notification (YATA CALL)")
             headers = {"error": "error on stock notification (YATA CALL)"}
             await self.bot.send_log_main(e, headers=headers)
             return
 
         # loop over guilds to send alerts
         for guild in self.bot.get_guilds_by_module("stocks"):
-            # try:
-            logging.debug(f"[loot/notifications] {guild}")
+            try:
+                logging.debug(f"[stocks/alerts] {guild}")
 
-            config = self.bot.get_guild_configuration_by_module(guild, "stocks", check_key="channels_alerts")
-            if not config:
-                continue
+                config = self.bot.get_guild_configuration_by_module(guild, "stocks", check_key="channels_alerts")
+                if not config:
+                    continue
 
-            # get role & channel
-            role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
-            channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
+                # get role & channel
+                role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
-            if channel is None:
-                continue
+                if channel is None:
+                    continue
 
-            s = "" if len(mentions) == 1 else "s"
-            txt = f"{len(mentions)} stock alert{s}!" if role is None else f"{role.mention}, {len(mentions)} stock alert{s}!"
-            await channel.send(txt, embed=mentions[0])
-            for embed in mentions[1:]:
-                await channel.send(embed=embed)
+                s = "" if len(mentions) == 1 else "s"
+                txt = f"{len(mentions)} stock alert{s}!" if role is None else f"{role.mention}, {len(mentions)} stock alert{s}!"
+                await send(channel, txt, embed=mentions[0])
+                for embed in mentions[1:]:
+                    await send(channel, embed=embed)
 
-            # except BaseException as e:
-            #     logging.error(f'[stock] {guild} [{guild.id}]: {hide_key(e)}')
-            #     await self.bot.send_log(e, guild_id=guild.id)
-            #     headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
-            #     await self.bot.send_log_main(e, headers=headers)
+            except BaseException as e:
+                logging.error(f"[stocks/alerts] {guild} [{guild.id}]: {hide_key(e)}")
+                await self.bot.send_log(e, guild_id=guild.id)
+                headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock notification"}
+                await self.bot.send_log_main(e, headers=headers)
 
     @notify.before_loop
     async def before_notify(self):

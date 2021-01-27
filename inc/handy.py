@@ -35,7 +35,7 @@ my_red = 15544372
 my_green = 4175668
 
 # split message if needed
-async def send(ctx, content, embed=None):
+async def send(obj, content='', embed=None):
     def lookahead(iterable):
         """Pass through all values from the given iterable, augmented by the
         information if there are more values to come after the current one
@@ -54,14 +54,14 @@ async def send(ctx, content, embed=None):
 
 
     try:
-        await ctx.send(content, embed=embed)
+        await obj.send(content, embed=embed)
     except BaseException as e:
         if isinstance(e, discord.errors.HTTPException) and e.code == 50035:
             contents = textwrap.wrap(content, 2000)
             for i, (content, in_between) in enumerate(lookahead(contents)):
 
                 if in_between:
-                    await ctx.send(content, embed=None)
+                    await obj.send(content, embed=None)
 
                 elif embed is not None:
 
@@ -93,10 +93,10 @@ async def send(ctx, content, embed=None):
 
                     embed = new_embed if len(new_embed) < 6000 else None
 
-                    await ctx.send(content, embed=embed)
+                    await obj.send(content, embed=embed)
 
         else:
-            print(f"Unhandled error {e}, {type(e)}, {e.code}")
+            print(f"Sending message error {e}")
 
 
 def permissions_rsm(permissions):

@@ -241,16 +241,10 @@ class YataBot(Bot):
             logging.error(f'[send_log_main] no main system channel')
         else:
             eb = log_fmt(log, headers=headers, full=full)
-            try:
-                await channel.send(embed=eb)
-            except BaseException:
-                await channel.send("**ERROR MESSAGE**")
-                msg = eb.to_dict()
-                for field in msg.get('fields', {}):
-                    await channel.send(f'**{field["name"]}**: {field["value"]}')
+            await send(channel, embed=eb)
 
     async def send_log_dm(self, log, author):
-        await author.send(embed=log_fmt(log))
+        await send(author, embed=log_fmt(log))
 
     async def send_log(self, log, guild_id=0, channel_id=0, ctx=None):
         # fallback if guild_id or channel_id has not been given
@@ -296,7 +290,7 @@ class YataBot(Bot):
             return
 
         try:
-            await channel.send(embed=log_fmt(log))
+            await send(channel, embed=log_fmt(log))
             logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel}')
 
         except discord.errors.Forbidden:
@@ -314,7 +308,7 @@ class YataBot(Bot):
                 return
 
             try:
-                await channel_fb.send(embed=log_fmt(log))
+                await send(channel_fb, embed=log_fmt(log))
                 logging.info(f'[send_log] error {hide_key(log)} sent to {guild} #{channel} (fallback channel)')
                 return
             except discord.errors.Forbidden:
@@ -370,7 +364,7 @@ class YataBot(Bot):
         eb.add_field(name="Server id", value=f'`{guild.id}`')
         eb.add_field(name="Owner", value=guild.owner)
         eb.set_thumbnail(url=guild.icon_url)
-        await channel.send(embed=eb)
+        await send(channel, embed=eb)
 
         self.configurations[guild.id] = {}
         await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
@@ -383,7 +377,7 @@ class YataBot(Bot):
         eb.add_field(name="Server id", value=f'`{guild.id}`')
         eb.add_field(name="Owner", value=guild.owner)
         eb.set_thumbnail(url=guild.icon_url)
-        await channel.send(embed=eb)
+        await send(channel, embed=eb)
 
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
@@ -395,13 +389,13 @@ class YataBot(Bot):
         eb = append_update(eb, ts_now(), text="At ")
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
-        return await channel.send(embed=eb)
+        return await send(channel, embed=eb)
 
     async def send_help_message(self, channel, description, fields={}):
         eb = Embed(title="Help", description=description, color=my_green)
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
-        return await channel.send(embed=eb)
+        return await send(channel, embed=eb)
 
     async def api_call(self, section, id, selections, key, check_key=[], error_channel=False):
 

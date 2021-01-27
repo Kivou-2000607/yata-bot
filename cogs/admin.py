@@ -98,12 +98,12 @@ class Admin(commands.Cog):
         else:
             eb = Embed(title="Server administrators", description="No administrators", color=my_red)
 
-        await ctx.send(embed=eb)
+        await send(ctx, embed=eb)
 
         if str(ctx.author.id) not in server_admins:
             updates.append("You need to be an administrator to continue, ask a @Staff for help on the [YATA discord server](https://yata.yt/discord).")
             eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
             return
 
         # create not configuration if need
@@ -188,7 +188,7 @@ class Admin(commands.Cog):
             updates.append("None")
         updates.append("\nCheck out [your dashboard](https://yata.yt/bot/dashboard/).")
         eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_blue)
-        await ctx.send(embed=eb)
+        await send(ctx, embed=eb)
 
 
     @commands.command()
@@ -222,7 +222,7 @@ class Admin(commands.Cog):
             eb.add_field(name=f'Owner', value=f"{guild.owner} [{guild.owner.id}]")
             eb.set_thumbnail(url=guild.icon_url)
 
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
             return
 
         # get all contacts
@@ -246,7 +246,7 @@ class Admin(commands.Cog):
 
             eb = Embed(title=f'Administrator information', description="\n".join(lst), color=my_blue)
             eb.set_thumbnail(url=member.avatar_url)
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
             return
 
         await self.bot.send_error_message(ctx, f'Server or member id `{args[0]}` not found in the configuration')
@@ -262,12 +262,12 @@ class Admin(commands.Cog):
             logging.info(f'[admin/talk] args: {k}')
 
         if not(len(args) == 2 and args[1].isdigit()):
-            await ctx.send(":x: You need to enter a channel and a message```!talk < #channel > < message_id >```Error: number of arguments = {}".format(len(args)))
+            await send(ctx, ":x: You need to enter a channel and a message```!talk < #channel > < message_id >```Error: number of arguments = {}".format(len(args)))
             return
 
         msg = [_ for _ in await ctx.channel.history().flatten() if _.id == int(args[1])]
         if len(msg) < 1:
-            await ctx.send(f':x: Message id `{args[1]}` not found in the channel recent history')
+            await send(ctx, f':x: Message id `{args[1]}` not found in the channel recent history')
             return
         msg = msg[0].content
 
@@ -281,7 +281,7 @@ class Admin(commands.Cog):
                     logging.info(f"[admin/talk] Guild {guild}: yata-admin not found")
                 else:
                     try:
-                        await channel.send(msg)
+                        await send(channel, msg)
                         logging.info(f"[admin/talk] Guild {guild}: message sent to #{channel}")
                         sent = True
                         continue
@@ -291,7 +291,7 @@ class Admin(commands.Cog):
 
                 for channel in guild.text_channels:
                     try:
-                        await channel.send(msg)
+                        await send(channel, msg)
                         logging.info(f"[admin/talk] Guild {guild}: message sent to #{channel}")
                         sent = True
                         break
@@ -305,22 +305,22 @@ class Admin(commands.Cog):
         else:  # send message to specific channel on yata server
             channel_id = is_mention(args[0], type="channel")
             if not channel_id or not channel_id.isdigit():
-                await ctx.send(":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel id = {}".format(channel_id))
+                await send(ctx, ":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel id = {}".format(channel_id))
                 return
 
             channel = get(ctx.guild.channels, id=int(channel_id))
             if channel is None:
-                await ctx.send(":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel = {}".format(channel))
+                await send(ctx, ":x: You need to enter a channel and a message```!talk #channel < message_id >```Error: channel = {}".format(channel))
                 return
 
-            await channel.send(msg)
-            await ctx.send(f"Message send to {channel.mention}```{msg}```")
+            await send(channel, msg)
+            await send(ctx, f"Message send to {channel.mention}```{msg}```")
 
     @commands.command()
     async def rtfm(self, ctx, *args):
         modules = ["admin", "verify", "loot", "chain", "rackets", "stocks", "revive", "crimes", "api"]
         hash = f"#{args[0]}" if len(args) and args[0] in modules else ""
-        await ctx.send(f"https://yata.yt/bot/documentation/{hash}")
+        await send(ctx, f"https://yata.yt/bot/documentation/{hash}")
 
     @commands.command()
     @commands.bot_has_permissions(manage_messages=True, send_messages=True, read_message_history=True)
@@ -386,7 +386,7 @@ class Admin(commands.Cog):
 
         embed.set_thumbnail(url="https://yata.yt/media/yata.png")
 
-        await ctx.send("", embed=embed)
+        await send(ctx, "", embed=embed)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
@@ -404,10 +404,10 @@ class Admin(commands.Cog):
 
             r = get(ctx.guild.roles, id=657131110077169664)
             if r is None:
-                await ctx.send(f":x: no role {args[0]}")
+                await send(ctx, f":x: no role {args[0]}")
                 return
 
-            msg = await ctx.send(f":clock1: Assigning {r}")
+            msg = await send(ctx, f":clock1: Assigning {r}")
 
             # now that we have discord id of contacts it's easier to use that to assign roles
 
@@ -446,9 +446,9 @@ class Admin(commands.Cog):
 
         #     # loop over member
         #     if r is None:
-        #         await ctx.send(f":x: no role {args[0]}")
+        #         await send(ctx, f":x: no role {args[0]}")
         #     else:
-        #         msg = await ctx.send(f":clock1: Assigning {r}")
+        #         msg = await send(ctx, f":clock1: Assigning {r}")
 
         #     n = len(ctx.guild.members)
         #     for i, member in enumerate(ctx.guild.members):
@@ -504,7 +504,7 @@ class Admin(commands.Cog):
 
         eb = Embed(description=f'Role @{html.unescape(role.name)} **{"added" if add else "removed"}** for module **{module}**', color=my_green if add else my_red)
         eb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-        msg = await ctx.send(embed=eb)
+        msg = await send(ctx, embed=eb)
 
         # clean messages
         await asyncio.sleep(5)
@@ -577,7 +577,7 @@ class Admin(commands.Cog):
         eb = Embed(description="\n".join(msg), color=my_blue)
         # eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/documentation/", icon_url=self.bot.user.avatar_url)
         # eb.set_thumbnail(url=member.avatar_url)
-        await welcome_channel.send(embed=eb)
+        await send(welcome_channel, embed=eb)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -695,7 +695,7 @@ class Admin(commands.Cog):
         guild = get(self.bot.guilds, id=self.bot.main_server_id)
         channel = self.bot.get_guild_admin_channel(guild)
 
-        await channel.send(embed=Embed(description="Start cleaning servers and configurations", color=my_blue))
+        await send(channel, embed=Embed(description="Start cleaning servers and configurations", color=my_blue))
 
         await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
         for server in self.bot.guilds:
@@ -710,7 +710,7 @@ class Admin(commands.Cog):
                 logging.info(f'[admin/servers] Bot in server {server} [{server.id}]: no configuration or no admin since {days_since_join:.2f} days')
 
                 if days_since_join > 7:
-                    await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I left server {server} [{server.id}] because there is no configurations or no admins since {days_since_join:.2f} days", color=my_blue))
+                    await send(channel, embed=Embed(title="Bot configuration cleaning", description=f"I left server {server} [{server.id}] because there is no configurations or no admins since {days_since_join:.2f} days", color=my_blue))
                     await server.leave()
                     if server.id in self.bot.configurations:
                         self.bot.configurations.pop(server.id)
@@ -719,12 +719,12 @@ class Admin(commands.Cog):
             logging.info(f'[admin/servers] No bot in configuration id [{server_id}]')
             try:
                 await delete_configuration(self.bot_id, server_id)
-                await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
+                await send(channel, embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
             except BaseException as e:
-                await channel.send(embed=Embed(title="Bot configuration cleaning", description=f"I can't delete the configuration of server ID {server_id} because there is still an administartor even if I'm not in the server anymore", color=my_red))
+                await send(channel, embed=Embed(title="Bot configuration cleaning", description=f"I can't delete the configuration of server ID {server_id} because there is still an administartor even if I'm not in the server anymore", color=my_red))
                 pass
 
-        await channel.send(embed=Embed(description="Done cleaning servers and configurations", color=my_blue))
+        await send(channel, embed=Embed(description="Done cleaning servers and configurations", color=my_blue))
 
     @assignRoles.before_loop
     async def before_assignRoles(self):
