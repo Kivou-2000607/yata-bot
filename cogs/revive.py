@@ -43,15 +43,15 @@ class Revive(commands.Cog):
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def revive(self, ctx, *args):
-        await self._revive(ctx, free=False, *args)
+        await self._revive(ctx, *args, free=False)
 
     @commands.command(aliases=["fr", "FR"])
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
     @commands.guild_only()
     async def freevive(self, ctx, *args):
-        await self._revive(ctx, free=True, *args)
+        await self._revive(ctx, *args, free=True)
 
-    async def _revive(self, ctx, free=False, *args):
+    async def _revive(self, ctx, *args, free=False):
         """ send revive message to @Reviver
         """
         logging.info(f'[revive/revive] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
