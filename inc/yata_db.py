@@ -139,9 +139,12 @@ async def delete_configuration(bot_id, discord_id):
     # check if server already in the database
     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     if server is not None:  # delete if in the db
-        await con.execute('''
-        DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2
-        ''', bot_id, discord_id)
+        # step 1 remove the admins
+        tmp = await con.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
+        await con.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
+
+        # step 2 delete the configuration
+        await con.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', bot_id, discord_id)
 
     await con.close()
 
