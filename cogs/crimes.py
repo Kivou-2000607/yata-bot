@@ -93,7 +93,7 @@ class Crimes(commands.Cog):
                     participants.append(f'- {name}: {status["state"]} ({status["description"]})')
                 eb.add_field(name=f'{len(v["participants"])} participants', value="\n".join(participants))
 
-                await ctx.send(embed=eb)
+                await send(ctx, embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -124,7 +124,7 @@ class Crimes(commands.Cog):
             eb = Embed(title="STOP tracking organized crimes", color=my_red)
             for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
                 eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
-            await ctx.channel.send(embed=eb)
+            await ctx.send(channel, embed=eb)
             del self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)]
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -151,7 +151,7 @@ class Crimes(commands.Cog):
         eb = Embed(title="START tracking organized crimes", color=my_green)
         for k, v in current.items():
             eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
-        await ctx.channel.send(embed=eb)
+        await ctx.send(channel, embed=eb)
         self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)] = current
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
@@ -174,7 +174,7 @@ class Crimes(commands.Cog):
         # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
         #
         # if status < 0:
-        #     await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
+        #     await send(channel, f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
 
         if len(oc.get("torn_user")) < 4:
@@ -257,7 +257,7 @@ class Crimes(commands.Cog):
                 eb = Embed(title=f'{v["crime_name"]} completed', color=my_blue)
                 for name, value in fields.items():
                     eb.add_field(name=name, value=value)
-                await channel.send(embed=eb)
+                await send(channel, embed=eb)
                 oc["mentions"].remove(str(k))
 
             # exit if completed
@@ -275,7 +275,7 @@ class Crimes(commands.Cog):
                 eb = Embed(title=f'OC ready', description=f'[{v["crime_name"]}](https://www.torn.com/factions.php?step=your#/tab=crimes)', color=my_green)
                 eb.add_field(name="Crime ID", value=f'{k}')
                 eb.add_field(name="Faction", value=f'{fName}')
-                await channel.send(f'{notified} {v["crime_name"]}', embed=eb)
+                await send(channel, f'{notified} {v["crime_name"]}', embed=eb)
                 oc["mentions"].append(str(k))
 
             # if not ready (because of participants) and already mentionned -> remove the already mentionned
@@ -283,7 +283,7 @@ class Crimes(commands.Cog):
                 eb = Embed(title=f'OC not ready anymore', description=v["crime_name"], color=my_red)
                 eb.add_field(name="Crime ID", value=f'{k}')
                 eb.add_field(name="Faction", value=f'{fName}')
-                await channel.send(embed=eb)
+                await send(channel, embed=eb)
                 oc["mentions"].remove(str(k))
 
         # clean mentions
@@ -320,7 +320,7 @@ class Crimes(commands.Cog):
         # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
         #
         # if status < 0:
-        #     await channel.send(f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
+        #     await send(channel, f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
 
         if len(oc.get("torn_user")) < 4:
@@ -525,7 +525,7 @@ class Crimes(commands.Cog):
                 if need_to_mention:
                     # print("delete message because need new mention")
                     await message.delete()
-                    await channel.send(content, embed=embed)
+                    await send(channel, content, embed=embed)
                     return True
 
                 # compare embed to see if needs to update or not
@@ -537,7 +537,7 @@ class Crimes(commands.Cog):
 
         # if no message found send a new one
         # print("no message found")
-        await channel.send(content, embed=embed)
+        await send(channel, content, embed=embed)
 
         return True
 

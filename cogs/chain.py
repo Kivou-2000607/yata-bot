@@ -104,15 +104,15 @@ class Chain(commands.Cog):
         # if no chain
         if response.get("chain", dict({})).get("current", 0) == 0:
             eb = Embed(title=f"{factionName} chain watching", description=f'No chains on the horizon', color=my_red)
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
             return
 
         if role is None:
             eb = Embed(title=f"{factionName} chain watching", description=f'Start watching', color=my_green)
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
         else:
             eb = Embed(title=f"{factionName} chain watching", description=f'Start watching. Will notify {role} on timeout', color=my_green)
-            await ctx.send(embed=eb)
+            await send(ctx, embed=eb)
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -128,7 +128,7 @@ class Chain(commands.Cog):
                 if m.content in ["!stopchain", "!stop"]:
                     await m.delete()
                     eb = Embed(title=f"{factionName} chain watching", description=f'Stop watching.', color=my_red)
-                    await ctx.send(embed=eb)
+                    await send(ctx, embed=eb)
                     return
 
             # Initial call to get faction name
@@ -139,7 +139,7 @@ class Chain(commands.Cog):
             response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
             if e and 'error' in response:
                 eb = Embed(title=f"{factionName} chain watching", description=f'API error code {response["error"]["code"]} with master key: {response["error"]["error"]}.', color=my_red)
-                await ctx.send(embed=eb)
+                await send(ctx, embed=eb)
                 return
 
             # get timings
@@ -164,25 +164,25 @@ class Chain(commands.Cog):
             # if cooldown
             if cooldown > 0:
                 eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f}min', color=my_blue)
-                await ctx.send(embed=eb)
+                await send(ctx, embed=eb)
                 return
 
             # if timeout
             elif timeout == 0:
                 eb = Embed(title=f"{factionName} chain watching", description=f'Chain timed out', color=my_red)
-                await ctx.send(embed=eb)
+                await send(ctx, embed=eb)
                 return
 
             # if warning
             elif timeout < deltaW:
                 eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
-                await ctx.send("" if role is None else f'{role} chain timeout {timeout}s', embed=eb)
+                await send(ctx, "" if role is None else f'{role} chain timeout {timeout}s', embed=eb)
 
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
                 eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
-                await ctx.send(embed=eb)
+                await send(ctx, embed=eb)
 
             # sleeps
             # logging.info(timeout, deltaW, delay, 30 - delay)
@@ -206,7 +206,7 @@ class Chain(commands.Cog):
         if not allowed:
             return
 
-        msg = await ctx.send("Gotcha! Just be patient, I'll stop watching on the next notification.")
+        msg = await send("ctx, Gotcha! Just be patient, I'll stop watching on the next notification.")
         await asyncio.sleep(10)
         await msg.delete()
 
@@ -532,7 +532,7 @@ class Chain(commands.Cog):
             eb.add_field(name=f'Money', value=f'No vault records')
             eb.add_field(name=f'Points', value=f'No vault records')
 
-        await ctx.author.send(embed=eb)
+        await ctx.send(author, embed=eb)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -563,7 +563,7 @@ class Chain(commands.Cog):
             eb = Embed(title="Retals tracking", description="STOP tracking", color=my_red)
             for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
                 eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
-            await ctx.channel.send(embed=eb)
+            await ctx.send(channel, embed=eb)
             del self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)]
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -590,7 +590,7 @@ class Chain(commands.Cog):
         eb = Embed(title="Retals tracking", description="START tracking", color=my_green)
         for k, v in current.items():
             eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
-        await ctx.channel.send(embed=eb)
+        await ctx.send(channel, embed=eb)
         self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)] = current
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
@@ -608,18 +608,18 @@ class Chain(commands.Cog):
         if discord_member is None:
             eb = Embed(title=f"Retals tracking error", description=f'Discord member {discord_member} not found', color=my_red)
             eb.set_footer(text="STOP tracking")
-            await channel.send(embed=eb)
+            await send(channel, embed=eb)
             return False
 
         # get torn id, name and key
         # # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
         #
         # if status < 0:
-        #     await channel.send(f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
+        #     await send(channel, f'```md\n# Tracking retals\n< error > could not find torn identity of discord member {discord_member}```')
         #     return False
 
         # if len(retal.get("torn_user")) < 4:
-        #     await channel.send(f'```md\n# Tracking retals\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
+        #     await send(channel, f'```md\n# Tracking retals\n< error > Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\n<STOP>```')
         #     return False
 
         tornId = retal.get("torn_user")[0]
@@ -649,13 +649,13 @@ class Chain(commands.Cog):
 
             eb = Embed(title=title, description=description, color=color)
             eb.set_footer(text=foot)
-            await channel.send(embed=eb)
+            await send(channel, embed=eb)
             return ret
 
         if not int(response["ID"]):
             eb = Embed(title=f"Retals tracking error", description=f'No faction found for {name} {tornId}', color=my_red)
             eb.set_footer(text="STOP tracking")
-            await channel.send(embed=eb)
+            await send(channel, embed=eb)
             return False
 
         # faction id and name
@@ -694,12 +694,12 @@ class Chain(commands.Cog):
                 embed.add_field(name='Respect', value=f'{v["respect_gain"]:.2f}')
                 embed.add_field(name=f'Log', value=f'[{v["result"]}](https://www.torn.com/loader.php?sid=attackLog&ID={v["code"]})')
 
-                await channel.send(message, embed=embed)
+                await send(channel, message, embed=embed)
                 retal["mentions"].append(str(k))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                 attack_time = ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
-                await channel.send(f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
+                await send(channel, f':middle_finger: {v["attacker_name"]} retaled on **{v["defender_name"]} [{v["defender_id"]}]** {delay:.1f} minutes ago at {attack_time} TCT')
                 retal["mentions"].append(str(k))
 
         # clean mentions

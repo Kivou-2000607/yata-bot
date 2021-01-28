@@ -330,7 +330,9 @@ class Verify(commands.Cog):
                 await member.edit(nick=nickname)
             except BaseException as e:
                 logging.debug(f"[verify/_member] {ctx.guild}: {member} can't edit nickname: {e}")
-                await self.bot.send_error_message(ctx.channel, f"Can't edit nickname to **{nickname}**\n`{e}`")
+                channel = self.bot.get_guild_admin_channel(ctx.guild)
+                if channel is not None:
+                    await self.bot.send_error_message(channel, f"Can't edit {member}'s nickname to **{nickname}**\n`{e}`")
                 pass
 
             # Get faction id and name

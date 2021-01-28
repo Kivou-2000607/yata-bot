@@ -616,6 +616,11 @@ class Admin(commands.Cog):
 
         # bugs or fatal errors
 
+        if ctx.guild is None:
+            logging.error("Could no send error message because guild is None")
+            logging.error(ctx)
+            logging.error(error)
+
         # headers
         headers = {
             "guild": f'{ctx.guild} [{ctx.guild.id}]',

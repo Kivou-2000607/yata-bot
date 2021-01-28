@@ -106,7 +106,7 @@ class API(commands.Cog):
             eb.add_field(name="Experience > 5%", value="\n".join(lst))
 
         eb.set_image(url="https://awardimages.torn.com/615034470.png")
-        await ctx.author.send(embed=eb)
+        await send(ctx.author, embed=eb)
         return
 
     @commands.command(aliases=['fh'])
@@ -152,7 +152,7 @@ class API(commands.Cog):
         eb = Embed(title=f"Finishing hits", description="\n".join(lst), colour=my_blue)
         eb.set_image(url="https://awardimages.torn.com/433435448.png")
 
-        await ctx.author.send(embed=eb)
+        await send(ctx.author, embed=eb)
         return
 
     @commands.command(aliases=['net'])
@@ -186,7 +186,7 @@ class API(commands.Cog):
                     name = k.title()
                 eb.add_field(name=name, value=f"${v:,.0f}")
 
-        await ctx.author.send(embed=eb)
+        await send(ctx.author, embed=eb)
         return
 
     @commands.command(aliases=['profile', 'p', 'id'])
@@ -262,7 +262,7 @@ class API(commands.Cog):
 
         # at this point tornId should be a interger corresponding to a torn ID
         if ctx.message.content[1:3] == "id":
-            await ctx.send(f"https://www.torn.com/profiles.php?XID={tornId}")
+            await send(ctx, f"https://www.torn.com/profiles.php?XID={tornId}")
             return
 
         # get configuration for guild
@@ -357,7 +357,7 @@ class API(commands.Cog):
         # if r.get("discord" {}).get("discordID", False):
         # eb.set_footer(text=f'Update: {ts_format(r["timestamp"], fmt="short")}')
 
-        await ctx.send(embed=eb)
+        await send(ctx, embed=eb)
 
 
     @tasks.loop(minutes=1)
@@ -438,7 +438,7 @@ class API(commands.Cog):
                             for k, v in response["events"].items():
                                 # if new event not notified -> notify
                                 if not v["seen"] and k not in notifications["event"]:
-                                    await member.send(cleanhtml(v["event"]).replace(" [View]", ""))
+                                    await send(member, cleanhtml(v["event"]).replace(" [View]", ""))
                                     notifications["event"][k] = True
 
                                 # if seen even already notified -> clean table
@@ -454,7 +454,7 @@ class API(commands.Cog):
                             for k, v in response["messages"].items():
                                 # if new event not notified -> notify
                                 if not v["seen"] and k not in notifications["message"]:
-                                    await member.send(f'New message from {v["name"]}: {v["title"]}')
+                                    await send(member, f'New message from {v["name"]}: {v["title"]}')
                                     notifications["message"][k] = True
 
                                 # if seen even already notified -> clean table
@@ -467,7 +467,7 @@ class API(commands.Cog):
                             # if new award or different number of awards
                             if not notifications["award"].get("notified", False) or notifications["award"].get("notified") != response["notifications"]["awards"]:
                                 s = "s" if response["notifications"]["awards"] > 1 else ""
-                                await member.send(f'You have {response["notifications"]["awards"]} new award{s}')
+                                await send(member, f'You have {response["notifications"]["awards"]} new award{s}')
                                 notifications["award"]["notified"] = response["notifications"]["awards"]
 
                         else:
@@ -477,7 +477,7 @@ class API(commands.Cog):
                     if "energy" in notifications:
                         if response["energy"]["fulltime"] < 90:
                             if not notifications["energy"].get("notified", False):
-                                await member.send(f'Energy at {response["energy"]["current"]} / {response["energy"]["maximum"]}')
+                                await send(member, f'Energy at {response["energy"]["current"]} / {response["energy"]["maximum"]}')
                             notifications["energy"]["notified"] = True
 
                         else:
@@ -487,7 +487,7 @@ class API(commands.Cog):
                     if "nerve" in notifications:
                         if response["nerve"]["fulltime"] < 90:
                             if not notifications["nerve"].get("notified", False):
-                                await member.send(f'Nerve at {response["nerve"]["current"]} / {response["nerve"]["maximum"]}')
+                                await send(member, f'Nerve at {response["nerve"]["current"]} / {response["nerve"]["maximum"]}')
                             notifications["nerve"]["notified"] = True
 
                         else:
@@ -497,7 +497,7 @@ class API(commands.Cog):
                     if "chain" in notifications:
                         if response["chain"]["timeout"] < 90 and response["chain"]["current"] > 10:
                             if not notifications["chain"].get("notified", False):
-                                await member.send(f'Chain timeout in {response["chain"]["timeout"]} seconds')
+                                await send(member, f'Chain timeout in {response["chain"]["timeout"]} seconds')
                             notifications["chain"]["notified"] = True
 
                         else:
@@ -507,7 +507,7 @@ class API(commands.Cog):
                     if "education" in notifications:
                         if response["education_timeleft"] < 90:
                             if not notifications["education"].get("notified", False):
-                                await member.send(f'Education ends in {response["education_timeleft"]} seconds')
+                                await send(member, f'Education ends in {response["education_timeleft"]} seconds')
                             notifications["education"]["notified"] = True
 
                         else:
@@ -517,7 +517,7 @@ class API(commands.Cog):
                     if "bank" in notifications:
                         if response["city_bank"]["time_left"] < 90:
                             if not notifications["bank"].get("notified", False):
-                                await member.send(f'Bank investment ends in {response["city_bank"]["time_left"]} seconds (${response["city_bank"]["amount"]:,.0f})')
+                                await send(member, f'Bank investment ends in {response["city_bank"]["time_left"]} seconds (${response["city_bank"]["amount"]:,.0f})')
                             notifications["bank"]["notified"] = True
 
                         else:
@@ -527,7 +527,7 @@ class API(commands.Cog):
                     if "drug" in notifications:
                         if response["cooldowns"]["drug"] < 90:
                             if not notifications["drug"].get("notified", False):
-                                await member.send(f'Drug cooldown ends in {response["cooldowns"]["drug"]} seconds')
+                                await send(member, f'Drug cooldown ends in {response["cooldowns"]["drug"]} seconds')
                             notifications["drug"]["notified"] = True
 
                         else:
@@ -537,7 +537,7 @@ class API(commands.Cog):
                     if "medical" in notifications:
                         if response["cooldowns"]["medical"] < 90:
                             if not notifications["medical"].get("notified", False):
-                                await member.send(f'Medical cooldown ends in {response["cooldowns"]["medical"]} seconds')
+                                await send(member, f'Medical cooldown ends in {response["cooldowns"]["medical"]} seconds')
                             notifications["medical"]["notified"] = True
 
                         else:
@@ -547,7 +547,7 @@ class API(commands.Cog):
                     if "booster" in notifications:
                         if response["cooldowns"]["booster"] < 90:
                             if not notifications["booster"].get("notified", False):
-                                await member.send(f'Booster cooldown ends in {response["cooldowns"]["booster"]} seconds')
+                                await send(member, f'Booster cooldown ends in {response["cooldowns"]["booster"]} seconds')
                             notifications["booster"]["notified"] = True
 
                         else:
@@ -557,7 +557,7 @@ class API(commands.Cog):
                     if "travel" in notifications:
                         if response["travel"]["time_left"] < 90:
                             if not notifications["travel"].get("destination", False):
-                                await member.send(f'Landing in {response["travel"]["destination"]} in {response["travel"]["time_left"]} seconds')
+                                await send(member, f'Landing in {response["travel"]["destination"]} in {response["travel"]["time_left"]} seconds')
                             notifications["travel"] = response["travel"]
 
                         else:
