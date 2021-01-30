@@ -36,31 +36,15 @@ my_green = 4175668
 
 # split message if needed
 async def send(obj, content='', embed=None):
-    def lookahead(iterable):
-        """Pass through all values from the given iterable, augmented by the
-        information if there are more values to come after the current one
-        (True), or if it is the last value (False).
-        """
-        # Get an iterator and pull the first value.
-        it = iter(iterable)
-        last = next(it)
-        # Run the iterator to exhaustion (starting from the second value).
-        for val in it:
-            # Report the *previous* value (more to come).
-            yield last, True
-            last = val
-        # Report the last value.
-        yield last, False
-
-
     try:
         await obj.send(content, embed=embed)
+
     except BaseException as e:
         if isinstance(e, discord.errors.HTTPException) and e.code == 50035:
             contents = textwrap.wrap(content, 2000)
-            for i, (content, in_between) in enumerate(lookahead(contents)):
-
-                if in_between:
+            lcontents = len(contents)
+            for i, content in enumerate(contents):
+                if i + 1 < lcontents:
                     await obj.send(content, embed=None)
 
                 elif embed is not None:
