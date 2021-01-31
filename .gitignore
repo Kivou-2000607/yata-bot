@@ -110,3 +110,6 @@ source.bash
 *.pid
 .vscode
 *~
+
+
+tools/*.json

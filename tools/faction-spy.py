@@ -24,9 +24,15 @@ import asyncio
 import datetime
 import pytz
 import json
+import argparse
 
-db = json.load(open("factionspies.json", "r"))
+# parser
+parser = argparse.ArgumentParser(description='Parse options to create json file.')
+parser.add_argument('--instance', type=str, help="name of the instance of the script", required=True)
+args = vars(parser.parse_args())
+json_name = f'faction-spy-{args.get("instance")}.json'
 
+db = json.load(open(json_name, "r"))
 
 def get_key():
     k, v = sorted(db["keys"].items(), key=lambda x: x[1]["last_used"])[0]
@@ -75,10 +81,11 @@ for faction_id, faction in db["factions"].items():
             if prev and curr > prev:
                 d = datetime.datetime.fromtimestamp(member_json["timestamp"], tz=pytz.UTC)
                 log = f'```md\n[{d.strftime("%m/%d %H:%M:%S")}]({member_json.get("name")} [{member_id}]) {curr - prev} {db["records"].get(k, k)}```'
-                webhook = Webhook.partial(db["wh_id"], db["wh_token"], adapter=RequestsWebhookAdapter())
-                webhook.send(log, username=f'Spying on {faction_json["name"]} [{faction_id}]')
+                for _, wb in db["webhooks"].items():
+                    webhook = Webhook.partial(wh["wh_id"], wh["wh_token"], adapter=RequestsWebhookAdapter())
+                    webhook.send(log, username=f'Spying on {faction_json["name"]} [{faction_id}]')
 
         # save new record
         faction["members"][member_id] = current_record
 
-    json.dump(db, open("factionspies.json", "w+"), sort_keys=True, indent=4)
+    json.dump(db, open(json_name, "w+"), sort_keys=True, indent=4)
