@@ -81,9 +81,13 @@ for faction_id, faction in db["factions"].items():
             if prev and curr > prev:
                 d = datetime.datetime.fromtimestamp(member_json["timestamp"], tz=pytz.UTC)
                 log = f'```md\n[{d.strftime("%m/%d %H:%M:%S")}]({member_json.get("name")} [{member_id}]) {curr - prev} {db["records"].get(k, k)}```'
-                for _, wb in db["webhooks"].items():
-                    webhook = Webhook.partial(wh["wh_id"], wh["wh_token"], adapter=RequestsWebhookAdapter())
-                    webhook.send(log, username=f'Spying on {faction_json["name"]} [{faction_id}]')
+                print(log)
+                for _, wh in db["webhooks"].items():
+                    try:
+                        webhook = Webhook.partial(wh["wh_id"], wh["wh_token"], adapter=RequestsWebhookAdapter())
+                        webhook.send(log, username=f'Spying on {faction_json["name"]} [{faction_id}]')
+                    except BaseException as e:
+                        print(e)
 
         # save new record
         faction["members"][member_id] = current_record

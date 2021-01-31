@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source ~/venvbot/bin/activate
+source ~/.virtualenvs/yata-bot/bin/activate
 
-cd ~/yata-bot/
+cd ~/yata-bot/tools/
 
-python factionspies.py >> factionspies.log
+python faction-spy.py --instance $1 >> faction-spy-$1.log
