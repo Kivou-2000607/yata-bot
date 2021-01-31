@@ -89,7 +89,10 @@ class Revive(commands.Cog):
             else:
                 msg = await self.bot.send_error_message(ctx.channel, "Impossible to send revive call because you're not verified on the official Torn discord server.\nYou can use `!revive <tornId>`.")
                 await asyncio.sleep(30)
-                await msg.delete()
+                try:
+                    await msg.delete()
+                except BaseException:
+                    pass
                 return
 
         else:

@@ -563,7 +563,7 @@ class Chain(commands.Cog):
             eb = Embed(title="Retals tracking", description="STOP tracking", color=my_red)
             for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "mentions"]:
                 eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
-            await ctx.send(channel, embed=eb)
+            await send(ctx.channel, embed=eb)
             del self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)]
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -590,7 +590,7 @@ class Chain(commands.Cog):
         eb = Embed(title="Retals tracking", description="START tracking", color=my_green)
         for k, v in current.items():
             eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
-        await ctx.send(channel, embed=eb)
+        await send(ctx.channel, embed=eb)
         self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)] = current
         await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
