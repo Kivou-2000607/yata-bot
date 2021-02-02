@@ -73,6 +73,7 @@ logging.error("error")
 bot_id = config("BOT_ID", default=1)
 github_token = config("GITHUB_TOKEN", default="")
 main_server_id = config("MAIN_SERVER_ID", default=581227228537421825)
+master_key = config("MASTER_KEY", default="")
 logging.info(f'Starting bot: bot id = {bot_id}')
 
 # sentry
@@ -105,6 +106,7 @@ bot = YataBot(configurations=configurations,
               bot_id=bot_id,
               main_server_id=main_server_id,
               github_token=github_token,
+              master_key=master_key,
               intents=intents)
 bot.remove_command('help')
 

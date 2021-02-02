@@ -43,10 +43,11 @@ from inc.handy import *
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, configurations=None, main_server_id=0, bot_id=0, github_token=None, **args):
+    def __init__(self, configurations=None, main_server_id=0, bot_id=0, master_key="", github_token=None, **args):
         Bot.__init__(self, **args)
         self.configurations = configurations
         self.bot_id = int(bot_id)
+        self.master_key = master_key
         self.github_token = github_token
         self.main_server_id = int(main_server_id)
 

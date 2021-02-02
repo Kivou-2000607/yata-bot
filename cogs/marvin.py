@@ -21,6 +21,7 @@ This file is part of yata-bot.
 import random
 import asyncio
 import time
+import aiohttp
 
 # import discord modules
 from discord import Embed
@@ -33,7 +34,8 @@ class Marvin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
-
+        self.master_key = self.bot.master_key
+        print(self.master_key)
         self.quotes_lib = [
             "Life? Don't talk to me about life.",
             "I think you ought to know I'm feeling very depressed.",
@@ -51,6 +53,12 @@ class Marvin(commands.Cog):
             "I ache, therefore I am.",
             "Life. Loathe it or ignore it. You can’t like it.",
             "*Now the world has gone to bed,*\n*Darkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
+
+        # server id: channel id for assist tools
+        self.assist_servers = {
+            650701692853288991: [650701692853288997],
+            646420161372356648: [646471341205225473],
+        }
 
         self.quotes_used = []
 
@@ -116,8 +124,88 @@ class Marvin(commands.Cog):
 
         }
 
+    async def handle_assist(self, message):
+        # only listen to specific channel
+        if message.channel.id not in self.assist_servers[message.guild.id]:
+            return
+
+        # try to get and number of players
+        split_content = message.content.split(" ")
+        if len(split_content) > 1:
+            n_assists = " ".join(split_content[1:])
+        else:
+            n_assists = 4
+
+        # check if isdigit
+        if split_content[0].isdigit():
+            target_id = int(split_content[0])
+
+        else:
+            # search 1
+            search = re.search("XID=\d+", split_content[0])
+
+            if search is None:
+                # search 2
+                search = re.search("user2ID=\d+", split_content[0])
+
+            if search is None:
+                return
+
+            target_id = int(search.group(0).split("=")[1])
+
+
+
+        # call tornstats factionspy
+        url = f"https://www.tornstats.com/api.php?key={self.master_key}&action=spy&target={target_id}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                req = await r.json()
+
+        spy = req["spy"] if req.get("spy", {}).get("status") else False
+
+        description = [
+            f"[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={target_id}) - [Profile](https://www.torn.com/profiles.php?XID={target_id})",
+            ]
+        if spy:
+            description.append("```")
+            for s in ["strength", "defense", "speed", "dexterity", "total"]:
+                try:
+                    description.append(f'{s.title():<9} {spy.get(s):>16,}')
+                except BaseException as e:
+                    description.append(f'{s}: ???')
+            description.append("```")
+        else:
+            description.append("*No spies found...*\n")
+
+        description.append(f"**Assists required** {n_assists}")
+
+        description.append(f"**React** ↗️ if you join - ☠️ when the fight is over")
+
+        eb = Embed(
+            title=f"Assist on Player [{target_id}]",
+            description="\n".join(description),
+            url=f"https://www.torn.com/loader.php?sid=attack&user2ID={target_id}",
+            color=my_blue
+            )
+        eb.set_author(name=f'{message.author.display_name}', icon_url=message.author.avatar_url)
+
+
+        msg = await message.channel.send("", embed=eb)
+
+        await msg.add_reaction('↗️')
+        await msg.add_reaction('☠️')
+
+        await message.delete()
+
     @commands.Cog.listener()
     async def on_message(self, message):
+
+        # tmp access to assists
+        if message.guild.id in self.assist_servers and not message.author.bot:
+            await self.handle_assist(message)
+            return
+
+
         # only blab for yata and chappie server or author is bot
         if message.guild.id not in self.blab_servers or message.author.bot:
             return
@@ -267,3 +355,22 @@ class Marvin(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         await self.toggle_role(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if payload.channel_id in self.assist_servers[payload.guild_id] and not payload.member.bot:
+            if payload.emoji.name == '☠️':
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                channel = get(guild.text_channels, id=payload.channel_id)
+                async for message in channel.history(limit=50):
+                    if message.id == payload.message_id:
+                        await message.edit(content="*Fight over*", embed=None)
+                        await asyncio.sleep(1)
+                        await message.delete()
+                        break
+            elif payload.emoji.name == '↗️':
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                channel = get(guild.text_channels, id=payload.channel_id)
+                msg = await channel.send(f"{payload.member.display_name} joined")
+                await asyncio.sleep(1)
+                await msg.delete()
