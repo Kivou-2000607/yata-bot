@@ -402,7 +402,7 @@ class YataBot(Bot):
         # proxy = True if len(key) == 32 else False
         # url = f'https://{"torn-proxy.com" if proxy else "api.torn.com"}/{section}/{id}?selections={",".join(selections)}&key={key}'
         proxy = False
-        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}'
+        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}&comment=yata-bot'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:
