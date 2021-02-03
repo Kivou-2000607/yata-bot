@@ -96,6 +96,17 @@ async def get_configuration(bot_id, discord_id):
     server = await con.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
     return False if server is None else json.loads(server.get("configuration"))
 
+async def get_assists():
+    db_cred = get_credentials()
+    dbname = db_cred["dbname"]
+    del db_cred["dbname"]
+    con = await asyncpg.connect(database=dbname, **db_cred)
+    assists_raw = await con.fetch(f'SELECT * FROM bot_assist;')
+    assists = []
+    for a in assists_raw:
+        assists.append({k: a.get(k) for k in ["player_id", "player_name", "target_id", "target_name"]})
+        await con.execute(f'DELETE FROM bot_assist WHERE id = $1', a.get("id"))
+    return assists
 
 async def set_n_servers(bot_id, n):
     db_cred = get_credentials()

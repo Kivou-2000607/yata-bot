@@ -27,15 +27,16 @@ import aiohttp
 from discord import Embed
 from discord.ext import commands
 from discord.utils import get
+from discord.ext import tasks
 
 from inc.handy import *
+from inc.yata_db import get_assists
 
 class Marvin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
         self.master_key = self.bot.master_key
-        print(self.master_key)
         self.quotes_lib = [
             "Life? Don't talk to me about life.",
             "I think you ought to know I'm feeling very depressed.",
@@ -53,8 +54,14 @@ class Marvin(commands.Cog):
             "I ache, therefore I am.",
             "Life. Loathe it or ignore it. You can’t like it.",
             "*Now the world has gone to bed,*\n*Darkness won't engulf my head,*\n*I can see by infra-red,*\n*How I hate the night,*\n*Now I lay me down to sleep,*\n*Try to count electric sheep,*\n*Sweet dream wishes you can keep,*\n*How I hate the night.*"]
+        self.get_assists.start()
+
+        def cog_unload(self):
+            self.get_assists.cancel()
 
         # server id: channel id for assist tools
+        self.assist_server_interaction = 650701692853288991  # chappie
+        # self.assist_server_interaction = 646420161372356648  # AK
         self.assist_servers = {
             650701692853288991: [650701692853288997],
             646420161372356648: [646471341205225473],
@@ -124,36 +131,53 @@ class Marvin(commands.Cog):
 
         }
 
-    async def handle_assist(self, message):
+    async def handle_assist(self, message=None, assist=None):
+
+        if message is None and assist is None:
+            return
+
+        if message is None:
+            # send initial message
+            guild = get(self.bot.guilds, id=self.assist_server_interaction)
+            channel = get(guild.channels, id=self.assist_servers[guild.id][0])
+            # channel_id = self.assist_servers[self.assist_server_interaction]
+            # channel_id = self.assist_servers[self.assist_server_interaction]
+            message = await channel.send("Incoming assist from TORN...")
+
         # only listen to specific channel
         if message.channel.id not in self.assist_servers[message.guild.id]:
             return
 
-        # try to get and number of players
-        split_content = message.content.split(" ")
-        if len(split_content) > 1:
-            n_assists = " ".join(split_content[1:])
+        n_assists = 4
+        if assist is None:
+            # try to get and number of players
+            split_content = message.content.split(" ")
+            if len(split_content) > 1:
+                n_assists = " ".join(split_content[1:])
+
+            # check if isdigit
+            if split_content[0].isdigit():
+                target_id = int(split_content[0])
+
+            else:
+                # search 1
+                search = re.search("XID=\d+", split_content[0])
+
+                if search is None:
+                    # search 2
+                    search = re.search("user2ID=\d+", split_content[0])
+
+                if search is None:
+                    return
+
+                target_id = int(search.group(0).split("=")[1])
+
+            target_name = "Player"
+            player_name = False
         else:
-            n_assists = 4
-
-        # check if isdigit
-        if split_content[0].isdigit():
-            target_id = int(split_content[0])
-
-        else:
-            # search 1
-            search = re.search("XID=\d+", split_content[0])
-
-            if search is None:
-                # search 2
-                search = re.search("user2ID=\d+", split_content[0])
-
-            if search is None:
-                return
-
-            target_id = int(search.group(0).split("=")[1])
-
-
+            target_id = assist.get("target_id")
+            target_name = assist.get("target_name")
+            player_name = assist.get("player_name")
 
         # call tornstats factionspy
         url = f"https://www.tornstats.com/api.php?key={self.master_key}&action=spy&target={target_id}"
@@ -182,12 +206,16 @@ class Marvin(commands.Cog):
         description.append(f"**React** ↗️ if you join - ☠️ when the fight is over")
 
         eb = Embed(
-            title=f"Assist on Player [{target_id}]",
+            title=f"Assist on {target_name} [{target_id}]",
             description="\n".join(description),
             url=f"https://www.torn.com/loader.php?sid=attack&user2ID={target_id}",
             color=my_blue
             )
-        eb.set_author(name=f'{message.author.display_name}', icon_url=message.author.avatar_url)
+
+        if player_name:
+            eb.set_author(name=f'{player_name}', icon_url=self.bot.user.avatar_url)
+        else:
+            eb.set_author(name=f'{message.author.display_name}', icon_url=message.author.avatar_url)
 
 
         msg = await message.channel.send("", embed=eb)
@@ -197,14 +225,19 @@ class Marvin(commands.Cog):
 
         await message.delete()
 
+    @tasks.loop(seconds=5)
+    async def get_assists(self):
+        assists = await get_assists()
+        for assist in assists:
+            await self.handle_assist(assist=assist)
+
     @commands.Cog.listener()
     async def on_message(self, message):
 
         # tmp access to assists
         if message.guild.id in self.assist_servers and not message.author.bot:
-            await self.handle_assist(message)
+            await self.handle_assist(message=message)
             return
-
 
         # only blab for yata and chappie server or author is bot
         if message.guild.id not in self.blab_servers or message.author.bot:
@@ -258,7 +291,6 @@ class Marvin(commands.Cog):
 
                 await message.channel.send(quote)
                 return
-
 
     async def toggle_role(self, payload):
         add = payload.event_type == 'REACTION_ADD'
@@ -347,7 +379,6 @@ class Marvin(commands.Cog):
                     await asyncio.sleep(10)
                     await msg.delete()
 
-
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         await self.toggle_role(payload)
@@ -374,3 +405,8 @@ class Marvin(commands.Cog):
                 msg = await channel.send(f"{payload.member.display_name} joined")
                 await asyncio.sleep(1)
                 await msg.delete()
+
+
+    @get_assists.before_loop
+    async def before_get_assists(self):
+        await self.bot.wait_until_ready()
