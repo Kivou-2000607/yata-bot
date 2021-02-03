@@ -133,10 +133,6 @@ class Marvin(commands.Cog):
 
     async def handle_assist(self, message=None, assist=None):
 
-        # only listen to specific channel
-        if message.channel.id not in self.assist_servers[message.guild.id]:
-            return
-
         # return if no message send and no assist from db
         if message is None and assist is None:
             return
@@ -150,6 +146,9 @@ class Marvin(commands.Cog):
             # channel_id = self.assist_servers[self.assist_server_interaction]
             message = await channel.send("Incoming assist from TORN...")
 
+        # only listen to specific channel
+        if message.channel.id not in self.assist_servers[message.guild.id]:
+            return
 
         # get target and player ids
         if assist is None:  # if from discord message
