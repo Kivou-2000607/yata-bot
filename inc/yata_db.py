@@ -106,7 +106,7 @@ async def get_assists():
     for a in assists_raw:
         assists.append({k: a.get(k) for k in ["player_id", "player_name", "target_id", "target_name"]})
         await con.execute(f'DELETE FROM bot_assist WHERE id = $1', a.get("id"))
-    con.close()
+    await con.close()
     return assists
 
 async def set_n_servers(bot_id, n):
