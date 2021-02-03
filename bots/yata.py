@@ -398,12 +398,12 @@ class YataBot(Bot):
             eb.add_field(name=k, value=v)
         return await send(channel, embed=eb)
 
-    async def api_call(self, section, id, selections, key, check_key=[], error_channel=False):
+    async def api_call(self, section, id, selections, key, check_key=[], error_channel=False, comment="yata-bot"):
 
         # proxy = True if len(key) == 32 else False
         # url = f'https://{"torn-proxy.com" if proxy else "api.torn.com"}/{section}/{id}?selections={",".join(selections)}&key={key}'
         proxy = False
-        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}&comment=yata-bot'
+        url = f'https://api.torn.com/{section}/{id}?selections={",".join(selections)}&key={key}&comment={comment}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 try:

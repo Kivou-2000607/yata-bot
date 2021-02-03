@@ -133,9 +133,15 @@ class Marvin(commands.Cog):
 
     async def handle_assist(self, message=None, assist=None):
 
+        # only listen to specific channel
+        if message.channel.id not in self.assist_servers[message.guild.id]:
+            return
+
+        # return if no message send and no assist from db
         if message is None and assist is None:
             return
 
+        # if assist from db sends init message
         if message is None:
             # send initial message
             guild = get(self.bot.guilds, id=self.assist_server_interaction)
@@ -144,14 +150,12 @@ class Marvin(commands.Cog):
             # channel_id = self.assist_servers[self.assist_server_interaction]
             message = await channel.send("Incoming assist from TORN...")
 
-        # only listen to specific channel
-        if message.channel.id not in self.assist_servers[message.guild.id]:
-            return
 
-        n_assists = 4
-        if assist is None:
+        # get target and player ids
+        if assist is None:  # if from discord message
             # try to get and number of players
             split_content = message.content.split(" ")
+            n_assists = "4"
             if len(split_content) > 1:
                 n_assists = " ".join(split_content[1:])
 
@@ -173,23 +177,24 @@ class Marvin(commands.Cog):
                 target_id = int(search.group(0).split("=")[1])
 
             target_name = "Player"
-            player_name = False
-        else:
+            player_name = message.author.display_name
+
+        else:  # if from DB
             target_id = assist.get("target_id")
             target_name = assist.get("target_name")
             player_name = assist.get("player_name")
 
-        # call tornstats factionspy
+
+        # get spies from tornstats factionspy
         url = f"https://www.tornstats.com/api.php?key={self.master_key}&action=spy&target={target_id}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 req = await r.json()
-
         spy = req["spy"] if req.get("spy", {}).get("status") else False
 
-        description = [
-            f"[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={target_id}) - [Profile](https://www.torn.com/profiles.php?XID={target_id})",
-            ]
+
+        # create message
+        description = [f"[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={target_id}) - [Profile](https://www.torn.com/profiles.php?XID={target_id})"]
         if spy:
             description.append("```")
             for s in ["strength", "defense", "speed", "dexterity", "total"]:
@@ -200,30 +205,44 @@ class Marvin(commands.Cog):
             description.append("```")
         else:
             description.append("*No spies found...*\n")
+        # description.append(f"**Assists required** {n_assists}")
+        eb = Embed(title=f"{target_name} [{target_id}]",
+                   description="\n".join(description),
+                   url=f"https://www.torn.com/loader.php?sid=attack&user2ID={target_id}",
+                   color=my_blue)
+        eb.set_author(name=f'Assist call from {player_name}', icon_url=message.author.avatar_url)
+        eb.set_footer(text=f"↗️ if you join - ☠️ when the fight is over")
 
-        description.append(f"**Assists required** {n_assists}")
-
-        description.append(f"**React** ↗️ if you join - ☠️ when the fight is over")
-
-        eb = Embed(
-            title=f"Assist on {target_name} [{target_id}]",
-            description="\n".join(description),
-            url=f"https://www.torn.com/loader.php?sid=attack&user2ID={target_id}",
-            color=my_blue
-            )
-
-        if player_name:
-            eb.set_author(name=f'{player_name}', icon_url=self.bot.user.avatar_url)
-        else:
-            eb.set_author(name=f'{message.author.display_name}', icon_url=message.author.avatar_url)
-
-
+        # send assist message
         msg = await message.channel.send("", embed=eb)
-
         await msg.add_reaction('↗️')
         await msg.add_reaction('☠️')
 
+        # delete origin message
         await message.delete()
+
+        # update origin message with torn API call
+        response, e = await self.bot.api_call("user", target_id, ["profile"], self.master_key, comment="ak-assist")
+        if e and 'error' in response:
+            tmp = await self.bot.send_error_message(message.channel, f'API error AK-assist: {response["error"]["error"]}')
+            await asyncio.sleep(5)
+            await tmp.delete()
+        else:
+            eb_d = msg.embeds[0].to_dict()
+
+            # modify title to add name and faction
+            f = response.get("faction", {})
+            eb_d["title"] = eb_d["title"].replace("Player", response.get("name")) + f' {f.get("position").lower()} of {response.get("faction", {}).get("faction_tag")}'
+            eb = Embed.from_dict(eb_d)
+
+            # add fields: life
+            l = response.get("life")
+            eb.add_field(name="Life", value=f'{l.get("current"):,}/{l.get("maximum"):,}')
+
+            # add fields: status
+            s = response.get("last_action")
+            eb.add_field(name="Last action", value=s.get("relative"))
+            await msg.edit(embed=eb)
 
     @tasks.loop(seconds=5)
     async def get_assists(self):
@@ -393,18 +412,40 @@ class Marvin(commands.Cog):
             if payload.emoji.name == '☠️':
                 guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = get(guild.text_channels, id=payload.channel_id)
-                async for message in channel.history(limit=50):
-                    if message.id == payload.message_id:
-                        await message.edit(content="*Fight over*", embed=None)
-                        await asyncio.sleep(1)
-                        await message.delete()
-                        break
+                message = await channel.fetch_message(payload.message_id)
+                await message.edit(content="*Fight over*", embed=None)
+                await asyncio.sleep(1)
+                await message.delete()
+
             elif payload.emoji.name == '↗️':
                 guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = get(guild.text_channels, id=payload.channel_id)
+                message = await channel.fetch_message(payload.message_id)
+
+                # enough joins
+                if not len(message.embeds):
+                    await message.clear_reaction(payload.emoji)
+                    return
+
+                # check number of react and edit
+                joins_emo = [r for r in message.reactions if r.emoji == payload.emoji.name]
+                joins = 0 if not len(joins_emo) else joins_emo[0].count - 1
+
                 msg = await channel.send(f"{payload.member.display_name} joined")
-                await asyncio.sleep(1)
+
+                # edit message if joins == 4
+                if joins == 4:
+                    eb_d = message.embeds[0].to_dict()
+                    await message.edit(content=f'*Enough joins for now on {eb_d.get("title")}.*\n*Wait for another call if needed.*', embed=None)
+                    await message.clear_reaction(payload.emoji)
+
+                # clean messages
+                await asyncio.sleep(2)
                 await msg.delete()
+
+                if joins == 1:
+                    await asyncio.sleep(60)
+                    await message.delete()
 
 
     @get_assists.before_loop
