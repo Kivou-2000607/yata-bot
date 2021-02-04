@@ -173,8 +173,13 @@ class Revive(commands.Cog):
 
                 logging.debug(f'[revive/revive] Sending call: {ctx.guild} -> {remote_guild}')
                 remote_config = self.bot.get_guild_configuration_by_module(remote_guild, "revive")
-
-                if str(ctx.guild.id) in remote_config.get("blacklist", {}):
+                if not remote_config:
+                    to_delete.append(server_id)
+                    # remote server disabled revives -> remove from origin server
+                    eb_bl = Embed(title="Revive call blacklisted", description=f'Server {remote_guild.name} disabled their revive option.', color=my_red)
+                    m = await ctx.send(embed=eb_bl)
+                    msgList.append([m, ctx.channel, delete])
+                elif str(ctx.guild.id) in remote_config.get("blacklist", {}):
                     eb_bl = Embed(title="Revive call blacklisted", description=f'Server {remote_guild.name} has blacklisted you.', color=my_red)
                     m = await ctx.send(embed=eb_bl)
                     msgList.append([m, ctx.channel, delete])
