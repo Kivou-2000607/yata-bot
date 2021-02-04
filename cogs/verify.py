@@ -382,6 +382,7 @@ class Verify(commands.Cog):
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
+            await self.bot.send_log_main(e, full=True)
             return f"Error while doing the verification: {hide_key(e)}", False
 
         return "< error > Weird... I didn't do anything...", False

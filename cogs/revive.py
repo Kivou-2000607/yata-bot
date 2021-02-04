@@ -194,6 +194,7 @@ class Revive(commands.Cog):
 
             except BaseException as e:
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
+                await self.bot.send_log_main(e, full=True)
 
 
         if len(to_delete):
