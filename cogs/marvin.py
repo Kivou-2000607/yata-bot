@@ -204,6 +204,7 @@ class Marvin(commands.Cog):
             description.append("```")
         else:
             description.append("*No spies found...*\n")
+        description.append("**React before joining:**")
         # description.append(f"**Assists required** {n_assists}")
         eb = Embed(title=f"{target_name} [{target_id}]",
                    description="\n".join(description),
@@ -215,10 +216,10 @@ class Marvin(commands.Cog):
         reactions_fields = {
             "💪": "if you can hit",
             "☁️": "if you just temp",
-            "☠️": "when fight is over",
+            "☠️": "when the fight is over",
         }
         for k, v in reactions_fields.items():
-            eb.add_field(name=f"React with {k}", value=v)
+            eb.add_field(name=f"{k}", value=v)
 
         # send assist message
         msg = await send(message.channel, "", embed=eb)
