@@ -421,7 +421,12 @@ class Marvin(commands.Cog):
                 channel = get(guild.text_channels, id=payload.channel_id)
                 message = await channel.fetch_message(payload.message_id)
 
-                await message.edit(content=message.content.replace("enough joins for now", "fight's over"), embed=None)
+                if len(message.embeds):
+                    message_title = message.embeds[0].to_dict().get("title")
+                    await message.edit(content=f"*Fight against {message_title}: fight's over*", embed=None)
+                else:
+                    await message.edit(content=message.content.replace("enough joins for now", "fight's over"), embed=None)
+
                 await message.clear_reactions()
                 # await asyncio.sleep(1)
                 # await message.delete()
@@ -444,13 +449,13 @@ class Marvin(commands.Cog):
                         if r not in joins_reacts:
                             joins_reacts.append(r)
                 joins = len(joins_reacts) - 1
-
-
+                # print(joins)
                 # edit message if joins == 4
-                if joins == 4:
+                if joins >= 4:
                     await message.edit(content=f'*Fight against {message_title}: enough joins for now*', embed=None)
-                    await message.clear_reactions()
-                    await message.add_reaction('☠️')
+                    await message.clear_reaction('☁️')
+                    await message.clear_reaction('💪')
+                    # await message.add_reaction('☠️')
                 else:
                     msg = await channel.send(f'*Fight against {message_title}: {payload.member.display_name} joined ({"hitter" if payload.emoji.name == "💪" else "smoke"})*')
                     await asyncio.sleep(10)
