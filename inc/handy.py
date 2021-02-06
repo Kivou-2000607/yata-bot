@@ -35,17 +35,28 @@ my_red = 15544372
 my_green = 4175668
 
 # split message if needed
-async def send(obj, content='', embed=None):
+async def send(obj, content='', embed=None, delete=False):
+    # message list for delete
+
+    msg_list = []
     try:
-        await obj.send(content, embed=embed)
+        msg = await obj.send(content, embed=embed)
+        msg_list.append(msg)
 
     except BaseException as e:
         if isinstance(e, discord.errors.HTTPException) and e.code == 50035:
             contents = textwrap.wrap(content, 2000)
             lcontents = len(contents)
+
+            # empty message with embed
+            if not lcontents:
+                contents = ['']
+                lcontents = 1
+
             for i, content in enumerate(contents):
                 if i + 1 < lcontents:
-                    await obj.send(content, embed=None)
+                    msg = await obj.send(content, embed=None)
+                    msg_list.append(msg)
 
                 elif embed is not None:
 
@@ -62,12 +73,12 @@ async def send(obj, content='', embed=None):
                     # +-------------+------------------------+
 
                     d = embed.to_dict()
-                    new_embed = Embed(title=textwrap.shorten(d.get("titled", "qsdf qsdfq sdfqsdfsdfqsdfqsdfdfqsd"), width=256),
+                    new_embed = Embed(title=textwrap.shorten(d.get("title", ""), width=256),
                                       description=textwrap.shorten(d.get("description", ""), width=2048),
                                       color=d.get("color"))
 
                     for f in d.get("fields", []):
-                        new_embed.add_field(name=textwrap.shorten(f.get("name", ""), width=256), value=textwrap.shorten(f.get("value", ""), width=256))
+                        new_embed.add_field(name=textwrap.shorten(f.get("name", ""), width=256), value=textwrap.shorten(f.get("value", ""), width=1024))
 
                     if d.get('footer', False):
                         new_embed.set_footer(text=textwrap.shorten(d["footer"].get("text", ""), width=2048))
@@ -77,11 +88,24 @@ async def send(obj, content='', embed=None):
 
                     embed = new_embed if len(new_embed) < 6000 else None
 
-                    await obj.send(content, embed=embed)
+                    msg = await obj.send(content, embed=embed)
+                    msg_list.append(msg)
 
         else:
             print(f"Sending message error {e}")
+            return
 
+    # delete messages
+    if delete and isinstance(delete, int):
+        await asyncio.sleep(delete)
+        for msg in msg_list:
+            await msg.delete()
+
+    # return message or list
+    if len(msg_list) > 1:
+        return msg_list
+    else:
+        return msg_list[-1]
 
 def permissions_rsm(permissions):
     perm = []

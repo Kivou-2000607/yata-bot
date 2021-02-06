@@ -174,10 +174,11 @@ class YataBot(Bot):
 
     async def on_ready(self):
         # change activity
-        # activity = discord.Activity(name="TORN", type=discord.ActivityType.playing)
-        # await self.change_presence(activity=activity)
+        # activity = discord.Activity(name="over TORN's players", type=discord.ActivityType.watching)
+        activity = discord.Activity(name="Torn", type=discord.ActivityType.playing)
+        await self.change_presence(activity=activity)
 
-        logging.info("[SETUP] Ready...")
+        logging.info("Ready...")
 
     def get_guilds_by_module(self, module):
         guilds = [g for g in self.guilds if self.configurations.get(g.id, {}).get(module, False)]
@@ -384,19 +385,19 @@ class YataBot(Bot):
             self.configurations.pop(guild.id)
         await delete_configuration(self.bot_id, guild.id)
 
-    async def send_error_message(self, channel, description, fields={}, title=False):
+    async def send_error_message(self, channel, description, fields={}, title=False, delete=False):
         title = title if title else "Error"
         eb = Embed(title=title, description=description, color=my_red)
         eb = append_update(eb, ts_now(), text="At ")
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
-        return await send(channel, embed=eb)
+        return await send(channel, embed=eb, delete=delete)
 
-    async def send_help_message(self, channel, description, fields={}):
+    async def send_help_message(self, channel, description, fields={}, delete=False):
         eb = Embed(title="Help", description=description, color=my_green)
         for k, v in fields.items():
             eb.add_field(name=k, value=v)
-        return await send(channel, embed=eb)
+        return await send(channel, embed=eb, delete=delete)
 
     async def api_call(self, section, id, selections, key, check_key=[], error_channel=False, comment="yata-bot"):
 

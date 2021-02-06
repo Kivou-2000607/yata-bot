@@ -193,7 +193,7 @@ class Marvin(commands.Cog):
 
 
         # create message
-        description = [f"[Attack](https://www.torn.com/loader.php?sid=attack&user2ID={target_id}) - [Profile](https://www.torn.com/profiles.php?XID={target_id})"]
+        description = []
         if spy:
             description.append("```")
             for s in ["strength", "defense", "speed", "dexterity", "total"]:
@@ -210,11 +210,20 @@ class Marvin(commands.Cog):
                    url=f"https://www.torn.com/loader.php?sid=attack&user2ID={target_id}",
                    color=my_blue)
         eb.set_author(name=f'Assist call from {player_name}', icon_url=message.author.avatar_url)
-        eb.set_footer(text=f"↗️ if you join - ☠️ when the fight is over")
+        # eb.set_footer(text=f'React: 💪 for hits or ☁️ for temp - ☠️ when the fight is over')
+        eb.timestamp = now()
+        reactions_fields = {
+            "💪": "if you can hit",
+            "☁️": "if you just temp",
+            "☠️": "when fight is over",
+        }
+        for k, v in reactions_fields.items():
+            eb.add_field(name=f"React with {k}", value=v)
 
         # send assist message
-        msg = await message.channel.send("", embed=eb)
-        await msg.add_reaction('↗️')
+        msg = await send(message.channel, "", embed=eb)
+        await msg.add_reaction('💪')
+        await msg.add_reaction('☁️')
         await msg.add_reaction('☠️')
 
         # delete origin message
@@ -223,24 +232,23 @@ class Marvin(commands.Cog):
         # update origin message with torn API call
         response, e = await self.bot.api_call("user", target_id, ["profile"], self.master_key, comment="ak-assist")
         if e and 'error' in response:
-            tmp = await self.bot.send_error_message(message.channel, f'API error AK-assist: {response["error"]["error"]}')
-            await asyncio.sleep(5)
-            await tmp.delete()
+            tmp = await self.bot.send_error_message(msg.channel, f'API error AK-assist: {response["error"]["error"]}', delete=5)
         else:
             eb_d = msg.embeds[0].to_dict()
 
             # modify title to add name and faction
             f = response.get("faction", {})
             eb_d["title"] = eb_d["title"].replace("Player", response.get("name")) + f' {f.get("position").lower()} of {response.get("faction", {}).get("faction_tag")}'
-            eb = Embed.from_dict(eb_d)
 
-            # add fields: life
+            # add life and status
             l = response.get("life")
-            eb.add_field(name="Life", value=f'{l.get("current"):,}/{l.get("maximum"):,}')
-
-            # add fields: status
             s = response.get("last_action")
-            eb.add_field(name="Last action", value=s.get("relative"))
+            description = f'**Life** {l.get("current"):,}/{l.get("maximum"):,} **Last action**: {s.get("relative")}'
+
+            # modify description
+            eb_d["description"] = f'{description}\n\n{eb_d["description"]}'
+
+            eb = Embed.from_dict(eb_d)
             await msg.edit(embed=eb)
 
     @tasks.loop(seconds=5)
@@ -412,14 +420,17 @@ class Marvin(commands.Cog):
                 guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = get(guild.text_channels, id=payload.channel_id)
                 message = await channel.fetch_message(payload.message_id)
-                await message.edit(content="*Fight over*", embed=None)
-                await asyncio.sleep(1)
-                await message.delete()
 
-            elif payload.emoji.name == '↗️':
+                await message.edit(content=message.content.replace("enough joins for now", "fight's over"), embed=None)
+                await message.clear_reactions()
+                # await asyncio.sleep(1)
+                # await message.delete()
+
+            elif payload.emoji.name in ['☁️', '💪']:
                 guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = get(guild.text_channels, id=payload.channel_id)
                 message = await channel.fetch_message(payload.message_id)
+                message_title = message.embeds[0].to_dict().get("title")
 
                 # enough joins
                 if not len(message.embeds):
@@ -427,24 +438,27 @@ class Marvin(commands.Cog):
                     return
 
                 # check number of react and edit
-                joins_emo = [r for r in message.reactions if r.emoji == payload.emoji.name]
-                joins = 0 if not len(joins_emo) else joins_emo[0].count - 1
+                joins_reacts = []
+                for reaction in [r for r in message.reactions if r.emoji in ['☁️', '💪']]:
+                    for r in await reaction.users().flatten():
+                        if r not in joins_reacts:
+                            joins_reacts.append(r)
+                joins = len(joins_reacts) - 1
 
-                msg = await channel.send(f"{payload.member.display_name} joined")
 
                 # edit message if joins == 4
                 if joins == 4:
-                    eb_d = message.embeds[0].to_dict()
-                    await message.edit(content=f'*Enough joins for now on {eb_d.get("title")}.*\n*Wait for another call if needed.*', embed=None)
-                    await message.clear_reaction(payload.emoji)
+                    await message.edit(content=f'*Fight against {message_title}: enough joins for now*', embed=None)
+                    await message.clear_reactions()
+                    await message.add_reaction('☠️')
+                else:
+                    msg = await channel.send(f'*Fight against {message_title}: {payload.member.display_name} joined ({"hitter" if payload.emoji.name == "💪" else "smoke"})*')
+                    await asyncio.sleep(10)
+                    await msg.delete()
 
-                # clean messages
-                await asyncio.sleep(2)
-                await msg.delete()
-
-                if joins == 1:
-                    await asyncio.sleep(60)
-                    await message.delete()
+                # if joins == 4:
+                #     await asyncio.sleep(60)
+                #     await message.delete()
 
 
     @get_assists.before_loop
