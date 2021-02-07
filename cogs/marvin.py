@@ -59,13 +59,24 @@ class Marvin(commands.Cog):
         def cog_unload(self):
             self.get_assists.cancel()
 
+        self.clean_assists.start()
+
+        def cog_unload(self):
+            self.clean_assists.cancel()
+
         # server id: channel id for assist tools
-        self.assist_server_interaction = 650701692853288991  # chappie
-        # self.assist_server_interaction = 646420161372356648  # AK
+        # self.assist_server_interaction = 650701692853288991  # chappie
+        self.assist_server_interaction = 646420161372356648  # AK
         self.assist_servers = {
             650701692853288991: [650701692853288997],
             646420161372356648: [646471341205225473],
         }
+
+        self.assist_spam = {
+            650701692853288991: {},
+            646420161372356648: {},
+        }
+        self.TIME_BETWEEN_ASSISTS = 30
 
         self.quotes_used = []
 
@@ -184,6 +195,20 @@ class Marvin(commands.Cog):
             player_name = assist.get("player_name")
 
 
+        guild_id = message.guild.id
+        last_assist = ts_now() - self.assist_spam[guild_id].get(target_id, 0)
+
+        # check for spam
+        if last_assist < self.TIME_BETWEEN_ASSISTS:
+            msg = await message.channel.send(f"*Assist for Player [{target_id}] already sent {last_assist}s ago (less than {self.TIME_BETWEEN_ASSISTS}s)*")
+            await message.delete()
+            await asyncio.sleep(10)
+            await msg.delete()
+            return
+
+        # add assist
+        self.assist_spam[guild_id][target_id] = ts_now()
+
         # get spies from tornstats factionspy
         url = f"https://www.tornstats.com/api.php?key={self.master_key}&action=spy&target={target_id}"
         async with aiohttp.ClientSession() as session:
@@ -214,9 +239,9 @@ class Marvin(commands.Cog):
         # eb.set_footer(text=f'React: 💪 for hits or ☁️ for temp - ☠️ when the fight is over')
         eb.timestamp = now()
         reactions_fields = {
-            "💪": "if you can hit",
-            "☁️": "if you just temp",
-            "☠️": "when the fight is over",
+            "React with 💪": "if you can hit",
+            "React with ☁️": "if you just temp",
+            "React with ☠️": "when the fight is over",
         }
         for k, v in reactions_fields.items():
             eb.add_field(name=f"{k}", value=v)
@@ -254,6 +279,26 @@ class Marvin(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def get_assists(self):
+        assists = await get_assists()
+        for assist in assists:
+            await self.handle_assist(assist=assist)
+
+    @tasks.loop(seconds=10)
+    async def clean_assists(self):
+        print("clean assists")
+        now = ts_now()
+        for guild_id, assists in self.assist_spam.items():
+            print(guild_id, assists)
+            to_del = []
+            for target_id, ts in assists.items():
+                if now - ts > self.TIME_BETWEEN_ASSISTS:
+                    to_del.append(target_id)
+            for target_id in to_del:
+                print("del", target_id)
+                del self.assist_spam[guild_id][target_id]
+
+
+
         assists = await get_assists()
         for assist in assists:
             await self.handle_assist(assist=assist)
@@ -452,7 +497,7 @@ class Marvin(commands.Cog):
                 joins = len(joins_reacts) - 1
                 # print(joins)
                 # edit message if joins == 4
-                if joins >= 4:
+                if joins > 4:
                     await message.edit(content=f'*Fight against {message_title}: enough joins for now*', embed=None)
                     await message.clear_reaction('☁️')
                     await message.clear_reaction('💪')
@@ -469,4 +514,8 @@ class Marvin(commands.Cog):
 
     @get_assists.before_loop
     async def before_get_assists(self):
+        await self.bot.wait_until_ready()
+
+    @clean_assists.before_loop
+    async def before_clean_assists(self):
         await self.bot.wait_until_ready()
