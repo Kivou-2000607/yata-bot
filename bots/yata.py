@@ -84,15 +84,18 @@ class YataBot(Bot):
             return -1, None, None
 
         torn_ids = [v["torn_id"] for k, v in c.get("admin", {}).get("server_admins", {}).items()]
-        logging.debug(f"[GET master KEY] <{guild}> {torn_ids}")
+        logging.info(f"[get_master_key] {guild}: {torn_ids}")
         if len(torn_ids):
             user = await get_yata_user(random.choice(torn_ids), type="T")
+            logging.info(f"[get_master_key] {guild}: user={user} len(user)={len(user)}")
             if not len(user):
+                logging.warning(f"[get_master_key] {guild}: empty user")
                 return -1, None, None
             else:
                 user = tuple(user[0])
                 return 0, user[0], user[2]
         else:
+            logging.warning(f"[get_master_key] {guild}: no master keys ids found")
             return -1, None, None
 
     async def get_user_key(self, ctx, member, needPerm=True, returnMaster=False, delError=False, guild=False):

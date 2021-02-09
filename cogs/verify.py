@@ -145,6 +145,7 @@ class Verify(commands.Cog):
 
         # get key
         status, tornId, key = await self.bot.get_master_key(ctx.guild)
+        logging.info(f'[verify/verify] {ctx.guild}: get_mastre_key status={status}, tornId={tornId}')
         if status == -1:
             await self.bot.send_error_message(ctx.channel, "No master key given")
             return
