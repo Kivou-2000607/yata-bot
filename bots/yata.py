@@ -84,6 +84,7 @@ class YataBot(Bot):
             return -1, None, None
 
         torn_ids = [v["torn_id"] for k, v in c.get("admin", {}).get("server_admins", {}).items()]
+        logging.debug(f"[GET master KEY] <{ctx.guild}> {torn_ids}")
         if len(torn_ids):
             user = await get_yata_user(random.choice(torn_ids), type="T")
             if not len(user):
@@ -117,10 +118,10 @@ class YataBot(Bot):
 
         # get master key to check identity
 
-        # logging.info(f"[GET USER KEY] <{ctx.guild}> get master key")
+        logging.debug(f"[GET USER KEY] <{ctx.guild}> get master key")
         master_status, master_id, master_key = await self.get_master_key(ctx.guild)
         if master_status == -1:
-            # logging.info(f"[GET USER KEY] <{ctx.guild}> no master key given")
+            logging.debug(f"[GET USER KEY] <{ctx.guild}> no master key given")
             if ctx:
                 m = await self.send_error_message(ctx, f'No master key given.', title="Error getting user API key")
                 if delError:
