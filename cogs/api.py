@@ -362,9 +362,9 @@ class API(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def notify(self):
-        logging.debug("[api/notifications] start task")
 
         try:
+            logging.info("[api/notifications] start task")
 
             # main guild
             guild = get(self.bot.guilds, id=self.bot.main_server_id)
@@ -572,6 +572,7 @@ class API(commands.Cog):
                         logging.error(f'[api/notifications] {member.nick} / {member}: {hide_key(e)}')
 
             await con.close()
+            logging.info("[api/notifications] start task")
 
         except BaseException as e:
             headers = {"error": "personal notification error before loop"}
