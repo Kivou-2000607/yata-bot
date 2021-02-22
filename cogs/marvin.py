@@ -57,7 +57,7 @@ class Marvin(commands.Cog):
         self.quotes_used = []
 
         # allowed servers
-        self.allowed_servers = [581227228537421825, 650701692853288991, 792136004684480532]
+        self.allowed_servers = [581227228537421825, 650701692853288991, 715785867519721534]
 
         # servers where marvin can talk
         self.blab_servers = [581227228537421825, 650701692853288991]
@@ -273,9 +273,9 @@ class Marvin(commands.Cog):
         await self.toggle_role(payload)
 
     @commands.command()
-    async def kick(self, ctx, *args):
+    async def kick(self, ctx):
         for guild in self.bot.guilds:
             print(f"Marvin on server {guild} {guild.id}")
             if guild.id not in self.allowed_servers:
                 print(f"leave server {guild}")
-                guild.leave()
+                await guild.leave()
