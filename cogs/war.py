@@ -180,8 +180,8 @@ class War(commands.Cog):
 
         logging.debug(f'[war/notifications] mentions: {len(mentions)}')
 
-        # logging.debug(f"[war/notifications] push wars")
-        # await push_data(self.bot.bot_id, int(response["timestamp"]), response, "wars")
+        logging.debug(f"[war/notifications] push wars")
+        await push_data(self.bot.bot_id, int(response["timestamp"]), response, "wars")
 
         # DEBUG
         # embed = Embed(title="Test Racket")
