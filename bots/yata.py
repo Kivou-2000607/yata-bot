@@ -87,7 +87,7 @@ class YataBot(Bot):
         logging.info(f"[get_master_key] {guild}: {torn_ids}")
         if len(torn_ids):
             user = await get_yata_user(random.choice(torn_ids), type="T")
-            logging.info(f"[get_master_key] {guild}: user={user} len(user)={len(user)}")
+            # logging.info(f"[get_master_key] {guild}: user={user} len(user)={len(user)}")
             if not len(user):
                 logging.warning(f"[get_master_key] {guild}: empty user")
                 return -1, None, None

@@ -209,6 +209,8 @@ async def push_data(bot_id, timestamp, data, module):
         await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
     elif module == "stocks":
         await con.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
+    elif module == "wars":
+        await con.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
     await con.close()
 
 
@@ -220,6 +222,8 @@ def get_data(bot_id, module):
         cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {bot_id};")
     elif module == "stocks":
         cur.execute(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {bot_id};")
+    elif module == "wars":
+        cur.execute(f"SELECT timestamp, wars FROM bot_wars WHERE id = {bot_id};")
 
     timestamp, data = cur.fetchone()
     cur.close()

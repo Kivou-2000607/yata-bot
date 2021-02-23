@@ -142,7 +142,7 @@ class Admin(commands.Cog):
         configuration["admin"]["last_sync"] = ts_now()
 
         # update modules
-        for module in ["admin", "rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
+        for module in ["admin", "rackets", "wars", "loot", "revive", "verify", "oc", "stocks", "chain"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
@@ -156,7 +156,7 @@ class Admin(commands.Cog):
                             updates.append(f":x: **{module} {key}** disabled")
 
                 # choose how to sync
-                if module in ["rackets", "loot", "revive", "verify", "oc", "stocks", "chain"]:
+                if module in ["rackets", "wars", "loot", "revive", "verify", "oc", "stocks", "chain"]:
                     # db erase completely bot config
                     configuration[module] = configuration_db[module]
                 elif module in ["admin"]:
@@ -318,7 +318,7 @@ class Admin(commands.Cog):
 
     @commands.command()
     async def rtfm(self, ctx, *args):
-        modules = ["admin", "verify", "loot", "chain", "rackets", "stocks", "revive", "crimes", "api"]
+        modules = ["admin", "verify", "loot", "chain", "rackets", "wars", "stocks", "revive", "crimes", "api"]
         hash = f"#{args[0]}" if len(args) and args[0] in modules else ""
         await send(ctx, f"https://yata.yt/bot/documentation/{hash}")
 
@@ -472,7 +472,7 @@ class Admin(commands.Cog):
 
         # check argument
         logging.debug(f'[admin/assign] args: {args}')
-        modules = ["revive", "rackets", "loot", "stocks"]
+        modules = ["revive", "rackets", "wars", "loot", "stocks"]
         if len(args) and args[0] in modules:
             module = args[0]
         else:

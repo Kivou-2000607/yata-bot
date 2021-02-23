@@ -45,6 +45,7 @@ from cogs.stocks import Stocks
 from cogs.api import API
 from cogs.chain import Chain
 from cogs.racket import Racket
+from cogs.war import War
 from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
@@ -125,6 +126,7 @@ if int(bot_id) in [1, 3, 5]:
     bot.add_cog(Loot(bot))
     bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
+    bot.add_cog(War(bot))
     bot.add_cog(Revive(bot))
     bot.add_cog(Crimes(bot))
     bot.add_cog(API(bot))
