@@ -176,7 +176,7 @@ class Revive(commands.Cog):
                 if not remote_config:
                     to_delete.append(server_id)
                     # remote server disabled revives -> remove from origin server
-                    eb_bl = Embed(title="Revive call blacklisted", description=f'Server {remote_guild.name} disabled their revive option.', color=my_red)
+                    eb_bl = Embed(title="Revive call disabled", description=f'Server {remote_guild.name} disabled their revive option.', color=my_red)
                     m = await ctx.send(embed=eb_bl)
                     msgList.append([m, ctx.channel, delete])
                 elif str(ctx.guild.id) in remote_config.get("blacklist", {}):
@@ -184,6 +184,11 @@ class Revive(commands.Cog):
                     m = await ctx.send(embed=eb_bl)
                     msgList.append([m, ctx.channel, delete])
                 else:
+                    # if freevive check if server accept freevives
+                    if free and not remote_config.get("other", {}).get("freevive", False):
+                        logging.debug(f'[revive/revive] not accepting freevives: {ctx.guild} -> {remote_guild}')
+                        continue
+
                     # get guild, role, channel and delete option
                     remote_role = self.bot.get_module_role(remote_guild.roles, remote_config.get("roles_alerts", {}))
                     remote_channel = self.bot.get_module_channel(remote_guild.channels, remote_config.get("channels_alerts", {}))
@@ -208,7 +213,7 @@ class Revive(commands.Cog):
 
             self.bot.configurations[ctx.guild.id]["revive"]["sending"] = sending_ids
             await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
-            logging.debug(f"[revive/revive] <{ctx.guild}> push new sending list")
+            logging.debug(f"[revive/revive] {ctx.guild} push new sending list")
 
         # delete messages
         # wait for 5 minutes
