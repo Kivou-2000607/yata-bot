@@ -101,6 +101,9 @@ class Marvin(commands.Cog):
             792136004684480532: {
                 'Metal_Left': 791813881545883709,
                 'Metal_Right': 791813997372243969,
+            },
+            823327984986750986: {
+                'gak': 823328164507942964
             }
         }
         self.guilds_cascading_roles = {
