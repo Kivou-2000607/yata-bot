@@ -690,7 +690,7 @@ class Chain(commands.Cog):
                     embed.add_field(name='Faction', value=f'None')
 
                 embed.add_field(name='Defender', value=f'[{v["defender_name"]} [{v["defender_id"]}]](https://www.torn.com/profiles.php?XID={v["defender_id"]})')
-                embed.add_field(name='Chain Bonus', value=f'{v["chain"]} (x {v["modifiers"]["chainBonus"]})')
+                embed.add_field(name='Chain Bonus', value=f'{v["chain"]} (x {v["modifiers"]["chain_bonus"]})')
                 embed.add_field(name='Respect', value=f'{v["respect_gain"]:.2f}')
                 embed.add_field(name=f'Log', value=f'[{v["result"]}](https://www.torn.com/loader.php?sid=attackLog&ID={v["code"]})')
 
