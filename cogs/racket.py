@@ -33,9 +33,6 @@ from discord.ext import tasks
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import get_data
-from inc.yata_db import push_data
-from inc.yata_db import get_faction_name
 from inc.handy import *
 
 
@@ -63,7 +60,7 @@ class Racket(commands.Cog):
             logging.error(f"[racket/notifications] Error {e}")
             return
 
-        _, randt_p = get_data(self.bot.bot_id, "rackets")
+        _, randt_p = self.bot.get_data("rackets")
         rackets_p = randt_p["rackets"] if "rackets" in randt_p else {}
         territory_p = randt_p["territory"] if "territory" in randt_p else {}
 
@@ -144,7 +141,7 @@ class Racket(commands.Cog):
         logging.debug(f'[racket/notifications] mentions: {len(mentions)}')
 
         logging.debug(f"[racket/notifications] push rackets")
-        await push_data(self.bot.bot_id, int(response["timestamp"]), response, "rackets")
+        await self.bot.push_data(int(response["timestamp"]), response, "rackets")
 
         # DEBUG
         # embed = Embed(title="Test Racket")
@@ -182,4 +179,6 @@ class Racket(commands.Cog):
 
     @racketsTask.before_loop
     async def before_racketsTask(self):
+        print("racket not ready")
         await self.bot.wait_until_ready()
+        print("racket ready")

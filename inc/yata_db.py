@@ -63,8 +63,14 @@ def get_credentials():
     return db_credentials
 
 
-def load_configurations(bot_id):
-    db_cred = get_credentials()
+def load_configurations(bot_id, database):
+    db_cred = {
+        "dbname": database.get("database"),
+        "user": database.get("user"),
+        "password": database.get("password"),
+        "host": database.get("host"),
+        "port": database.get("port")
+    }
     con = psycopg2.connect(**db_cred)
 
     # get bot
@@ -88,105 +94,105 @@ def load_configurations(bot_id):
     return token, configurations
 
 
-async def get_configuration(bot_id, discord_id):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    server = await con.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
-    return False if server is None else json.loads(server.get("configuration"))
+# async def get_configuration(bot_id, discord_id):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     server = await con.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+#     return False if server is None else json.loads(server.get("configuration"))
 
-async def set_n_servers(bot_id, n):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-
-    await con.execute('''
-        UPDATE bot_bot SET number_of_servers = $2 WHERE id = $1
-        ''', bot_id, n)
-    await con.close()
-
-
-async def set_configuration(bot_id, discord_id, server_name, configuration):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-
-    # check if server already in the database
-    server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
-    if server is None:  # create if not in the db
-        # logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
-        await con.execute('''
-        INSERT INTO bot_server(bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
-        ''', bot_id, discord_id, server_name, json.dumps(configuration), 'x')
-    else:  # update otherwise
-        # logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
-        await con.execute('''
-        UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
-        ''', bot_id, discord_id, server_name, json.dumps(configuration))
-    await con.close()
+# async def set_n_servers(bot_id, n):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#
+#     await con.execute('''
+#         UPDATE bot_bot SET number_of_servers = $2 WHERE id = $1
+#         ''', bot_id, n)
+#     await con.close()
 
 
-async def delete_configuration(bot_id, discord_id):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-
-    # check if server already in the database
-    server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
-    if server is not None:  # delete if in the db
-        # step 1 remove the admins
-        tmp = await con.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
-        await con.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
-
-        # step 2 delete the configuration
-        await con.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', bot_id, discord_id)
-
-    await con.close()
-
-
-async def get_server_admins(bot_id, discord_id):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
-    if server is None:
-        return {}, 'x'
-
-    server_yata_id = server.get("id")
-    players_yata_id = await con.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
-
-    admins = {}
-    for player_yata_id in [player.get("player_id") for player in players_yata_id]:
-        player = await con.fetchrow(f'SELECT "tId", "dId", "name" FROM player_player WHERE "id" = {player_yata_id};')
-        dId = player.get("dId", 0)
-        if dId:
-            admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
-
-    secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
-    if secret == 'x':
-        secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
-
-    return admins, secret
+# async def set_configuration(bot_id, discord_id, server_name, configuration):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#
+#     # check if server already in the database
+#     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+#     if server is None:  # create if not in the db
+#         # logging.debug(f"[yata_db/set_configuration] Create db configuration {server_name}: {configuration}")
+#         await con.execute('''
+#         INSERT INTO bot_server(bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
+#         ''', bot_id, discord_id, server_name, json.dumps(configuration), 'x')
+#     else:  # update otherwise
+#         # logging.debug(f"[yata_db/set_configuration] Update db configuration {server_name}: {configuration}")
+#         await con.execute('''
+#         UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
+#         ''', bot_id, discord_id, server_name, json.dumps(configuration))
+#     await con.close()
 
 
-async def get_yata_user(user_id, type="T"):
-    # get YATA user
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    if type == "T":
-        user = await con.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {user_id};')
-    elif type == "D":
-        user = await con.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "dId" = {user_id};')
-    await con.close()
+# async def delete_configuration(bot_id, discord_id):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#
+#     # check if server already in the database
+#     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+#     if server is not None:  # delete if in the db
+#         # step 1 remove the admins
+#         tmp = await con.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
+#         await con.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
+#
+#         # step 2 delete the configuration
+#         await con.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', bot_id, discord_id)
+#
+#     await con.close()
 
-    return user
+
+# async def get_server_admins(bot_id, discord_id):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     server = await con.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {bot_id} AND discord_id = {discord_id};')
+#     if server is None:
+#         return {}, 'x'
+#
+#     server_yata_id = server.get("id")
+#     players_yata_id = await con.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
+#
+#     admins = {}
+#     for player_yata_id in [player.get("player_id") for player in players_yata_id]:
+#         player = await con.fetchrow(f'SELECT "tId", "dId", "name" FROM player_player WHERE "id" = {player_yata_id};')
+#         dId = player.get("dId", 0)
+#         if dId:
+#             admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
+#
+#     secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
+#     if secret == 'x':
+#         secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
+#
+#     return admins, secret
+
+
+# async def get_yata_user(user_id, type="T"):
+#     # get YATA user
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     if type == "T":
+#         user = await con.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {user_id};')
+#     elif type == "D":
+#         user = await con.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "dId" = {user_id};')
+#     await con.close()
+#
+#     return user
 
 
 def get_secret(name):
@@ -200,35 +206,35 @@ def get_secret(name):
     return uid, secret, hookurl
 
 
-async def push_data(bot_id, timestamp, data, module):
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    if module == "rackets":
-        await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
-    elif module == "stocks":
-        await con.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
-    elif module == "wars":
-        await con.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
-    await con.close()
+# async def push_data(bot_id, timestamp, data, module):
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     if module == "rackets":
+#         await con.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
+#     elif module == "stocks":
+#         await con.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
+#     elif module == "wars":
+#         await con.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), bot_id)
+#     await con.close()
 
 
-def get_data(bot_id, module):
-    db_cred = get_credentials()
-    con = psycopg2.connect(**db_cred)
-    cur = con.cursor()
-    if module == "rackets":
-        cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {bot_id};")
-    elif module == "stocks":
-        cur.execute(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {bot_id};")
-    elif module == "wars":
-        cur.execute(f"SELECT timestamp, wars FROM bot_wars WHERE id = {bot_id};")
-
-    timestamp, data = cur.fetchone()
-    cur.close()
-    con.close()
-    return timestamp, json.loads(data)
+# def get_data(bot_id, module):
+#     db_cred = get_credentials()
+#     con = psycopg2.connect(**db_cred)
+#     cur = con.cursor()
+#     if module == "rackets":
+#         cur.execute(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {bot_id};")
+#     elif module == "stocks":
+#         cur.execute(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {bot_id};")
+#     elif module == "wars":
+#         cur.execute(f"SELECT timestamp, wars FROM bot_wars WHERE id = {bot_id};")
+#
+#     timestamp, data = cur.fetchone()
+#     cur.close()
+#     con.close()
+#     return timestamp, json.loads(data)
 
 
 async def get_faction_name(tId):

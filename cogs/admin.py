@@ -38,8 +38,6 @@ from discord import Embed
 from discord.ext import tasks
 
 # import bot functions and classes
-from inc.yata_db import *
-
 from inc.handy import *
 
 
@@ -80,16 +78,16 @@ class Admin(commands.Cog):
         updates = []
 
         # get configuration from the database and create if new
-        configuration_db = await get_configuration(self.bot_id, ctx.guild.id)
+        configuration_db = await self.bot.get_configuration(ctx.guild.id)
 
         # create in database if new
         if not configuration_db:
             logging.info(f'[admin/sync] Create db configuration for {ctx.guild}')
-            await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, {"admin": {}})
+            await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, {"admin": {}})
             updates.append("- create server database")
 
         # check if server admin and secret
-        server_admins, server_secret = await get_server_admins(self.bot_id, ctx.guild.id)
+        server_admins, server_secret = await self.bot.get_server_admins(ctx.guild.id)
         if len(server_admins):
             eb = Embed(title="Server administrators", color=my_blue)
             for server_admin_id, server_admin in server_admins.items():
@@ -180,7 +178,7 @@ class Admin(commands.Cog):
 
         # push configuration
         # print(json.dumps(configuration))
-        await set_configuration(self.bot_id, ctx.guild.id, ctx.guild.name, configuration)
+        await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, configuration)
 
         self.bot.configurations[ctx.guild.id] = configuration
 
@@ -452,11 +450,11 @@ class Admin(commands.Cog):
 
         #     n = len(ctx.guild.members)
         #     for i, member in enumerate(ctx.guild.members):
-        #         if len(await get_yata_user(member.id, type="D")) and r not in member.roles:
+        #         if len(await self.bot.get_yata_user(member.id, type="D")) and r not in member.roles:
         #             logging.info(f"[admin/assign] {member.display_name} add {r}")
         #             await member.add_roles(r)
 
-        #         elif not len(await get_yata_user(member.id, type="D")) and r in member.roles:
+        #         elif not len(await self.bot.get_yata_user(member.id, type="D")) and r in member.roles:
         #             logging.info(f"[admin/assign] {member.display_name} remove {r}")
         #             await member.remove_roles(r)
 
@@ -682,7 +680,7 @@ class Admin(commands.Cog):
                 logging.info(f"[admin/assignRoles] {member.display_name} remove {host}")
                 await member.remove_roles(host)
 
-            # is_yata = await get_yata_user(member.id, type="D")
+            # is_yata = await self.bot.get_yata_user(member.id, type="D")
             # if len(is_yata) and yata not in member.roles:
             #     logging.info(f"[admin/assignRoles] {member.display_name} add {yata}")
             #     await member.add_roles(yata)
@@ -702,7 +700,7 @@ class Admin(commands.Cog):
 
         await send(channel, embed=Embed(description="Start cleaning servers and configurations", color=my_blue))
 
-        await set_n_servers(self.bot.bot_id, len(self.bot.guilds))
+        await self.bot.set_n_servers(len(self.bot.guilds))
         for server in self.bot.guilds:
             config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
             bot = get(server.members, id=self.bot.user.id)
@@ -723,7 +721,7 @@ class Admin(commands.Cog):
         for server_id in [s for s in self.bot.configurations if s not in [g.id for g in self.bot.guilds]]:
             logging.info(f'[admin/servers] No bot in configuration id [{server_id}]')
             try:
-                await delete_configuration(self.bot_id, server_id)
+                await self.bot.delete_configuration(server_id)
                 await send(channel, embed=Embed(title="Bot configuration cleaning", description=f"I deleted the configuration of server ID {server_id} because I'm not in the server anymore", color=my_blue))
             except BaseException as e:
                 await send(channel, embed=Embed(title="Bot configuration cleaning", description=f"I can't delete the configuration of server ID {server_id} because there is still an administartor even if I'm not in the server anymore", color=my_red))

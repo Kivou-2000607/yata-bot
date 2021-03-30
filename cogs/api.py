@@ -35,8 +35,6 @@ from discord.ext import tasks
 from discord.utils import get
 
 # import bot functions and classes
-from inc.yata_db import reset_notifications
-from inc.yata_db import get_credentials
 from inc.handy import *
 
 

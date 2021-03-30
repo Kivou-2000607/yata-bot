@@ -35,7 +35,6 @@ from discord.ext import tasks
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import set_configuration
 from inc.handy import *
 
 
@@ -126,7 +125,7 @@ class Crimes(commands.Cog):
                 eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
             await send(ctx.channel, embed=eb)
             del self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)]
-            await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+            await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
 
         current = {"channel": [str(ctx.channel.id), f'{ctx.channel.name}', '#'],
@@ -153,7 +152,7 @@ class Crimes(commands.Cog):
             eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
         await send(ctx.channel, embed=eb)
         self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)] = current
-        await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+        await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
     async def _oc(self, guild, oc):
 
@@ -588,7 +587,7 @@ class Crimes(commands.Cog):
                     changes = True
 
                 if changes:
-                    await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                    await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
                     logging.debug(f"[oc/notifications] <{guild}> push notifications")
                 else:
                     logging.debug(f"[oc/notifications] <{guild}> don't push notifications")
@@ -646,7 +645,7 @@ class Crimes(commands.Cog):
                     changes = True
 
                 if changes:
-                    await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                    await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
                     logging.debug(f"[oc/notifications] <{guild}> push notifications")
                 else:
                     logging.debug(f"[oc/notifications] <{guild}> don't push notifications")

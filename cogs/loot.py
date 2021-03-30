@@ -35,9 +35,6 @@ from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
-from inc.yata_db import get_loots
-from inc.yata_db import get_scheduled
-from inc.yata_db import get_npc
 
 
 class Loot(commands.Cog):

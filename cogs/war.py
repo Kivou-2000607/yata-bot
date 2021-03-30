@@ -33,9 +33,6 @@ from discord.ext import tasks
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import get_data
-from inc.yata_db import push_data
-from inc.yata_db import get_faction_name
 from inc.handy import *
 
 
@@ -64,7 +61,7 @@ class War(commands.Cog):
             return
 
         # get previous data to compare with current api call
-        _, randt_p = get_data(self.bot.bot_id, "wars")
+        _, randt_p = self.bot.get_data("wars")
         wars_p = randt_p.get("territorywars", {})
         raids_p = randt_p.get("raids", {})
 
@@ -181,7 +178,7 @@ class War(commands.Cog):
         logging.debug(f'[war/notifications] mentions: {len(mentions)}')
 
         logging.debug(f"[war/notifications] push wars")
-        await push_data(self.bot.bot_id, int(response["timestamp"]), response, "wars")
+        await self.bot.push_data(int(response["timestamp"]), response, "wars")
 
         # DEBUG
         # embed = Embed(title="Test Racket")

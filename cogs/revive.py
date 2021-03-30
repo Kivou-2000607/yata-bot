@@ -32,8 +32,6 @@ from discord import Embed
 
 # import bot functions and classes
 from inc.handy import *
-from inc.yata_db import set_configuration
-
 
 class Revive(commands.Cog):
     def __init__(self, bot):
@@ -212,7 +210,7 @@ class Revive(commands.Cog):
                 del sending_ids[server_id]
 
             self.bot.configurations[ctx.guild.id]["revive"]["sending"] = sending_ids
-            await set_configuration(self.bot.bot_id, ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+            await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             logging.debug(f"[revive/revive] {ctx.guild} push new sending list")
 
         # delete messages

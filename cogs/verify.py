@@ -32,8 +32,6 @@ from discord.ext import tasks
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import set_configuration
-from inc.yata_db import get_faction_name
 from inc.handy import *
 
 
@@ -574,7 +572,7 @@ class Verify(commands.Cog):
                 # update time
                 config["other"]["daily_verify"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
@@ -622,7 +620,7 @@ class Verify(commands.Cog):
                 # update time
                 config["other"]["weekly_verify"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
@@ -669,7 +667,7 @@ class Verify(commands.Cog):
                 # update time
                 config["other"]["daily_check"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
@@ -716,7 +714,7 @@ class Verify(commands.Cog):
                 # update time
                 config["other"]["weekly_check"] = ts_now()
                 self.bot.configurations[guild.id]["verify"] = config
-                await set_configuration(self.bot.bot_id, guild.id, guild.name, self.bot.configurations[guild.id])
+                await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)

@@ -77,6 +77,17 @@ main_server_id = config("MAIN_SERVER_ID", default=581227228537421825)
 master_key = config("MASTER_KEY", default="")
 logging.info(f'Starting bot: bot id = {bot_id}')
 
+# databse
+database = {
+    "host": config("DB_HOST", cast=str),
+    "database": config("DB_DATABASE", cast=str),
+    "user": config("DB_USER", cast=str),
+    "password": config("DB_PASSWORD", cast=str),
+    "port": config("DB_PORT", cast=int),
+    "min_size": config("DB_MIN_SIZE", cast=int, default=1),
+    "max_size": config("DB_MAX_SIZE", cast=int, default=5)
+}
+
 # sentry
 if config("ENABLE_SENTRY", default=False, cast=bool):
     logging.info(f'Sentry: enabled')
@@ -90,7 +101,7 @@ else:
     logging.info(f'Sentry: disabled')
 
 # get configurations from YATA's database
-token, configurations = load_configurations(bot_id)
+token, configurations = load_configurations(bot_id, database)
 
 def get_prefix(client, message):
     if message.guild:
@@ -108,6 +119,7 @@ bot = YataBot(configurations=configurations,
               main_server_id=main_server_id,
               github_token=github_token,
               master_key=master_key,
+              database=database,
               intents=intents)
 bot.remove_command('help')
 
@@ -122,17 +134,18 @@ bot.add_cog(Admin(bot))
 # 5: YATA backup (the backup version of the public bot)
 
 if int(bot_id) in [1, 3, 5]:
-    bot.add_cog(Verify(bot))
-    bot.add_cog(Loot(bot))
-    bot.add_cog(Stocks(bot))
+    # pass
+    # bot.add_cog(Verify(bot))
+    # bot.add_cog(Loot(bot))
+    # bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
-    bot.add_cog(War(bot))
-    bot.add_cog(Revive(bot))
-    bot.add_cog(Crimes(bot))
-    bot.add_cog(API(bot))
-    bot.add_cog(Chain(bot))
-    bot.add_cog(Misc(bot))
-    bot.add_cog(Repository(bot))
+    # bot.add_cog(War(bot))
+    # bot.add_cog(Revive(bot))
+    # bot.add_cog(Crimes(bot))
+    # bot.add_cog(API(bot))
+    # bot.add_cog(Chain(bot))
+    # bot.add_cog(Misc(bot))
+    # bot.add_cog(Repository(bot))
     # bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [2]:

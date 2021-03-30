@@ -33,8 +33,6 @@ from discord.utils import get
 from discord import Embed
 
 # import bot functions and classes
-from inc.yata_db import get_data
-from inc.yata_db import push_data
 from inc.handy import *
 
 
@@ -169,7 +167,7 @@ class Stocks(commands.Cog):
     async def notify(self):
         logging.debug(f"[stocks/alerts] start task")
 
-        _, mentions_keys_prev = get_data(self.bot.bot_id, "stocks")
+        _, mentions_keys_prev = self.bot.get_data("stocks")
         mentions_keys_prev = mentions_keys_prev if len(mentions_keys_prev) else []  # make sure it's a list if empty
         for k in mentions_keys_prev:
             logging.debug(f"[stocks/alerts] previous alerts: {k}")
@@ -270,7 +268,7 @@ class Stocks(commands.Cog):
                     if k != "42":
                         mentions_keys.append(v)
 
-            await push_data(self.bot.bot_id, ts_now(), mentions_keys, "stocks")
+            await self.bot.push_data(ts_now(), mentions_keys, "stocks")
 
             # create message to send
             if not len(mentions):

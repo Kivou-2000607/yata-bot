@@ -25,6 +25,7 @@ import traceback
 import html
 import logging
 import asyncio
+import asyncpg
 
 # import discord modules
 import discord
@@ -35,21 +36,19 @@ from discord import Embed
 
 # import bot functions and classes
 # from includes.yata_db import get_member_key
-from inc.yata_db import set_configuration
-from inc.yata_db import delete_configuration
-from inc.yata_db import get_yata_user
 from inc.handy import *
 
 
 # Child class of Bot with extra configuration variables
 class YataBot(Bot):
-    def __init__(self, configurations=None, main_server_id=0, bot_id=0, master_key="", github_token=None, **args):
+    def __init__(self, configurations=None, database={}, main_server_id=0, bot_id=0, master_key="", github_token=None, **args):
         Bot.__init__(self, **args)
         self.configurations = configurations
         self.bot_id = int(bot_id)
         self.master_key = master_key
         self.github_token = github_token
         self.main_server_id = int(main_server_id)
+        self.database = database
 
     async def discord_to_torn(self, member, key):
         """ get a torn id form discord id
@@ -86,7 +85,7 @@ class YataBot(Bot):
         torn_ids = [v["torn_id"] for k, v in c.get("admin", {}).get("server_admins", {}).items()]
         logging.info(f"[get_master_key] {guild}: {torn_ids}")
         if len(torn_ids):
-            user = await get_yata_user(random.choice(torn_ids), type="T")
+            user = await self.get_yata_user(random.choice(torn_ids), type="T")
             # logging.info(f"[get_master_key] {guild}: user={user} len(user)={len(user)}")
             if not len(user):
                 logging.warning(f"[get_master_key] {guild}: empty user")
@@ -113,7 +112,7 @@ class YataBot(Bot):
         guild = ctx.guild if not guild and ctx else guild
 
         # skip all if user in yata with discord id
-        user = await get_yata_user(member.id, type="D")
+        user = await self.get_yata_user(member.id, type="D")
         if len(user):
             user = tuple(user[0])
             logging.debug(f"[get_user_key] got user from discord id: {user[1]} {user[0]}")
@@ -158,7 +157,7 @@ class YataBot(Bot):
 
         # get YATA user
 
-        user = await get_yata_user(tornId, type="T")
+        user = await self.get_yata_user(tornId, type="T")
 
         # handle user not on YATA
         if not len(user):
@@ -177,6 +176,9 @@ class YataBot(Bot):
         return 0, user[0], user[1], user[2]
 
     async def on_ready(self):
+        pool = await asyncpg.create_pool(**self.database)
+        self.pool = await pool.acquire()
+
         # change activity
         # activity = discord.Activity(name="over TORN's players", type=discord.ActivityType.watching)
         activity = discord.Activity(name="Torn", type=discord.ActivityType.playing)
@@ -373,7 +375,7 @@ class YataBot(Bot):
         await send(channel, embed=eb)
 
         self.configurations[guild.id] = {}
-        await set_configuration(self.bot_id, guild.id, guild.name, self.configurations[guild.id])
+        await self.set_configuration(guild.id, guild.name, self.configurations[guild.id])
 
     async def on_guild_remove(self, guild):
 
@@ -387,7 +389,7 @@ class YataBot(Bot):
 
         if guild.id in self.configurations:
             self.configurations.pop(guild.id)
-        await delete_configuration(self.bot_id, guild.id)
+        await self.delete_configuration(guild.id)
 
     async def send_error_message(self, channel, description, fields={}, title=False, delete=False):
         title = title if title else "Error"
@@ -434,3 +436,95 @@ class YataBot(Bot):
             return response, True
         else:
             return response, False
+
+
+    # DB CALLS
+
+    async def get_configuration(self, discord_id):
+        server = await self.pool.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+        return False if server is None else json.loads(server.get("configuration"))
+
+
+    async def set_n_servers(self, n):
+        await self.pool.execute('''
+            UPDATE bot_bot SET number_of_servers = $1 WHERE id = $2'''
+            , n, self.bot_id)
+
+
+    async def set_configuration(self, discord_id, server_name, configuration):
+        # check if server already in the database
+        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+        if server is None:  # create if not in the db
+            await self.pool.execute('''
+            INSERT INTO bot_server(self.bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
+            ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x')
+        else:  # update otherwise
+            await self.pool.execute('''
+            UPDATE bot_server SET name = $3, configuration = $4 WHERE self.bot_id = $1 AND discord_id = $2
+            ''', self.bot_id, discord_id, server_name, json.dumps(configuration))
+
+
+    async def delete_configuration(self, discord_id):
+        # check if server already in the database
+        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+        if server is not None:  # delete if in the db
+            # step 1 remove the admins
+            tmp = await self.pool.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
+            await self.pool.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
+
+            # step 2 delete the configuration
+            await self.pool.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', self.bot_id, discord_id)
+
+
+    async def get_server_admins(self, discord_id):
+        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+        if server is None:
+            return {}, 'x'
+
+        server_yata_id = server.get("id")
+        players_yata_id = await self.pool.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
+
+        admins = {}
+        for player_yata_id in [player.get("player_id") for player in players_yata_id]:
+            player = await self.pool.fetchrow(f'SELECT "tId", "dId", "name" FROM player_player WHERE "id" = {player_yata_id};')
+            dId = player.get("dId", 0)
+            if dId:
+                admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
+
+        secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
+        if secret == 'x':
+            secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
+
+        return admins, secret
+
+
+    async def get_yata_user(self, user_id, type="T"):
+        # get YATA user
+        if type == "T":
+            user = await self.pool.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {user_id};')
+        elif type == "D":
+            user = await self.pool.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "dId" = {user_id};')
+
+        return user
+
+
+    async def push_data(self, timestamp, data, module):
+        if module == "rackets":
+            await self.pool.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+        elif module == "stocks":
+            await self.pool.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+        elif module == "wars":
+            await self.pool.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+
+
+    async def get_data(self, module):
+        if module == "rackets":
+            resp = await self.pool.fetch(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {self.bot_id};")
+        elif module == "stocks":
+            resp = await self.pool.fetch(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {self.bot_id};")
+        elif module == "wars":
+            resp = await self.pool.fetch(f"SELECT timestamp, wars FROM bot_wars WHERE id = {self.bot_id};")
+
+        print("TO DEBUG", resp)
+        timestamp, data = resp[0]
+        return timestamp, json.loads(data)
