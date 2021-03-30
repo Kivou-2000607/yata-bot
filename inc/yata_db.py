@@ -51,16 +51,16 @@ else:
 #   FROM player_key
 #     JOIN player_player ON player_key.player_id = player_player.id;
 
-def get_credentials():
-    db_credentials = {
-        "dbname": config("DB_NAME"),
-        "user": config("DB_USER"),
-        "password": config("DB_PASSWORD"),
-        "host": config("DB_HOST"),
-        "port": config("DB_PORT")
-    }
-
-    return db_credentials
+# def get_credentials():
+#     db_credentials = {
+#         "dbname": config("DB_NAME"),
+#         "user": config("DB_USER"),
+#         "password": config("DB_PASSWORD"),
+#         "host": config("DB_HOST"),
+#         "port": config("DB_PORT")
+#     }
+#
+#     return db_credentials
 
 
 def load_configurations(bot_id, database):
@@ -237,61 +237,61 @@ def get_secret(name):
 #     return timestamp, json.loads(data)
 
 
-async def get_faction_name(tId):
-    if str(tId).isdigit():
-        tId = int(tId)
-        db_cred = get_credentials()
-        dbname = db_cred["dbname"]
-        del db_cred["dbname"]
-        con = await asyncpg.connect(database=dbname, **db_cred)
-        row = await con.fetchrow('SELECT name FROM faction_faction WHERE "tId" = $1', tId)
-        await con.close()
-        return f'Faction [{tId}]' if row is None else f'{html.unescape(row.get("name", "Faction"))} [{tId}]'
-    else:
-        return f'Faction [{tId}]'
+# async def get_faction_name(tId):
+#     if str(tId).isdigit():
+#         tId = int(tId)
+#         db_cred = get_credentials()
+#         dbname = db_cred["dbname"]
+#         del db_cred["dbname"]
+#         con = await asyncpg.connect(database=dbname, **db_cred)
+#         row = await con.fetchrow('SELECT name FROM faction_faction WHERE "tId" = $1', tId)
+#         await con.close()
+#         return f'Faction [{tId}]' if row is None else f'{html.unescape(row.get("name", "Faction"))} [{tId}]'
+#     else:
+#         return f'Faction [{tId}]'
 
 
-async def reset_notifications(tornId):
-    # get YATA user
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    await con.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
-    await con.close()
+# async def reset_notifications(tornId):
+#     # get YATA user
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     await con.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
+#     await con.close()
 
 
-async def get_loots():
-    # get YATA npcs loot timings
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    loots = await con.fetch(f'SELECT * FROM loot_NPC WHERE show = true;')
-    await con.close()
-
-    return loots
-
-
-async def get_scheduled():
-    # get YATA npcs loot timings
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    loots = await con.fetch(f'SELECT * FROM loot_scheduledAttack;')
-    await con.close()
-
-    return loots
-
-
-async def get_npc(id):
-    # get YATA npcs loot timings
-    db_cred = get_credentials()
-    dbname = db_cred["dbname"]
-    del db_cred["dbname"]
-    con = await asyncpg.connect(database=dbname, **db_cred)
-    npc = await con.fetch(f'SELECT * FROM loot_NPC WHERE "id"=$1;', id)
-    await con.close()
-
-    return npc
+# async def get_loots():
+#     # get YATA npcs loot timings
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     loots = await con.fetch(f'SELECT * FROM loot_NPC WHERE show = true;')
+#     await con.close()
+#
+#     return loots
+#
+#
+# async def get_scheduled():
+#     # get YATA npcs loot timings
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     loots = await con.fetch(f'SELECT * FROM loot_scheduledAttack;')
+#     await con.close()
+#
+#     return loots
+#
+#
+# async def get_npc(id):
+#     # get YATA npcs loot timings
+#     db_cred = get_credentials()
+#     dbname = db_cred["dbname"]
+#     del db_cred["dbname"]
+#     con = await asyncpg.connect(database=dbname, **db_cred)
+#     npc = await con.fetch(f'SELECT * FROM loot_NPC WHERE "id"=$1;', id)
+#     await con.close()
+#
+#     return npc

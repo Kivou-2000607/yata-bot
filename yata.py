@@ -106,7 +106,6 @@ token, configurations = load_configurations(bot_id, database)
 def get_prefix(client, message):
     if message.guild:
         prefix = client.configurations.get(message.guild.id, {}).get("admin", {}).get("prefix", "!")
-        # logging.debug(f'[get_prefix] {message.guild}: {prefix}')
         return prefix
     else:
         return "!"
@@ -134,19 +133,18 @@ bot.add_cog(Admin(bot))
 # 5: YATA backup (the backup version of the public bot)
 
 if int(bot_id) in [1, 3, 5]:
-    # pass
-    # bot.add_cog(Verify(bot))
-    # bot.add_cog(Loot(bot))
-    # bot.add_cog(Stocks(bot))
+    bot.add_cog(Verify(bot))
+    bot.add_cog(Loot(bot))
+    bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
-    # bot.add_cog(War(bot))
-    # bot.add_cog(Revive(bot))
-    # bot.add_cog(Crimes(bot))
-    # bot.add_cog(API(bot))
-    # bot.add_cog(Chain(bot))
-    # bot.add_cog(Misc(bot))
-    # bot.add_cog(Repository(bot))
-    # bot.add_cog(Marvin(bot))
+    bot.add_cog(War(bot))
+    bot.add_cog(Revive(bot))
+    bot.add_cog(Crimes(bot))
+    bot.add_cog(API(bot))
+    bot.add_cog(Chain(bot))
+    bot.add_cog(Misc(bot))
+    bot.add_cog(Repository(bot))
+    bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))

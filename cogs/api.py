@@ -368,208 +368,206 @@ class API(commands.Cog):
             guild = get(self.bot.guilds, id=self.bot.main_server_id)
 
             # connect to YATA database of notifiers
-            db_cred = get_credentials()
-            dbname = db_cred["dbname"]
-            del db_cred["dbname"]
             sql = 'SELECT "tId", "dId", "notifications", "value" FROM player_view_player_key WHERE "activateNotifications" = True;'
-            con = await asyncpg.connect(database=dbname, **db_cred)
-
-            # async loop over notifiers
-            async with con.transaction():
-                async for record in con.cursor(sql, prefetch=100, timeout=2):
-                    # get corresponding discord member
-                    member = get(guild.members, id=record["dId"])
-                    if member is None:
-                        logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
-                        # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
-                        # await self.bot.send_log_main("member not found", headers=headers)
-                        if self.bot.bot_id == 3:
-                            await reset_notifications(record["tId"])
-                        continue
-
-                    try:
-
-                        # get notifications preferences
-                        logging.debug(f'[api/notifications] {member.nick} / {member}')
-                        notifications = json.loads(record["notifications"])
-
-                        # get selections for Torn API call
-                        keys = []
-                        if "event" in notifications:
-                            keys.append("events")
-                            keys.append("notifications")
-                        if "message" in notifications:
-                            keys.append("messages")
-                            keys.append("notifications")
-                        if "award" in notifications:
-                            keys.append("notifications")
-                        if "energy" in notifications:
-                            keys.append("bars")
-                        if "nerve" in notifications:
-                            keys.append("bars")
-                        if "chain" in notifications:
-                            keys.append("bars")
-                        if "education" in notifications:
-                            keys.append("education")
-                        if "bank" in notifications:
-                            keys.append("money")
-                        if "drug" in notifications:
-                            keys.append("cooldowns")
-                        if "medical" in notifications:
-                            keys.append("cooldowns")
-                        if "booster" in notifications:
-                            keys.append("cooldowns")
-                        if "travel" in notifications:
-                            keys.append("travel")
-
-                        # make Torn API call
-                        response, e = await self.bot.api_call("user", "", keys, record["value"])
-
-                        if e and 'error' in response:
-                            logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {response["error"]["code"]}: {response["error"]["error"]}')
+            async with self.pool.acquire() as con:
+                # async loop over notifiers
+                async with con.transaction():
+                    async for record in con.cursor(sql, prefetch=100, timeout=2):
+                        # get corresponding discord member
+                        member = get(guild.members, id=record["dId"])
+                        if member is None:
+                            logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
+                            # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
+                            # await self.bot.send_log_main("member not found", headers=headers)
+                            if self.bot.bot_id == 3:
+                                await self.bot.reset_notifications(record["tId"])
                             continue
 
-                        # notify event
-                        if "event" in notifications:
-                            if not response["notifications"]["events"]:
-                                notifications["event"] = dict({})
-                            else:
-                                # loop over events
-                                for k, v in response["events"].items():
-                                    # if new event not notified -> notify
-                                    if not v["seen"] and k not in notifications["event"]:
-                                        await send(member, cleanhtml(v["event"]).replace(" [View]", ""))
-                                        notifications["event"][k] = True
+                        try:
 
-                                    # if seen even already notified -> clean table
-                                    elif v["seen"] and k in notifications["event"]:
-                                        del notifications["event"][k]
+                            # get notifications preferences
+                            logging.debug(f'[api/notifications] {member.nick} / {member}')
+                            notifications = json.loads(record["notifications"])
 
-                        # notify message
-                        if "message" in notifications:
-                            if not response["notifications"]["messages"]:
-                                notifications["messages"] = dict({})
-                            else:
-                                # loop over messages
-                                for k, v in response["messages"].items():
-                                    # if new event not notified -> notify
-                                    if not v["seen"] and k not in notifications["message"]:
-                                        await send(member, f'New message from {v["name"]}: {v["title"]}')
-                                        notifications["message"][k] = True
+                            # get selections for Torn API call
+                            keys = []
+                            if "event" in notifications:
+                                keys.append("events")
+                                keys.append("notifications")
+                            if "message" in notifications:
+                                keys.append("messages")
+                                keys.append("notifications")
+                            if "award" in notifications:
+                                keys.append("notifications")
+                            if "energy" in notifications:
+                                keys.append("bars")
+                            if "nerve" in notifications:
+                                keys.append("bars")
+                            if "chain" in notifications:
+                                keys.append("bars")
+                            if "education" in notifications:
+                                keys.append("education")
+                            if "bank" in notifications:
+                                keys.append("money")
+                            if "drug" in notifications:
+                                keys.append("cooldowns")
+                            if "medical" in notifications:
+                                keys.append("cooldowns")
+                            if "booster" in notifications:
+                                keys.append("cooldowns")
+                            if "travel" in notifications:
+                                keys.append("travel")
 
-                                    # if seen even already notified -> clean table
-                                    elif v["seen"] and k in notifications["message"]:
-                                        del notifications["message"][k]
+                            # make Torn API call
+                            response, e = await self.bot.api_call("user", "", keys, record["value"])
 
-                        # notify awards
-                        if "award" in notifications:
-                            if response["notifications"]["awards"]:
-                                # if new award or different number of awards
-                                if not notifications["award"].get("notified", False) or notifications["award"].get("notified") != response["notifications"]["awards"]:
-                                    s = "s" if response["notifications"]["awards"] > 1 else ""
-                                    await send(member, f'You have {response["notifications"]["awards"]} new award{s}')
-                                    notifications["award"]["notified"] = response["notifications"]["awards"]
+                            if e and 'error' in response:
+                                logging.warning(f'[api/notifications] {member.nick} / {member} error in api payload: {response["error"]["code"]}: {response["error"]["error"]}')
+                                if response["error"]["code"] in [1, 2, 10, 13]:
+                                    await self.bot.reset_notifications(record["tId"])
 
-                            else:
-                                notifications["award"] = dict({})
+                                continue
 
-                        # notify energy
-                        if "energy" in notifications:
-                            if response["energy"]["fulltime"] < 90:
-                                if not notifications["energy"].get("notified", False):
-                                    await send(member, f'Energy at {response["energy"]["current"]} / {response["energy"]["maximum"]}')
-                                notifications["energy"]["notified"] = True
+                            # notify event
+                            if "event" in notifications:
+                                if not response["notifications"]["events"]:
+                                    notifications["event"] = dict({})
+                                else:
+                                    # loop over events
+                                    for k, v in response["events"].items():
+                                        # if new event not notified -> notify
+                                        if not v["seen"] and k not in notifications["event"]:
+                                            await send(member, cleanhtml(v["event"]).replace(" [View]", ""))
+                                            notifications["event"][k] = True
 
-                            else:
-                                notifications["energy"] = dict({})
+                                        # if seen even already notified -> clean table
+                                        elif v["seen"] and k in notifications["event"]:
+                                            del notifications["event"][k]
 
-                        # notify nerve
-                        if "nerve" in notifications:
-                            if response["nerve"]["fulltime"] < 90:
-                                if not notifications["nerve"].get("notified", False):
-                                    await send(member, f'Nerve at {response["nerve"]["current"]} / {response["nerve"]["maximum"]}')
-                                notifications["nerve"]["notified"] = True
+                            # notify message
+                            if "message" in notifications:
+                                if not response["notifications"]["messages"]:
+                                    notifications["messages"] = dict({})
+                                else:
+                                    # loop over messages
+                                    for k, v in response["messages"].items():
+                                        # if new event not notified -> notify
+                                        if not v["seen"] and k not in notifications["message"]:
+                                            await send(member, f'New message from {v["name"]}: {v["title"]}')
+                                            notifications["message"][k] = True
 
-                            else:
-                                notifications["nerve"] = dict({})
+                                        # if seen even already notified -> clean table
+                                        elif v["seen"] and k in notifications["message"]:
+                                            del notifications["message"][k]
 
-                        # notify chain
-                        if "chain" in notifications:
-                            if response["chain"]["timeout"] < 90 and response["chain"]["current"] > 10:
-                                if not notifications["chain"].get("notified", False):
-                                    await send(member, f'Chain timeout in {response["chain"]["timeout"]} seconds')
-                                notifications["chain"]["notified"] = True
+                            # notify awards
+                            if "award" in notifications:
+                                if response["notifications"]["awards"]:
+                                    # if new award or different number of awards
+                                    if not notifications["award"].get("notified", False) or notifications["award"].get("notified") != response["notifications"]["awards"]:
+                                        s = "s" if response["notifications"]["awards"] > 1 else ""
+                                        await send(member, f'You have {response["notifications"]["awards"]} new award{s}')
+                                        notifications["award"]["notified"] = response["notifications"]["awards"]
 
-                            else:
-                                notifications["chain"] = dict({})
+                                else:
+                                    notifications["award"] = dict({})
 
-                        # notify education
-                        if "education" in notifications:
-                            if response["education_timeleft"] < 90:
-                                if not notifications["education"].get("notified", False):
-                                    await send(member, f'Education ends in {response["education_timeleft"]} seconds')
-                                notifications["education"]["notified"] = True
+                            # notify energy
+                            if "energy" in notifications:
+                                if response["energy"]["fulltime"] < 90:
+                                    if not notifications["energy"].get("notified", False):
+                                        await send(member, f'Energy at {response["energy"]["current"]} / {response["energy"]["maximum"]}')
+                                    notifications["energy"]["notified"] = True
 
-                            else:
-                                notifications["education"] = dict({})
+                                else:
+                                    notifications["energy"] = dict({})
 
-                        # notify bank
-                        if "bank" in notifications:
-                            if response["city_bank"]["time_left"] < 90:
-                                if not notifications["bank"].get("notified", False):
-                                    await send(member, f'Bank investment ends in {response["city_bank"]["time_left"]} seconds (${response["city_bank"]["amount"]:,.0f})')
-                                notifications["bank"]["notified"] = True
+                            # notify nerve
+                            if "nerve" in notifications:
+                                if response["nerve"]["fulltime"] < 90:
+                                    if not notifications["nerve"].get("notified", False):
+                                        await send(member, f'Nerve at {response["nerve"]["current"]} / {response["nerve"]["maximum"]}')
+                                    notifications["nerve"]["notified"] = True
 
-                            else:
-                                notifications["bank"] = dict({})
+                                else:
+                                    notifications["nerve"] = dict({})
 
-                        # notify drug
-                        if "drug" in notifications:
-                            if response["cooldowns"]["drug"] < 90:
-                                if not notifications["drug"].get("notified", False):
-                                    await send(member, f'Drug cooldown ends in {response["cooldowns"]["drug"]} seconds')
-                                notifications["drug"]["notified"] = True
+                            # notify chain
+                            if "chain" in notifications:
+                                if response["chain"]["timeout"] < 90 and response["chain"]["current"] > 10:
+                                    if not notifications["chain"].get("notified", False):
+                                        await send(member, f'Chain timeout in {response["chain"]["timeout"]} seconds')
+                                    notifications["chain"]["notified"] = True
 
-                            else:
-                                notifications["drug"] = dict({})
+                                else:
+                                    notifications["chain"] = dict({})
 
-                        # notify medical
-                        if "medical" in notifications:
-                            if response["cooldowns"]["medical"] < 90:
-                                if not notifications["medical"].get("notified", False):
-                                    await send(member, f'Medical cooldown ends in {response["cooldowns"]["medical"]} seconds')
-                                notifications["medical"]["notified"] = True
+                            # notify education
+                            if "education" in notifications:
+                                if response["education_timeleft"] < 90:
+                                    if not notifications["education"].get("notified", False):
+                                        await send(member, f'Education ends in {response["education_timeleft"]} seconds')
+                                    notifications["education"]["notified"] = True
 
-                            else:
-                                notifications["medical"] = dict({})
+                                else:
+                                    notifications["education"] = dict({})
 
-                        # notify booster
-                        if "booster" in notifications:
-                            if response["cooldowns"]["booster"] < 90:
-                                if not notifications["booster"].get("notified", False):
-                                    await send(member, f'Booster cooldown ends in {response["cooldowns"]["booster"]} seconds')
-                                notifications["booster"]["notified"] = True
+                            # notify bank
+                            if "bank" in notifications:
+                                if response["city_bank"]["time_left"] < 90:
+                                    if not notifications["bank"].get("notified", False):
+                                        await send(member, f'Bank investment ends in {response["city_bank"]["time_left"]} seconds (${response["city_bank"]["amount"]:,.0f})')
+                                    notifications["bank"]["notified"] = True
 
-                            else:
-                                notifications["booster"] = dict({})
+                                else:
+                                    notifications["bank"] = dict({})
 
-                        # notify travel
-                        if "travel" in notifications:
-                            if response["travel"]["time_left"] < 90:
-                                if not notifications["travel"].get("destination", False):
-                                    await send(member, f'Landing in {response["travel"]["destination"]} in {response["travel"]["time_left"]} seconds')
-                                notifications["travel"] = response["travel"]
+                            # notify drug
+                            if "drug" in notifications:
+                                if response["cooldowns"]["drug"] < 90:
+                                    if not notifications["drug"].get("notified", False):
+                                        await send(member, f'Drug cooldown ends in {response["cooldowns"]["drug"]} seconds')
+                                    notifications["drug"]["notified"] = True
 
-                            else:
-                                notifications["travel"] = dict({})
+                                else:
+                                    notifications["drug"] = dict({})
 
-                        # update notifications in YATA's database
-                        await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
+                            # notify medical
+                            if "medical" in notifications:
+                                if response["cooldowns"]["medical"] < 90:
+                                    if not notifications["medical"].get("notified", False):
+                                        await send(member, f'Medical cooldown ends in {response["cooldowns"]["medical"]} seconds')
+                                    notifications["medical"]["notified"] = True
 
-                    except BaseException as e:
-                        logging.error(f'[api/notifications] {member.nick} / {member}: {hide_key(e)}')
+                                else:
+                                    notifications["medical"] = dict({})
 
-            await con.close()
+                            # notify booster
+                            if "booster" in notifications:
+                                if response["cooldowns"]["booster"] < 90:
+                                    if not notifications["booster"].get("notified", False):
+                                        await send(member, f'Booster cooldown ends in {response["cooldowns"]["booster"]} seconds')
+                                    notifications["booster"]["notified"] = True
+
+                                else:
+                                    notifications["booster"] = dict({})
+
+                            # notify travel
+                            if "travel" in notifications:
+                                if response["travel"]["time_left"] < 90:
+                                    if not notifications["travel"].get("destination", False):
+                                        await send(member, f'Landing in {response["travel"]["destination"]} in {response["travel"]["time_left"]} seconds')
+                                    notifications["travel"] = response["travel"]
+
+                                else:
+                                    notifications["travel"] = dict({})
+
+                            # update notifications in YATA's database
+                            await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
+
+                        except BaseException as e:
+                            logging.error(f'[api/notifications] {member.nick} / {member}: {hide_key(e)}')
+
             logging.info("[api/notifications] start task")
 
         except BaseException as e:
@@ -580,3 +578,4 @@ class API(commands.Cog):
     @notify.before_loop
     async def before_notify(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

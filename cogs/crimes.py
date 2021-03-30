@@ -659,7 +659,9 @@ class Crimes(commands.Cog):
     @ocTask.before_loop
     async def before_ocTask(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @ocTask_v2.before_loop
     async def before_ocTask_v2(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

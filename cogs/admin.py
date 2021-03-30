@@ -47,12 +47,16 @@ class Admin(commands.Cog):
         self.bot_id = self.bot.bot_id
         if self.bot.bot_id in [1, 3]:
             self.cleanServers.start()
+            self.updateFactionNames.start()
         if self.bot.bot_id == 3:
             self.assignRoles.start()
 
     def cog_unload(self):
-        self.assignRoles.cancel()
-        self.cleanServers.cancel()
+        if self.bot.bot_id in [1, 3]:
+            self.cleanServers.cancel()
+            self.updateFactionNames.cancel()
+        if self.bot.bot_id == 3:
+            self.assignRoles.cancel()
 
     @commands.command()
     @commands.guild_only()
@@ -652,6 +656,12 @@ class Admin(commands.Cog):
         await self.bot.send_log_main(error, headers=headers, full=True)
 
     @tasks.loop(hours=24)
+    async def updateFactionNames(self):
+        logging.debug("[admin/updateFactionNames] start task")
+        self.bot.factions_names = {f.get("tId"): f.get("name") for f in await self.bot.get_factions_names()}
+        logging.debug("[admin/updateFactionNames] end task")
+
+    @tasks.loop(hours=24)
     async def assignRoles(self):
         logging.debug("[admin/assignRoles] start task")
 
@@ -729,10 +739,17 @@ class Admin(commands.Cog):
 
         await send(channel, embed=Embed(description="Done cleaning servers and configurations", color=my_blue))
 
+    @updateFactionNames.before_loop
+    async def before_updateFactionNames(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
     @assignRoles.before_loop
     async def before_assignRoles(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @cleanServers.before_loop
     async def before_cleanServers(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

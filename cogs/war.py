@@ -61,7 +61,7 @@ class War(commands.Cog):
             return
 
         # get previous data to compare with current api call
-        _, randt_p = self.bot.get_data("wars")
+        _, randt_p = await self.bot.get_data("wars")
         wars_p = randt_p.get("territorywars", {})
         raids_p = randt_p.get("raids", {})
 
@@ -74,9 +74,9 @@ class War(commands.Cog):
                 continue
 
             assaulting_faction_id = v["assaulting_faction"]
-            assaulting_faction = await get_faction_name(assaulting_faction_id)
+            assaulting_faction = self.bot.get_faction_name(assaulting_faction_id)
             defending_faction_id = v["defending_faction"]
-            defending_faction = await get_faction_name(defending_faction_id)
+            defending_faction = self.bot.get_faction_name(defending_faction_id)
             title = f"New assault over the sovereignty of {k}"
             url = f'https://www.torn.com/city.php#terrName={k}'
             embed = Embed(title=title, url=url, color=my_red)
@@ -98,9 +98,9 @@ class War(commands.Cog):
                 continue
 
             assaulting_faction_id = v["assaulting_faction"]
-            assaulting_faction = await get_faction_name(assaulting_faction_id)
+            assaulting_faction = self.bot.get_faction_name(assaulting_faction_id)
             defending_faction_id = v["defending_faction"]
-            defending_faction = await get_faction_name(defending_faction_id)
+            defending_faction = self.bot.get_faction_name(defending_faction_id)
             title = f"New raid"
 
             embed = Embed(title=title, color=my_red)
@@ -120,9 +120,9 @@ class War(commands.Cog):
                 continue
 
             assaulting_faction_id = v["assaulting_faction"]
-            assaulting_faction = await get_faction_name(assaulting_faction_id)
+            assaulting_faction = self.bot.get_faction_name(assaulting_faction_id)
             defending_faction_id = v["defending_faction"]
-            defending_faction = await get_faction_name(defending_faction_id)
+            defending_faction = self.bot.get_faction_name(defending_faction_id)
             title = f"Assault ended over the sovereignty of {k}"
             url = f'https://www.torn.com/city.php#terrName={k}'
 
@@ -157,9 +157,9 @@ class War(commands.Cog):
                 continue
 
             assaulting_faction_id = v["assaulting_faction"]
-            assaulting_faction = await get_faction_name(assaulting_faction_id)
+            assaulting_faction = self.bot.get_faction_name(assaulting_faction_id)
             defending_faction_id = v["defending_faction"]
-            defending_faction = await get_faction_name(defending_faction_id)
+            defending_faction = self.bot.get_faction_name(defending_faction_id)
             title = f"Raid ended"
 
             embed = Embed(title=title, color=my_green)
@@ -217,3 +217,4 @@ class War(commands.Cog):
     @warsTask.before_loop
     async def before_warsTask(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

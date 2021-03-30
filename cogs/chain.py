@@ -772,3 +772,4 @@ class Chain(commands.Cog):
     @retalTask.before_loop
     async def before_retalTask(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

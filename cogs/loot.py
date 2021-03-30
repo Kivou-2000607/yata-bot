@@ -77,7 +77,7 @@ class Loot(commands.Cog):
         now = ts_now()
 
         # get npc timings from YATA db
-        loots_raw = await get_loots()
+        loots_raw = await self.bot.get_loots()
         loots = {}
 
         for loot in loots_raw:
@@ -130,7 +130,7 @@ class Loot(commands.Cog):
         logging.debug(f"[loot/notifications_{level}] start task")
 
         # get npc timings from YATA db
-        loots_raw = await get_loots()
+        loots_raw = await self.bot.get_loots()
         loots = {}
         for loot in loots_raw:
             name = loot.get("name")
@@ -219,7 +219,7 @@ class Loot(commands.Cog):
     async def scheduled(self):
         logging.debug("[loot/scheduled] start task")
 
-        loots_raw = await get_scheduled()
+        loots_raw = await self.bot.get_loots(scheduled=True)
 
         mentions = []
         embeds = []
@@ -231,7 +231,7 @@ class Loot(commands.Cog):
             # if True:
             if due < 10 * 60:
                 # get NPC
-                npc = await get_npc(loot.get("npc_id"))
+                npc = await self.bot.get_npc(loot.get("npc_id"))
                 if not len(npc):
                     continue
 
@@ -286,11 +286,14 @@ class Loot(commands.Cog):
     @notify_4.before_loop
     async def before_notify_4(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @notify_5.before_loop
     async def before_notify_5(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @scheduled.before_loop
     async def before_scheduled(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

@@ -167,7 +167,7 @@ class Stocks(commands.Cog):
     async def notify(self):
         logging.debug(f"[stocks/alerts] start task")
 
-        _, mentions_keys_prev = self.bot.get_data("stocks")
+        _, mentions_keys_prev = await self.bot.get_data("stocks")
         mentions_keys_prev = mentions_keys_prev if len(mentions_keys_prev) else []  # make sure it's a list if empty
         for k in mentions_keys_prev:
             logging.debug(f"[stocks/alerts] previous alerts: {k}")
@@ -312,3 +312,4 @@ class Stocks(commands.Cog):
     @notify.before_loop
     async def before_notify(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

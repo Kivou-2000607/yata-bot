@@ -465,7 +465,7 @@ class Verify(commands.Cog):
             faction_roles = [_ for _ in self.bot.get_module_role(guild.roles, faction_roles_id, all=True) if _ is not None]
             faction_roles_unique = [_ for _ in faction_roles if all_faction_roles.count(str(_.id)) == 1]
             roles_list = ", ".join([f'@{html.unescape(faction_role.name)}' for faction_role in faction_roles])
-            faction_name = await get_faction_name(faction_id)
+            faction_name = self.bot.get_faction_name(faction_id)
 
             if not len(faction_roles_unique):
                 await self.bot.send_error_message(channel, f'None of the following roles are unique: {roles_list}', title=f"Error checking faction {faction_name}")
@@ -737,15 +737,19 @@ class Verify(commands.Cog):
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @weeklyVerify.before_loop
     async def before_weeklyVerify(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @dailyCheck.before_loop
     async def before_dailyCheck(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @weeklyCheck.before_loop
     async def before_weeklyCheck(self):
         await self.bot.wait_until_ready()
+        await asyncio.sleep(10)

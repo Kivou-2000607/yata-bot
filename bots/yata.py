@@ -49,6 +49,7 @@ class YataBot(Bot):
         self.github_token = github_token
         self.main_server_id = int(main_server_id)
         self.database = database
+        self.factions_names = {}
 
     async def discord_to_torn(self, member, key):
         """ get a torn id form discord id
@@ -176,8 +177,7 @@ class YataBot(Bot):
         return 0, user[0], user[1], user[2]
 
     async def on_ready(self):
-        pool = await asyncpg.create_pool(**self.database)
-        self.pool = await pool.acquire()
+        self.pool = await asyncpg.create_pool(**self.database)
 
         # change activity
         # activity = discord.Activity(name="over TORN's players", type=discord.ActivityType.watching)
@@ -437,94 +437,141 @@ class YataBot(Bot):
         else:
             return response, False
 
+    def get_faction_name(self, tId):
+        return f'{html.unescape(self.factions_names.get("name", "Faction"))} [{tId}]'
+
 
     # DB CALLS
 
     async def get_configuration(self, discord_id):
-        server = await self.pool.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
-        return False if server is None else json.loads(server.get("configuration"))
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                server = await connection.fetchrow(f'SELECT configuration FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+                return False if server is None else json.loads(server.get("configuration"))
 
 
     async def set_n_servers(self, n):
-        await self.pool.execute('''
-            UPDATE bot_bot SET number_of_servers = $1 WHERE id = $2'''
-            , n, self.bot_id)
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.execute('''
+                    UPDATE bot_bot SET number_of_servers = $1 WHERE id = $2'''
+                    , n, self.bot_id)
 
 
     async def set_configuration(self, discord_id, server_name, configuration):
-        # check if server already in the database
-        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
-        if server is None:  # create if not in the db
-            await self.pool.execute('''
-            INSERT INTO bot_server(self.bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
-            ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x')
-        else:  # update otherwise
-            await self.pool.execute('''
-            UPDATE bot_server SET name = $3, configuration = $4 WHERE self.bot_id = $1 AND discord_id = $2
-            ''', self.bot_id, discord_id, server_name, json.dumps(configuration))
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                # check if server already in the database
+                server = await connection.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+                if server is None:  # create if not in the db
+                    await connection.execute('''
+                    INSERT INTO bot_server(self.bot_id, discord_id, name, configuration, secret) VALUES($1, $2, $3, $4, $5)
+                    ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x')
+                else:  # update otherwise
+                    await connection.execute('''
+                    UPDATE bot_server SET name = $3, configuration = $4 WHERE self.bot_id = $1 AND discord_id = $2
+                    ''', self.bot_id, discord_id, server_name, json.dumps(configuration))
 
 
     async def delete_configuration(self, discord_id):
-        # check if server already in the database
-        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
-        if server is not None:  # delete if in the db
-            # step 1 remove the admins
-            tmp = await self.pool.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
-            await self.pool.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                # check if server already in the database
+                server = await connection.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+                if server is not None:  # delete if in the db
+                    # step 1 remove the admins
+                    tmp = await connection.fetch(f'SELECT * FROM bot_server_server_admin WHERE server_id = {server.get("id")};')
+                    await connection.execute(f'DELETE FROM bot_server_server_admin WHERE server_id = $1', server.get("id"))
 
-            # step 2 delete the configuration
-            await self.pool.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', self.bot_id, discord_id)
+                    # step 2 delete the configuration
+                    await connection.execute(f'DELETE FROM bot_server WHERE bot_id = $1 AND discord_id = $2', self.bot_id, discord_id)
 
 
     async def get_server_admins(self, discord_id):
-        server = await self.pool.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
-        if server is None:
-            return {}, 'x'
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                server = await connection.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
+                if server is None:
+                    return {}, 'x'
 
-        server_yata_id = server.get("id")
-        players_yata_id = await self.pool.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
+                server_yata_id = server.get("id")
+                players_yata_id = await connection.fetch(f'SELECT player_id FROM bot_server_server_admin WHERE server_id = {server_yata_id};')
 
-        admins = {}
-        for player_yata_id in [player.get("player_id") for player in players_yata_id]:
-            player = await self.pool.fetchrow(f'SELECT "tId", "dId", "name" FROM player_player WHERE "id" = {player_yata_id};')
-            dId = player.get("dId", 0)
-            if dId:
-                admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
+                admins = {}
+                for player_yata_id in [player.get("player_id") for player in players_yata_id]:
+                    player = await connection.fetchrow(f'SELECT "tId", "dId", "name" FROM player_player WHERE "id" = {player_yata_id};')
+                    dId = player.get("dId", 0)
+                    if dId:
+                        admins[str(dId)] = {"name": player.get("name", "?"), "torn_id": player.get("tId")}
 
-        secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
-        if secret == 'x':
-            secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
+                secret = json.loads(server.get("configuration", '{}')).get("admin", {}).get("secret", 'x')
+                if secret == 'x':
+                    secret = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
 
-        return admins, secret
+                return admins, secret
 
 
     async def get_yata_user(self, user_id, type="T"):
-        # get YATA user
-        if type == "T":
-            user = await self.pool.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {user_id};')
-        elif type == "D":
-            user = await self.pool.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "dId" = {user_id};')
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                if type == "T":
+                    user = await connection.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "tId" = {user_id};')
+                elif type == "D":
+                    user = await connection.fetch(f'SELECT "tId", "name", "value" FROM player_view_player_key WHERE "dId" = {user_id};')
 
-        return user
+                return user
 
 
     async def push_data(self, timestamp, data, module):
-        if module == "rackets":
-            await self.pool.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
-        elif module == "stocks":
-            await self.pool.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
-        elif module == "wars":
-            await self.pool.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                if module == "rackets":
+                    await connection.execute('UPDATE bot_rackets SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+                elif module == "stocks":
+                    await connection.execute('UPDATE bot_stocks SET timestamp = $1, rackets = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
+                elif module == "wars":
+                    await connection.execute('UPDATE bot_wars SET timestamp = $1, wars = $2 WHERE id = $3', timestamp, json.dumps(data), self.bot_id)
 
 
     async def get_data(self, module):
-        if module == "rackets":
-            resp = await self.pool.fetch(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {self.bot_id};")
-        elif module == "stocks":
-            resp = await self.pool.fetch(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {self.bot_id};")
-        elif module == "wars":
-            resp = await self.pool.fetch(f"SELECT timestamp, wars FROM bot_wars WHERE id = {self.bot_id};")
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                if module == "rackets":
+                    resp = await connection.fetch(f"SELECT timestamp, rackets FROM bot_rackets WHERE id = {self.bot_id};")
+                elif module == "stocks":
+                    resp = await connection.fetch(f"SELECT timestamp, rackets FROM bot_stocks WHERE id = {self.bot_id};")
+                elif module == "wars":
+                    resp = await connection.fetch(f"SELECT timestamp, wars FROM bot_wars WHERE id = {self.bot_id};")
 
-        print("TO DEBUG", resp)
-        timestamp, data = resp[0]
-        return timestamp, json.loads(data)
+                timestamp, data = resp[0]
+                return timestamp, json.loads(data)
+
+
+    async def get_factions_names(self):
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                rows = await connection.fetch('SELECT "tId", "name" FROM faction_faction')
+                return rows
+
+
+    async def reset_notifications(self, tornId):
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.execute('UPDATE player_player SET "activateNotifications"=$1, "notifications"=$2 WHERE "tId"=$3', False, json.dumps({}), tornId)
+
+
+    async def get_loots(self, scheduled=False):
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                if scheduled:
+                    loots = await connection.fetch(f'SELECT * FROM loot_scheduledAttack;')
+                else:
+                    loots = await connection.fetch(f'SELECT * FROM loot_NPC WHERE show = true;')
+
+                return loots
+
+    async def get_npc(self, id):
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                npc = await connection.fetch(f'SELECT * FROM loot_NPC WHERE "id"=$1;', id)
+            return npc
