@@ -21,13 +21,6 @@ echo "    run marvin"
 nohup python yata.py ".env-marvin" > logs/marvin.log 2>&1 &
 echo $! > pids/marvin.pid
 
-# run the nub bot
-echo "    kill nub bot"
-kill -9 $(cat pids/nub.pid)
-echo "    run nub bot"
-nohup python yata.py ".env-nub" > logs/nub.log 2>&1 &
-echo $! > pids/nub.pid
-
 # send the logs
 echo "    kill logs"
 kill -9 $(cat pids/logs.pid)

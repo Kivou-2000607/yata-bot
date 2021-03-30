@@ -83,7 +83,7 @@ class Marvin(commands.Cog):
         # list of emoji and roles for reactions
         self.guilds_reactions = {
             792138838327296011: {
-                'pico': 755352458833821727,
+                'pico': 826558863469183056,
                 'dollarbill': 755352458833821727
             },
             760807943762739230: {
@@ -239,9 +239,12 @@ class Marvin(commands.Cog):
                     msg = await channel.send(embed=eb)
                     msgs.append(msg)
 
-                    # check if user have at least one helper role
+                    # check if user have at least one cascading_role role
                     cascading_roles = self.guilds_cascading_roles.get(payload.message_id, {})
                     for role_main_id, role_casc_ids in cascading_roles.items():
+                        # skip if react role not part of cascading_role
+                        if role.id not in role_casc_ids:
+                            continue
                         main_role = get(guild.roles, id=role_main_id)
                         if main_role is None:
                             continue
