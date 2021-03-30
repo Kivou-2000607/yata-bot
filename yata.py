@@ -144,7 +144,7 @@ if int(bot_id) in [1, 3, 5]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
-    bot.add_cog(Marvin(bot))
+    # bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
