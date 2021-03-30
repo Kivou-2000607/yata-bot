@@ -176,6 +176,11 @@ class YataBot(Bot):
         user = tuple(user[0])
         return 0, user[0], user[1], user[2]
 
+    async def on_connect(self):
+        logging.info("Create async pool")
+        self.pool = await asyncpg.create_pool(**self.database)
+        logging.info("Pool created")
+
     async def on_ready(self):
         self.pool = await asyncpg.create_pool(**self.database)
 
@@ -469,7 +474,7 @@ class YataBot(Bot):
                     ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x')
                 else:  # update otherwise
                     await connection.execute('''
-                    UPDATE bot_server SET name = $3, configuration = $4 WHERE self.bot_id = $1 AND discord_id = $2
+                    UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
                     ''', self.bot_id, discord_id, server_name, json.dumps(configuration))
 
 
