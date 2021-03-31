@@ -658,7 +658,7 @@ class Admin(commands.Cog):
     @tasks.loop(hours=24)
     async def updateFactionNames(self):
         logging.debug("[admin/updateFactionNames] start task")
-        self.bot.factions_names = {f.get("tId"): f.get("name") for f in await self.bot.get_factions_names()}
+        self.bot.factions_names = {str(f.get("tId")): f.get("name") for f in await self.bot.get_factions_names()}
         logging.debug("[admin/updateFactionNames] end task")
 
     @tasks.loop(hours=24)

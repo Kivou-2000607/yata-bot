@@ -441,7 +441,7 @@ class YataBot(Bot):
             return response, False
 
     def get_faction_name(self, tId):
-        return f'{html.unescape(self.factions_names.get("name", "Faction"))} [{tId}]'
+        return f'{html.unescape(self.factions_names.get(str(tId), "Faction"))} [{tId}]'
 
 
     # DB CALLS
