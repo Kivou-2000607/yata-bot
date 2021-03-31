@@ -182,8 +182,6 @@ class YataBot(Bot):
         logging.info("Pool created")
 
     async def on_ready(self):
-        self.pool = await asyncpg.create_pool(**self.database)
-
         # change activity
         # activity = discord.Activity(name="over TORN's players", type=discord.ActivityType.watching)
         activity = discord.Activity(name="Torn", type=discord.ActivityType.playing)

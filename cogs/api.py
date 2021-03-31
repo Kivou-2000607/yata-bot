@@ -369,7 +369,7 @@ class API(commands.Cog):
 
             # connect to YATA database of notifiers
             sql = 'SELECT "tId", "dId", "notifications", "value" FROM player_view_player_key WHERE "activateNotifications" = True;'
-            async with self.pool.acquire() as con:
+            async with self.bot.pool.acquire() as con:
                 # async loop over notifiers
                 async with con.transaction():
                     async for record in con.cursor(sql, prefetch=100, timeout=2):
