@@ -148,7 +148,7 @@ class Marvin(commands.Cog):
                     'category': 'yata',
                     'roles': []
                 },
-                'bug~2': {
+                'bugswatter': {
                     'name': 'bug',
                     'message': ['You can report your bug here.'],
                     'category': 'yata',
@@ -321,8 +321,7 @@ class Marvin(commands.Cog):
 
                 # create tmp channel
                 name = emoji_data[payload.emoji.name]["name"]
-                message = emoji_data[payload.emoji.name]["message"]
-                close = emoji_data[payload.emoji.name]["close"]
+                close = emoji_data[payload.emoji.name].get("close", False)
                 roles = [get(guild.roles, id=id) for id in emoji_data[payload.emoji.name]["roles"]]
 
                 category_name = emoji_data[payload.emoji.name]["category"]
@@ -330,7 +329,9 @@ class Marvin(commands.Cog):
 
                 channel = await guild.create_text_channel(f'{name}-{member.nick.split(" ")[0]}', category=category)
 
-                message.insert(0, f'{member.mention}')
+                message = [f'{member.mention}']
+                for m in emoji_data[payload.emoji.name]["message"]:
+                    message.append(m)
                 if close:
                     message.append("")
                     message.append(f'*{close}*')
