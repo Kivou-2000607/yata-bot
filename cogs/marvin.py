@@ -57,31 +57,13 @@ class Marvin(commands.Cog):
         self.quotes_used = []
 
         # allowed servers
-        self.allowed_servers = [581227228537421825, 650701692853288991, 715785867519721534]
+        self.allowed_servers = [581227228537421825, 650701692853288991]
 
-        # servers where marvin can talk
-        self.blab_servers = [581227228537421825, 650701692853288991]
-
-        # list of staff roles id per server
-        self.staff_id = {
-            581227228537421825: [679669933680230430],
-            650701692853288991: [755352458833821727]
-        }
-
-        # list of channels id for message per server
-        self.channel_for_help = {
-            581227228537421825: [703587583862505483],
-            650701692853288991: [650701692853288997]
-        }
-
-        # list of channels id not meant for help (sends message if staff is pinged there)
-        self.not_for_help = {
-            581227228537421825: [581227228537421829],
-            650701692853288991: [737055053608910952]
-        }
+        # channels where marvin can talk
+        self.talk_channels = [738724413201055826, 776408895483805697, 650701692853288997]
 
         # list of emoji and roles for reactions
-        self.guilds_reactions = {
+        self.messageid_roles = {
             792138838327296011: {
                 'pico': 826558863469183056,
                 'dollarbill': 755352458833821727
@@ -106,7 +88,7 @@ class Marvin(commands.Cog):
                 'gak': 823328164507942964
             }
         }
-        self.guilds_cascading_roles = {
+        self.messageid_croles = {
             # YATA
             # helper: [yata helper, python helper, js helper, torn helper]
             760807943762739230: {
@@ -124,52 +106,82 @@ class Marvin(commands.Cog):
 
         }
 
+        self.create_channels = {
+            # message id: { icon: { 'name' }}
+            827169703511982192: {
+                'pico': {
+                    'name': 'type1',
+                    'message': ["Hello, you're here for a bot setup I presume.",
+                                "Please wait a moment for a staff member. They like to pretend they are busy...",
+                                "In the meantime they asked me to tell you to:",
+                                "- make sure you followed these steps https://yata.yt/bot/host/",
+                                "- give us the **name of the server**",
+                                "",
+                                "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
+                    'category': 'cat1',
+                    'close': "When you're all setup you can react below to close this channel. Thank you.",
+                    'roles': []
+                },
+                'goldlaptop': {
+                    'name': 'type2',
+                    'message': ['message2'],
+                    'category': 'prout 2',
+                    'roles': [789249556423770132]
+                },
+            },
+            827272764229419058: {
+                'bot': {
+                    'name': 'bot-setup',
+                    'message': ["Hello, you're here for a bot setup I presume.",
+                                "Make sure you've followed these steps https://yata.yt/bot/host/.",
+                                "When you're ready ping a @Staff and give us the **name of the server**",
+                                "Please wait a moment for a staff member. They like to pretend they are busy...",
+                                "",
+                                "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
+                    'category': 'yata',
+                    'close': "When you're all setup you can react below to close this channel. Thank you.",
+                    'roles': []
+                },
+                'amen': {
+                    'name': 'suggestion',
+                    'message': ['Hey, you can make your suggestion here.'],
+                    'category': 'yata',
+                    'roles': []
+                },
+                'bug~2': {
+                    'name': 'bug',
+                    'message': ['You can report your bug here.'],
+                    'category': 'yata',
+                    'roles': []
+                },
+                'yoda': {
+                    'name': 'help',
+                    'message': ['You can ask your question here.'],
+                    'category': 'yata',
+                    'roles': []
+                },
+            }
+        }
+
+        self.channel_created = {}
+
+
     @commands.Cog.listener()
     async def on_message(self, message):
 
         # only blab for yata and chappie server or author is bot
-        if message.guild.id not in self.blab_servers or message.author.bot:
+        if message.guild.id not in self.allowed_servers or message.author.bot:
             return
 
-        bot_user_id = str(self.bot.user.id)
-        staff_id = self.staff_id.get(message.guild.id, [])
-        staff_mentionned = any([str(i) in message.content for i in staff_id])
-        bot_mentionned = str(self.bot.user.id) in message.content
-        help_channel = message.channel.id in self.channel_for_help.get(message.guild.id, [])
-
-        if bot_mentionned:  # if bot is mentionned
+        if str(self.bot.user.id) in message.content:  # if bot is mentionned
             await message.channel.send("*sigh*")
-
-        elif staff_mentionned:  # if staff is mentionned
-
-            # wrong channel
-            if message.channel.id in self.not_for_help.get(message.guild.id, []):
-                await message.channel.send(f"{message.author.mention}, it's not a good channel to ask for help. Please read server's rules.")
-                return
-
-            # only ping
-            if message.content.replace("&", "") in [f'<@{i}>' for i in staff_id]:
-                await message.channel.send(f"{message.author.mention}, don't just ping staff, try to formulate your request with a complete sentence.")
-                return
-
-            # in #yata-bot-setup
-            if help_channel:
-                lst = [f"Hello {message.author.mention}, you're here for a bot setup I presume.",
-                       "Please wait a moment for a staff member. They like to pretend they are busy...",
-                       "In the meantime they asked me to tell you to:",
-                       "- make sure you followed these steps https://yata.yt/bot/host/",
-                       "- give us the **name of the server**",
-                       "",
-                       "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."]
-                await message.channel.send("\n".join(lst))
-                return
 
         if '!looter' in message.content:
             responses = ["Try again", 'Close enough', "rtfm", "Almost there", "*sight*", "*shrug*"]
             await message.channel.send(random.choice(responses))
             return
 
-        if not help_channel:
+        if message.channel.id in self.talk_channels:
             if random.random() > 0.9:
                 if not len(self.quotes_used):
                     self.quotes_used = list(self.quotes_lib)
@@ -184,10 +196,10 @@ class Marvin(commands.Cog):
         add = payload.event_type == 'REACTION_ADD'
 
         # check if watch message
-        if payload.message_id in self.guilds_reactions:
+        if payload.message_id in self.messageid_roles:
 
             # check emoji
-            emoji_role = self.guilds_reactions[payload.message_id]
+            emoji_role = self.messageid_roles[payload.message_id]
 
             # reset message
             if payload.emoji.name == '🍌' and add:
@@ -240,7 +252,7 @@ class Marvin(commands.Cog):
                     msgs.append(msg)
 
                     # check if user have at least one cascading_role role
-                    cascading_roles = self.guilds_cascading_roles.get(payload.message_id, {})
+                    cascading_roles = self.messageid_croles.get(payload.message_id, {})
                     for role_main_id, role_casc_ids in cascading_roles.items():
                         # skip if react role not part of cascading_role
                         if role.id not in role_casc_ids:
@@ -270,9 +282,77 @@ class Marvin(commands.Cog):
                     await asyncio.sleep(10)
                     await msg.delete()
 
+
+    async def create_tmp_channel(self, payload):
+
+        # check if watch message
+        if payload.message_id in self.create_channels:
+            emoji_data = self.create_channels[payload.message_id]
+
+            # reset message
+            if payload.emoji.name == '🍌':
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                channel = get(guild.text_channels, id=payload.channel_id)
+                async for message in channel.history(limit=20):
+                    if message.id == payload.message_id:
+                        await message.clear_reactions()
+                        time.sleep(1)
+                        for emoji in emoji_data:
+                            emoji = get(guild.emojis, name=emoji)
+                            await message.add_reaction(emoji)
+                            time.sleep(1)
+                        break
+
+                eb = Embed(description=f'Reaction message cleared', color=my_blue)
+                msg = await channel.send(embed=eb)
+                await asyncio.sleep(10)
+                await msg.delete()
+                return
+
+            # check if user is bot
+            user = self.bot.get_user(payload.user_id)
+            if user is None or user.bot:
+                return
+
+            if payload.emoji.name in emoji_data:
+                # get guild and member
+                guild = get(self.bot.guilds, id=payload.guild_id)
+                member = get(guild.members, id=payload.user_id)
+
+                # create tmp channel
+                name = emoji_data[payload.emoji.name]["name"]
+                message = emoji_data[payload.emoji.name]["message"]
+                close = emoji_data[payload.emoji.name]["close"]
+                roles = [get(guild.roles, id=id) for id in emoji_data[payload.emoji.name]["roles"]]
+
+                category_name = emoji_data[payload.emoji.name]["category"]
+                category = get(guild.categories, name=category_name)
+
+                channel = await guild.create_text_channel(f'{name}-{member.nick.split(" ")[0]}', category=category)
+
+                message.insert(0, f'{member.mention}')
+                if close:
+                    message.append("")
+                    message.append(f'*{close}*')
+                if len(roles):
+                    message.append(" ".join([f'{r.mention}' for r in roles]))
+
+                message = await channel.send("\n".join(message))
+                if close:
+                    await message.add_reaction('❌')
+                self.channel_created[message.id] = {"member_id": member.id, "channel": channel}
+
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        await self.toggle_role(payload)
+        if payload.message_id in self.messageid_roles:
+            await self.toggle_role(payload)
+        elif payload.message_id in self.create_channels:
+            await self.create_tmp_channel(payload)
+        elif payload.message_id in self.channel_created:
+            if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
+                await self.channel_created[payload.message_id].get("channel").delete()
+                del self.channel_created[payload.message_id]
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
