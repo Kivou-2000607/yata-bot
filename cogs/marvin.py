@@ -146,18 +146,21 @@ class Marvin(commands.Cog):
                     'name': 'suggestion',
                     'message': ['Hey, you can make your suggestion here.'],
                     'category': 'yata',
+                    'close': "You can close this channel by reacting below. Thank you.",
                     'roles': []
                 },
                 'bugswatter': {
                     'name': 'bug',
                     'message': ['You can report your bug here.'],
                     'category': 'yata',
+                    'close': "You can close this channel by reacting below. Thank you.",
                     'roles': []
                 },
                 'yoda': {
                     'name': 'help',
                     'message': ['You can ask your question here.'],
                     'category': 'yata',
+                    'close': "You can close this channel by reacting below. Thank you.",
                     'roles': []
                 },
             }
