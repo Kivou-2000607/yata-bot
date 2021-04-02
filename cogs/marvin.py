@@ -354,12 +354,26 @@ class Marvin(commands.Cog):
         elif payload.message_id in self.create_channels:
             await self.create_tmp_channel(payload)
         elif payload.message_id in self.channel_created:
-            if payload.user_id == self.channel_created[payload.message_id].get("member_id") or payload.user_id in self.roles_delete_channel:
-                channel = self.channel_created[payload.message_id].get("channel")
-                await channel.send("*The ticket will be closed in a minute. Thank you.*")
-                await asyncio.sleep(60)
-                await channel.delete()
-                del self.channel_created[payload.message_id]
+            # get autorized user_id
+            # if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
+            #     channel = self.channel_created[payload.message_id].get("channel")
+            #     await channel.send("*The ticket will be closed in a minute. Thank you.*")
+            #     await asyncio.sleep(60)
+            #     await channel.delete()
+            #     del self.channel_created[payload.message_id]
+            #     return
+            # member user roles
+            guild = get(self.bot.guilds, id=payload.guild_id)
+            member = get(guild.members, id=payload.user_id)
+            for role_id in [r.id for r in member.roles]:
+                if role_id in self.roles_delete_channel:
+                    channel = self.channel_created[payload.message_id].get("channel")
+                    await channel.send("*The ticket will be closed in a minute. Thank you.*")
+                    await asyncio.sleep(60)
+                    await channel.delete()
+                    del self.channel_created[payload.message_id]
+                    return
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
