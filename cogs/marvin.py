@@ -355,13 +355,13 @@ class Marvin(commands.Cog):
             await self.create_tmp_channel(payload)
         elif payload.message_id in self.channel_created:
             # get autorized user_id
-            # if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
-            #     channel = self.channel_created[payload.message_id].get("channel")
-            #     await channel.send("*The ticket will be closed in a minute. Thank you.*")
-            #     await asyncio.sleep(60)
-            #     await channel.delete()
-            #     del self.channel_created[payload.message_id]
-            #     return
+            if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
+                channel = self.channel_created[payload.message_id].get("channel")
+                await channel.send("*Your ticket will be closed in a minute. Thank you.*")
+                await asyncio.sleep(60)
+                await channel.delete()
+                del self.channel_created[payload.message_id]
+                return
             # member user roles
             guild = get(self.bot.guilds, id=payload.guild_id)
             member = get(guild.members, id=payload.user_id)
