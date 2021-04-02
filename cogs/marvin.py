@@ -164,7 +164,7 @@ class Marvin(commands.Cog):
         }
 
         self.channel_created = {}
-
+        self.roles_delete_channel = [679669933680230430]
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -351,8 +351,11 @@ class Marvin(commands.Cog):
         elif payload.message_id in self.create_channels:
             await self.create_tmp_channel(payload)
         elif payload.message_id in self.channel_created:
-            if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
-                await self.channel_created[payload.message_id].get("channel").delete()
+            if payload.user_id == self.channel_created[payload.message_id].get("member_id") or payload.user_id in self.roles_delete_channel:
+                channel = self.channel_created[payload.message_id].get("channel")
+                await channel.send("*The ticket will be closed in a minute. Thank you.*")
+                await asyncio.sleep(60)
+                await channel.delete()
                 del self.channel_created[payload.message_id]
 
     @commands.Cog.listener()
