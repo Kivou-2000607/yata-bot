@@ -26,6 +26,7 @@ import html
 import logging
 import asyncio
 import asyncpg
+import random
 
 # import discord modules
 import discord
@@ -78,7 +79,6 @@ class YataBot(Bot):
             return 0, id, Name, Key: All good
             return -1, None, None, None: no key given
         """
-        import random
         c = self.configurations.get(guild.id)
         if c is None:
             return -1, None, None
