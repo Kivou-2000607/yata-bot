@@ -154,7 +154,7 @@ class Loot(commands.Cog):
             ts = npc["ts"]
 
             if due > -60 and due < 10 * 60:
-                notification = "{} {}".format(npc["name"], "in " + s_to_ms(due) if due > 0 else "now")
+                notification = f'{npc["name"]} level {self.lvl_roman.get(level)} {"in " + s_to_ms(due) if due > 0 else "now"}'
                 mentions.append(notification)
 
                 # author field
