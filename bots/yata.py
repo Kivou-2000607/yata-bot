@@ -27,6 +27,7 @@ import logging
 import asyncio
 import asyncpg
 import random
+import string
 
 # import discord modules
 import discord
