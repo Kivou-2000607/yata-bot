@@ -120,7 +120,7 @@ class Marvin(commands.Cog):
                                 "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
                     'category': 'cat1',
                     'close': "When you're all setup you can react below to close this channel. Thank you.",
-                    'roles': []
+                    'roles': [],
                 },
                 'goldlaptop': {
                     'name': 'type2',
@@ -140,28 +140,28 @@ class Marvin(commands.Cog):
                                 "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
                     'category': 'yata',
                     'close': "When you're all setup you can react below to close this channel. Thank you.",
-                    'roles': []
+                    'roles': [],
                 },
                 'amen': {
                     'name': 'suggestion',
                     'message': ['Hey, you can make your suggestion here.'],
                     'category': 'yata',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': []
+                    'roles': [],
                 },
                 'bugswatter': {
                     'name': 'bug',
                     'message': ['You can report your bug here.'],
                     'category': 'yata',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': []
+                    'roles': [],
                 },
                 'yoda': {
                     'name': 'help',
                     'message': ['You can ask your question here.'],
                     'category': 'yata',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': []
+                    'roles': [],
                 },
             }
         }
@@ -356,21 +356,28 @@ class Marvin(commands.Cog):
         elif payload.message_id in self.channel_created:
             # get autorized user_id
             if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
+                guild = get(self.bot.guilds, id=payload.guild_id)
                 channel = self.channel_created[payload.message_id].get("channel")
-                await channel.send("*Your ticket will be closed in a minute. Thank you.*")
-                await asyncio.sleep(60)
-                await channel.delete()
+                await channel.send("*Ticket closed*")
+                # await asyncio.sleep(60)
+                await channel.edit(category=get(guild.categories, name='closed'), sync_permissions=True)
+                await channel.set_permissions(member, read_messages=True, send_messages=False)
+                # await channel.delete()
                 del self.channel_created[payload.message_id]
                 return
+
             # member user roles
             guild = get(self.bot.guilds, id=payload.guild_id)
             member = get(guild.members, id=payload.user_id)
             for role_id in [r.id for r in member.roles]:
                 if role_id in self.roles_delete_channel:
+                    guild = get(self.bot.guilds, id=payload.guild_id)
                     channel = self.channel_created[payload.message_id].get("channel")
-                    await channel.send("*The ticket will be closed in a minute. Thank you.*")
-                    await asyncio.sleep(60)
-                    await channel.delete()
+                    await channel.send("*Ticket closed*")
+                    # await asyncio.sleep(60)
+                    await channel.edit(category=get(guild.categories, name='closed'), sync_permissions=True)
+                    await channel.set_permissions(member, read_messages=True, send_messages=False)
+                    # await channel.delete()
                     del self.channel_created[payload.message_id]
                     return
 
