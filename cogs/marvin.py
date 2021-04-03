@@ -354,6 +354,9 @@ class Marvin(commands.Cog):
         elif payload.message_id in self.create_channels:
             await self.create_tmp_channel(payload)
         elif payload.message_id in self.channel_created:
+            guild = get(self.bot.guilds, id=payload.guild_id)
+            member = get(guild.members, id=payload.user_id)
+
             # get autorized user_id
             if payload.user_id == self.channel_created[payload.message_id].get("member_id"):
                 guild = get(self.bot.guilds, id=payload.guild_id)
@@ -367,8 +370,6 @@ class Marvin(commands.Cog):
                 return
 
             # member user roles
-            guild = get(self.bot.guilds, id=payload.guild_id)
-            member = get(guild.members, id=payload.user_id)
             for role_id in [r.id for r in member.roles]:
                 if role_id in self.roles_delete_channel:
                     guild = get(self.bot.guilds, id=payload.guild_id)
