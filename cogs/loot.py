@@ -188,30 +188,28 @@ class Loot(commands.Cog):
             try:
                 logging.debug(f"[loot/notifications_{level}] {guild}")
 
-                config = self.bot.get_guild_configuration_by_module(guild, "loot", check_key="channels_alerts")
+                config = self.bot.get_guild_configuration_by_module(guild, "loot")
                 if not config:
-                    continue
-
-                # get role & channel
-                role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
-                channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
-
-                if channel is None:
-                    continue
-
-                if "other" in config and not config["other"].get(f'level_{level}', False):
-                    # server set a loot level config and it's not for this level
-                    logging.debug(f"[loot/notifications_{level}] {guild} -> ignore this level")
                     continue
 
                 # loop of npcs to mentions
                 for m, e, i in zip(mentions, embeds, npcs):
-                    logging.debug(f"[LOOT] guild {guild}: mention {m}.")
-                    roles = [] if role is None else [role]
-                    npc_role = self.bot.get_module_role(guild.roles, config.get(f"roles_{i}", {}))
-                    if npc_role is not None:
-                        roles.append(npc_role)
-                    msg = f'{m} {" ".join([r.mention for r in roles])}'
+
+                    # check if alert for the level
+                    if not config.get(f"loot_level_{i}", {}).get(f"level_{level}", False):
+                        logging.debug(f"[loot/notifications_{level}] guild {guild}: mention {m} -> ignore level {level}")
+                        continue
+
+                    # get npc channel
+                    channel = self.bot.get_module_channel(guild.channels, config.get(f"channels_alerts_{i}", {}))
+                    if channel is None:
+                        logging.debug(f"[loot/notifications_{level}] guild {guild}: mention {m} -> no channels")
+                        continue
+
+                    # get role
+                    role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                    logging.debug(f"[loot/notifications_{level}] guild {guild}: mention {m} -> send alert to role {role}")
+                    msg = f'{m} {"" if role is None else role.mention}'
                     await channel.send(msg, embed=e)
 
             except BaseException as e:
@@ -257,8 +255,7 @@ class Loot(commands.Cog):
                 continue
 
             due = loot.get("timestamp") - ts_now()
-            # if True:
-            if due < 10 * 60:
+            if True:
                 # get NPC
                 npc = await self.bot.get_npc(loot.get("npc_id"))
                 if not len(npc):
