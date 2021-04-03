@@ -207,7 +207,7 @@ class Loot(commands.Cog):
                         continue
 
                     # get role
-                    role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
+                    role = self.bot.get_module_role(guild.roles, config.get(f"roles_alerts_{i}", {}))
                     logging.debug(f"[loot/notifications_{level}] guild {guild}: mention {m} -> send alert to role {role}")
                     msg = f'{m} {"" if role is None else role.mention}'
                     await channel.send(msg, embed=e)
