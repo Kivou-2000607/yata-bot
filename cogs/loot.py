@@ -40,6 +40,9 @@ from inc.handy import *
 class Loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.notify_1.start()
+        self.notify_2.start()
+        self.notify_3.start()
         self.notify_4.start()
         self.notify_5.start()
         self.scheduled.start()
@@ -50,6 +53,9 @@ class Loot(commands.Cog):
         self.lvl_to_display = [4, 5]
 
     def cog_unload(self):
+        self.notify_1.cancel()
+        self.notify_2.cancel()
+        self.notify_3.cancel()
         self.notify_4.cancel()
         self.notify_5.cancel()
         self.scheduled.cancel()
@@ -141,6 +147,7 @@ class Loot(commands.Cog):
         # loop over NPCs
         mentions = []
         embeds = []
+        npcs = []
         nextDue = []
         for npc_id, npc in loots.items():
             due = npc["due"]
@@ -162,6 +169,7 @@ class Loot(commands.Cog):
                 embed = append_update(embed, ts, text="At ")
 
                 embeds.append(embed)
+                npcs.append(npc_id)
                 logging.debug(f'[loot/notifications_{level}] {npc["name"]}: notify (due {due})')
             elif due > 0:
                 # used for computing sleeping time
@@ -191,10 +199,19 @@ class Loot(commands.Cog):
                 if channel is None:
                     continue
 
+                if "other" in config and not config["other"].get(f'level_{level}', False):
+                    # server set a loot level config and it's not for this level
+                    logging.debug(f"[loot/notifications_{level}] {guild} -> ignore this level")
+                    continue
+
                 # loop of npcs to mentions
-                for m, e in zip(mentions, embeds):
+                for m, e, i in zip(mentions, embeds, npcs):
                     logging.debug(f"[LOOT] guild {guild}: mention {m}.")
-                    msg = f'{m} {"" if role is None else role.mention}'
+                    roles = [] if role is None else [role]
+                    npc_role = self.bot.get_module_role(guild.roles, config.get(f"roles_{i}", {}))
+                    if npc_role is not None:
+                        roles.append(npc_role)
+                    msg = f'{m} {" ".join([r.mention for r in roles])}'
                     await channel.send(msg, embed=e)
 
             except BaseException as e:
@@ -206,6 +223,18 @@ class Loot(commands.Cog):
         # sleeps
         logging.debug(f"[loot/notifications_{level}] sleep for {s} seconds")
         await asyncio.sleep(s)
+
+    @tasks.loop(seconds=5)
+    async def notify_1(self):
+        await self.notify(1)
+
+    @tasks.loop(seconds=5)
+    async def notify_2(self):
+        await self.notify(2)
+
+    @tasks.loop(seconds=5)
+    async def notify_3(self):
+        await self.notify(3)
 
     @tasks.loop(seconds=5)
     async def notify_4(self):
@@ -282,6 +311,21 @@ class Loot(commands.Cog):
                 await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on loot notifications"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
+
+    @notify_1.before_loop
+    async def before_notify_1(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+    @notify_2.before_loop
+    async def before_notify_2(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+    @notify_3.before_loop
+    async def before_notify_3(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
 
     @notify_4.before_loop
     async def before_notify_4(self):
