@@ -358,6 +358,71 @@ class API(commands.Cog):
         await send(ctx, embed=eb)
 
 
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
+    async def vault(self, ctx, *args):
+        """ For AA users: gives the vault balance of a user
+        """
+        logging.info(f'[api/vault] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        if not len(args):
+            await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
+            return
+
+        # get author key
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status != 0:
+            return
+
+        # get user id based on torn id or mention
+        if args[0].isdigit():
+            checkVaultId = args[0]
+
+        elif re.match(r'<@!?\d+>', args[0]):
+            discordID = re.findall(r'\d+', args[0])
+            member = ctx.guild.get_member(int(discordID[0]))
+            checkVaultId, err = await self.bot.discord_to_torn(member, key)
+            if checkVaultId == -1:
+                await self.bot.send_error_message(ctx, f'Error code {r["error"]["code"]}: {r["error"]["error"]}')
+                return
+            elif checkVaultId == -2:
+                await self.bot.send_error_message(ctx, f'Discord member {discordID[0]} is not verified')
+                return
+
+        else:
+            await self.bot.send_error_message(ctx, "You need to enter a torn user ID: `!vault <torn_id>` or mention a member `!vault @Mention`")
+            return
+
+        response, e = await self.bot.api_call("faction", "", ["basic", "donations"], key)
+        if e and "error" in response:
+            await self.bot.send_error_message(ctx.channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title="API error")
+            return
+
+        factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
+        members = response["members"]
+        donations = response["donations"]
+        checkVaultId = str(checkVaultId)
+        eb = Embed(title=f"{factionName}", color=my_blue)
+        if checkVaultId in members:
+            member = members[checkVaultId]
+            eb.add_field(name=f'Member', value=f'{member["name"]} [{checkVaultId}]')
+            eb.add_field(name=f'Action', value=f'{member["last_action"]["relative"]}')
+        else:
+            eb.add_field(name=f'User', value=f'Member [{checkVaultId}]')
+            eb.add_field(name=f'Action', value=f'Not in faction')
+
+        if checkVaultId in donations:
+            member = donations[checkVaultId]
+            eb.add_field(name=f'Money', value=f'${member["money_balance"]:,d}')
+            eb.add_field(name=f'Points', value=f'{member["points_balance"]:,d}')
+        else:
+            eb.add_field(name=f'Money', value=f'No vault records')
+            eb.add_field(name=f'Points', value=f'No vault records')
+
+        await ctx.send(embed=eb)
+
+
     @tasks.loop(minutes=1)
     async def notify(self):
 
