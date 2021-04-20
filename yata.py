@@ -135,7 +135,7 @@ bot.add_cog(Admin(bot))
 if int(bot_id) in [1, 3, 5]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
-    bot.add_cog(Stocks(bot))
+    # bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
     bot.add_cog(War(bot))
     bot.add_cog(Revive(bot))
