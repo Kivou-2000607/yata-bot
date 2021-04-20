@@ -168,6 +168,10 @@ class Marvin(commands.Cog):
 
         self.channel_created = {}
         self.roles_delete_channel = [679669933680230430]
+        self.clean_tickets.start()
+
+        def cog_unload(self):
+            self.get_assists.cancel()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -394,3 +398,26 @@ class Marvin(commands.Cog):
             if guild.id not in self.allowed_servers:
                 print(f"leave server {guild}")
                 await guild.leave()
+
+
+    @tasks.loop(hours=24)
+    async def clean_tickets(self):
+        # delete old channels
+        guild = get(self.bot.guilds, id=self.bot.main_server_id)
+        category = get(guild.categories, name='closed')
+        for channel in category.channels:
+            try:
+                last_message = await channel.fetch_message(channel.last_message_id)
+            except:
+                await channel.delete()
+                continue
+
+            diff = (datetime.datetime.utcnow() - last_message.created_at).total_seconds()
+            if diff > 604800:
+                await channel.delete()
+
+
+    @clean_tickets.before_loop
+    async def before_clean_tickets(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
