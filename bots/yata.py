@@ -185,7 +185,10 @@ class YataBot(Bot):
     async def on_ready(self):
         # change activity
         # activity = discord.Activity(name="over TORN's players", type=discord.ActivityType.watching)
-        activity = discord.Activity(name="Torn", type=discord.ActivityType.playing)
+        if self.bot_id == 4:
+            activity = discord.Activity(name="over JFK", type=discord.ActivityType.watching)
+        else:
+            activity = discord.Activity(name="Torn", type=discord.ActivityType.playing)
         await self.change_presence(activity=activity)
 
         logging.info("Ready...")
