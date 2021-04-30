@@ -45,14 +45,14 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot_id = self.bot.bot_id
-        if self.bot.bot_id in [1, 3]:
+        if self.bot.bot_id in [1, 3, 4]:
             self.cleanServers.start()
             self.updateFactionNames.start()
         if self.bot.bot_id == 3:
             self.assignRoles.start()
 
     def cog_unload(self):
-        if self.bot.bot_id in [1, 3]:
+        if self.bot.bot_id in [1, 3, 4]:
             self.cleanServers.cancel()
             self.updateFactionNames.cancel()
         if self.bot.bot_id == 3:
