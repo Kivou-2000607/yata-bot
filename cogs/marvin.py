@@ -413,7 +413,7 @@ class Marvin(commands.Cog):
                 continue
 
             diff = (datetime.datetime.utcnow() - last_message.created_at).total_seconds()
-            if diff > 604800:
+            if diff > 172800:
                 await channel.delete()
 
 
