@@ -75,6 +75,6 @@ class JFK(commands.Cog):
             await ctx.author.add_roles(role)
             msg = await ctx.send(f'```role @{role.name} added to {ctx.author.display_name}```')
 
-        await asyncio.sleep(5)
-        await msg.delete()
-        await ctx.message.delete()
+        # await asyncio.sleep(5)
+        # await msg.delete()
+        # await ctx.message.delete()
