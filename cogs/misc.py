@@ -81,24 +81,10 @@ class Misc(commands.Cog):
         size_y = 11
 
         # screen
-        s_s = ""
         s_u = ":arrow_up_small:"
         s_d = ":arrow_down_small:"
         s_r = ":arrow_forward:"
         s_l = ":arrow_backward:"
-        s_b = ":blue_square:"
-        s_v = ":black_large_square:"
-        s_a = ":green_square:"
-        s_e = ""
-        # s_s = "```\n"
-        # s_u = ":arrow_up_small:"
-        # s_d = ":arrow_down_small:"
-        # s_r = ":arrow_forward:"
-        # s_l = ":arrow_backward:"
-        # s_b = ":blue_square:"
-        # s_v = ":black_large_square:"
-        # s_a = ":green_square:"
-        # s_e = "```"
 
         # helper function to pass from cartesian to lexicographical notations
         def c2l(x, y):
@@ -108,41 +94,48 @@ class Misc(commands.Cog):
         def l2c(n):
             return (n % size_x, n // size_x)
 
+        # randomly pick a free space
         def spawn_apple(snake):
-            free = [_ for _ in range(size_x * size_y)]
-            for s in snake["body"]:
-                free.pop(s)
-
-            for a in snake["apples"]:
-                free.pop(a)
-
+            free = [_ for _ in range(size_x * size_y) if _ not in snake["body"] + snake["apples"]]
             snake["apples"].append(random.choice(free))
             return snake
 
-
+        # display screen
         def screen(snake):
 
             # check if lost
             if snake["lost"]:
-                return f'You lost... Snake size: {len(snake["body"])}'
+                screen = f'**Score** {len(snake["body"])}\n'
+                for i in range(size_x * size_y):
+                    if i == snake["body"][-1]:
+                        screen += ":x:"
+                    elif i in snake["body"]:
+                        screen += ":o:"
+                    elif i in snake["apples"]:
+                        screen += ":green_square:"
+                    else:
+                        screen += ":wavy_dash:"
 
-            screen = s_s
-            head = l2c(snake["body"][-1])
-            screen = f"{head}\n{s_s}"
+                    if not (i + 1) % size_x:
+                        screen += "\n"
+
+                return screen
+
+            screen = f'**Score** {len(snake["body"])} '
+            screen += f'**Position** {l2c(snake["body"][-1])} '
+            screen += f'**Speed** {snake["speed"]}/4\n'
             for i in range(size_x * size_y):
                 if i == snake["body"][-1]:
                     screen += snake["direction"]
                 elif i in snake["body"]:
-                    screen += s_b
+                    screen += ":blue_square:"
                 elif i in snake["apples"]:
-                    screen += s_a
+                    screen += ":green_square:"
                 else:
-                    screen += s_v
+                    screen += ":wavy_dash:"
 
                 if not (i + 1) % size_x:
                     screen += "\n"
-
-            screen += s_s
 
             return screen
 
@@ -197,7 +190,8 @@ class Misc(commands.Cog):
 
         # variables
         snake = { "body": [c2l(size_x // 2 - 1, size_y // 2), c2l(size_x // 2, size_y // 2)],
-                  "direction": s_r, "lost": False, "apples": [c2l(size_x // 2 + 2, size_y // 2)] }
+                  "direction": s_r, "lost": False, "apples": [c2l(size_x // 2 + 2, size_y // 2)],
+                  "speed": 1 }
 
         message = await ctx.send(screen(snake))
         await message.add_reaction(self.snake_e_l)
@@ -210,17 +204,21 @@ class Misc(commands.Cog):
             snake = self.snakes[message.id]
             snake = move(snake)
             await message.edit(content=screen(snake))
+
             if snake["lost"]:
+                await message.clear_reactions()
                 return
 
-            if len(snake["body"]) > 20:
-                pass
-            elif len(snake["body"]) > 10:
-                await asyncio.sleep(1)
-            elif len(snake["body"]) > 5:
-                await asyncio.sleep(2)
+            if len(snake["body"]) > 15:
+                snake["speed"] = 4
+            elif len(snake["body"]) > 9:
+                snake["speed"] = 3
+            elif len(snake["body"]) > 4:
+                snake["speed"] = 2
             else:
-                await asyncio.sleep(3)
+                snake["speed"] = 1
+
+            await asyncio.sleep(max(4 - snake["speed"], 0.5))
 
 
     @commands.Cog.listener()
@@ -228,15 +226,10 @@ class Misc(commands.Cog):
         if discord_user.bot:
             return
 
-        s_s = ""
         s_u = ":arrow_up_small:"
         s_d = ":arrow_down_small:"
         s_r = ":arrow_forward:"
         s_l = ":arrow_backward:"
-        s_b = ":blue_square:"
-        s_v = ":black_large_square:"
-        s_a = ":green_square:"
-        s_e = ""
 
         if reaction.message.id in self.snakes:
             snake = self.snakes[reaction.message.id]
