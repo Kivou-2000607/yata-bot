@@ -218,7 +218,7 @@ class Misc(commands.Cog):
             else:
                 snake["speed"] = 1
 
-            await asyncio.sleep(max(4 - snake["speed"], 0.5))
+            await asyncio.sleep(2.5 - 0.5*snake["speed"])
 
 
     @commands.Cog.listener()
