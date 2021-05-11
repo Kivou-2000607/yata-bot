@@ -131,28 +131,18 @@ bot.add_cog(Admin(bot))
 # 2: Marvin (YATA server administrator)
 # 3: YATA (the public bot)
 # 4: JFK
-# 5: YATA backup (the backup version of the public bot)
 
-if int(bot_id) in [1, 3, 5]:
-    bot.add_cog(Verify(bot))
-    bot.add_cog(Loot(bot))
-    # bot.add_cog(Stocks(bot))
-    bot.add_cog(Racket(bot))
-    bot.add_cog(War(bot))
-    bot.add_cog(Revive(bot))
-    bot.add_cog(Crimes(bot))
-    bot.add_cog(API(bot))
-    bot.add_cog(Chain(bot))
+if int(bot_id) in [1]:
     bot.add_cog(Misc(bot))
-    bot.add_cog(Repository(bot))
-    # bot.add_cog(Marvin(bot))
+    bot.add_cog(JFK(bot))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
 
-elif int(bot_id) in [4]:
+elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
+    bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
     bot.add_cog(War(bot))
     bot.add_cog(Revive(bot))
@@ -161,6 +151,19 @@ elif int(bot_id) in [4]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
+
+elif int(bot_id) in [4]:
+    # bot.add_cog(Verify(bot))
+    bot.add_cog(Loot(bot))
+    bot.add_cog(Stocks(bot))
+    bot.add_cog(Racket(bot))
+    bot.add_cog(War(bot))
+    bot.add_cog(Revive(bot))
+    # bot.add_cog(Crimes(bot))
+    bot.add_cog(API(bot))
+    bot.add_cog(Chain(bot))
+    bot.add_cog(Misc(bot))
+    # bot.add_cog(Repository(bot))
     bot.add_cog(JFK(bot))
 
 # run bot
