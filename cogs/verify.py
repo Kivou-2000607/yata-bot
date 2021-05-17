@@ -550,7 +550,7 @@ class Verify(commands.Cog):
         logging.debug("[verify/dailyVerify] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=250):
+        async for guild in self.bot.fetch_guilds(limit=None):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
@@ -598,7 +598,7 @@ class Verify(commands.Cog):
         logging.debug("[verify/weeklyVerify] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=250):
+        async for guild in self.bot.fetch_guilds(limit=None):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
@@ -645,7 +645,7 @@ class Verify(commands.Cog):
         logging.debug("[verify/dailyCheck] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=250):
+        async for guild in self.bot.fetch_guilds(limit=None):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
@@ -692,7 +692,7 @@ class Verify(commands.Cog):
         logging.debug("[verify/weeklyCheck] start task")
 
         # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=250):
+        async for guild in self.bot.fetch_guilds(limit=None):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
