@@ -547,19 +547,17 @@ class Verify(commands.Cog):
 
     @tasks.loop(hours=1)
     async def dailyVerify(self):
-        logging.debug("[verify/dailyVerify] start task")
 
-        # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=None):
+        async def _verify_guild(guild):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
                 if not config:
-                    continue
+                    return
 
                 # ignore servers with no option daily check
                 if not config.get("other", {}).get("daily_verify", False):
-                    continue
+                    return
 
                 try:
                     last_update = int(config["other"]["daily_verify"])
@@ -567,7 +565,8 @@ class Verify(commands.Cog):
                     logging.error(f'[verify/dailyVerify] Failed to cast last update into int guild {guild}: {config["other"]["daily_verify"]}')
                     last_update = 1
                 if ts_now() - last_update < 24 * 3600:
-                    continue
+                    logging.debug(f"[verify/dailyVerify] {guild}: skip {ts_now()} {last_update}")
+                    return
 
                 # update time
                 config["other"]["daily_verify"] = ts_now()
@@ -576,38 +575,40 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.debug(f"[verify/dailyVerify] verifying all {guild}: start")
+                logging.debug(f"[verify/dailyVerify] {guild}: start")
                 # get channel
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
                     logging.debug(f"[verify/dailyVerify] {guild}: no admin channel found")
-                    continue
+                    return
                 await self._loop_verify(guild, channel, force=True)
-                logging.debug(f"[verify/dailyVerify] verifying all {guild}: end")
+                logging.debug(f"[verify/dailyVerify] {guild}: end")
+                return
 
             except BaseException as e:
                 logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily verify"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
+                return
 
+        logging.debug("[verify/dailyVerify] start task")
+        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
         logging.debug("[verify/dailyVerify] end task")
 
     @tasks.loop(hours=1)
     async def weeklyVerify(self):
-        logging.debug("[verify/weeklyVerify] start task")
 
-        # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=None):
+        async def _verify_guild(guild):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
                 if not config:
-                    continue
+                    return
 
                 # ignore servers with no option weekly check
                 if not config.get("other", {}).get("weekly_verify", False):
-                    continue
+                    return
 
                 try:
                     last_update = int(config["other"]["weekly_verify"])
@@ -615,7 +616,8 @@ class Verify(commands.Cog):
                     logging.error(f'[verify/weeklyVerify] Failed to cast last update into int guild {guild}: {config["other"]["weekly_verify"]}')
                     last_update = 1
                 if ts_now() - last_update < 7 * 24 * 3600:
-                    continue
+                    logging.debug(f"[verify/weeklyVerify] {guild}: skip {ts_now()} {last_update}")
+                    return
 
                 # update time
                 config["other"]["weekly_verify"] = ts_now()
@@ -624,37 +626,39 @@ class Verify(commands.Cog):
 
                 # get full guild (async iterator doesn't return channels)
                 guild = self.bot.get_guild(guild.id)
-                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: start")
+                logging.debug(f"[verify/weeklyVerify] {guild}: start")
                 # get channel
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
-                    continue
+                    return
                 await self._loop_verify(guild, channel, force=True)
-                logging.debug(f"[verify/weeklyVerify] verifying all {guild}: end")
+                logging.debug(f"[verify/weeklyVerify] {guild}: end")
+                return
 
             except BaseException as e:
                 logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly verify"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
+                return
 
+        logging.debug("[verify/weeklyVerify] start task")
+        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
         logging.debug("[verify/weeklyVerify] end task")
 
     @tasks.loop(hours=1)
     async def dailyCheck(self):
-        logging.debug("[verify/dailyCheck] start task")
 
-        # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=None):
+        async def _check_guild(guild):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
                 if not config:
-                    continue
+                    return
 
                 # ignore servers with no option daily check
                 if not config.get("other", {}).get("daily_check", False):
-                    continue
+                    return
 
                 try:
                     last_update = int(config["other"]["daily_check"])
@@ -662,7 +666,8 @@ class Verify(commands.Cog):
                     logging.error(f'[verify/dailyCheck] Failed to cast last update into int guild {guild}: {config["other"]["daily_check"]}')
                     last_update = 1
                 if ts_now() - last_update < 24 * 3600:
-                    continue
+                    logging.debug(f"[verify/dailyCheck] {guild}: skip {ts_now()} {last_update}")
+                    return
 
                 # update time
                 config["other"]["daily_check"] = ts_now()
@@ -675,33 +680,36 @@ class Verify(commands.Cog):
                 # get channel
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
-                    continue
+                    return
+
                 await self._loop_check(guild, channel, force=True)
                 logging.debug(f"[check/dailyCheck] checking all {guild}: end")
+                return
 
             except BaseException as e:
                 logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on daily check"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
+                return
 
+        logging.debug("[verify/dailyCheck] start task")
+        await asyncio.gather(*map(_check_guild, self.bot.guilds))
         logging.debug("[verify/dailyCheck] end task")
 
     @tasks.loop(hours=1)
     async def weeklyCheck(self):
-        logging.debug("[verify/weeklyCheck] start task")
 
-        # iteration over all guilds
-        async for guild in self.bot.fetch_guilds(limit=None):
+        async def _check_guild(guild):
             try:
                 # get configuration
                 config = self.bot.get_guild_configuration_by_module(guild, "verify")
                 if not config:
-                    continue
+                    return
 
                 # ignore servers with no option weekly check
                 if not config.get("other", {}).get("weekly_check", False):
-                    continue
+                    return
 
                 try:
                     last_update = int(config["other"]["weekly_check"])
@@ -709,7 +717,8 @@ class Verify(commands.Cog):
                     logging.error(f'[verify/weeklyCheck] Failed to cast last update into int guild {guild}: {config["other"]["weekly_check"]}')
                     last_update = 1
                 if ts_now() - last_update < 7 * 24 * 3600:
-                    continue
+                    logging.debug(f"[verify/weeklyCheck] {guild}: skip {ts_now()} {last_update}")
+                    return
 
                 # update time
                 config["other"]["weekly_check"] = ts_now()
@@ -722,16 +731,21 @@ class Verify(commands.Cog):
                 # get channel
                 channel = self.bot.get_guild_admin_channel(guild)
                 if channel is None:
-                    continue
+                    return
+
                 await self._loop_check(guild, channel, force=True)
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: end")
+                return
 
             except BaseException as e:
                 logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on weekly check"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
+                return
 
+        logging.debug("[verify/weeklyCheck] start task")
+        await asyncio.gather(*map(_check_guild, self.bot.guilds))
         logging.debug("[verify/weeklyCheck] end task")
 
     @dailyVerify.before_loop
