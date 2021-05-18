@@ -212,6 +212,12 @@ class Verify(commands.Cog):
 
         await self._loop_verify(ctx.guild, ctx.channel, ctx=ctx, force=force)
 
+        if force:
+            config["other"]["weekly_check"] = ts_now()
+            config["other"]["daily_check"] = ts_now()
+            self.bot.configurations[ctx.guild.id]["verify"] = config
+            await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+
     @commands.command(aliases=["checkfactions"])
     @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
     @commands.guild_only()
