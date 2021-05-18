@@ -142,7 +142,6 @@ elif int(bot_id) in [2]:
 elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
-    bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
     bot.add_cog(War(bot))
     bot.add_cog(Revive(bot))
@@ -155,7 +154,6 @@ elif int(bot_id) in [3]:
 elif int(bot_id) in [4]:
     # bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
-    bot.add_cog(Stocks(bot))
     bot.add_cog(Racket(bot))
     bot.add_cog(War(bot))
     bot.add_cog(Revive(bot))
