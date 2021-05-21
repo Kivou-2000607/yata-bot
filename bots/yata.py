@@ -423,15 +423,15 @@ class YataBot(Bot):
                 try:
                     response = await r.json()
                 except BaseException:
-                    response = {'error': {'error': 'API is talking shit... response not serializable.', 'code': -1}}
+                    response = {'error': {'error': 'API is talking shit... response not serializable.', 'code': 0}}
 
         if not isinstance(response, dict):
-            response = {'error': {'error': 'API is talking shit... invalid response format.', 'code': -1}}
+            response = {'error': {'error': 'API is talking shit... invalid response format.', 'code': 0}}
 
         if 'error' not in response:
             for key in check_key:
                 if key not in response:
-                    response = {'error': {'error': f'API is talking shit... key `{key}` not found in the response.', 'code': -1}}
+                    response = {'error': {'error': f'API is talking shit... key `{key}` not found in the response.', 'code': 0}}
                     break
 
         if 'error' in response:
@@ -440,8 +440,11 @@ class YataBot(Bot):
                 response = {'error': {'error': f'{response["error"]} (proxy error {response["proxy_code"]}: {response["proxy_error"]})', 'code': response["code"]}}
             if error_channel:
                 await self.send_error_message(error_channel, response["error"]["error"], title=f'API Error code {response["error"]["code"]}')
+
+            await self.send_api_log(ts_now(), url.replace(f'&key={key}', ""), response["error"]["code"])
             return response, True
         else:
+            await self.send_api_log(ts_now(), url.replace(f'&key={key}', ""), -1)
             return response, False
 
     def get_faction_name(self, tId):
@@ -559,6 +562,15 @@ class YataBot(Bot):
             async with connection.transaction():
                 rows = await connection.fetch('SELECT "tId", "name" FROM faction_faction')
                 return rows
+
+
+    async def send_api_log(self, timestamp, url, error):
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.execute('''
+                INSERT INTO setup_apicalllog (timestamp, url, error) VALUES ($1, $2, $3)
+                ''', timestamp, url, error)
+                return
 
 
     async def reset_notifications(self, tornId):
