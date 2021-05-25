@@ -447,6 +447,28 @@ class YataBot(Bot):
             await self.send_api_log(ts_now(), url.replace(f'&key={key}', ""), -1)
             return response, False
 
+    async def yata_api_call(self, url, error_channel=False):
+
+        url = f'https://yata.yt/api/v1/{url}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                try:
+                    response = await r.json()
+                except BaseException:
+                    response = {'error': {'error': 'API is talking shit... response not serializable.', 'code': 0}}
+
+        if not isinstance(response, dict):
+            response = {'error': {'error': 'API is talking shit... invalid response format.', 'code': 0}}
+
+        if 'error' in response:
+            # change error message if it's a proxy error to format as per API error
+            if error_channel:
+                await self.send_error_message(error_channel, response["error"]["error"], title=f'YATA API Error code {response["error"]["code"]}')
+            return response, True
+        else:
+            return response, False
+
+
     def get_faction_name(self, tId):
         return f'{html.unescape(self.factions_names.get(str(tId), "Faction"))} [{tId}]'
 

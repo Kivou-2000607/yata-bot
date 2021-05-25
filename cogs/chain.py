@@ -21,16 +21,23 @@ This file is part of yata-bot.
 import asyncio
 import aiohttp
 import datetime
+import pytz
 import json
 import re
 import logging
 import html
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.ticker import FormatStrFormatter
+from matplotlib.colors import to_rgba
+
 
 # import discord modules
 from discord.ext import commands
 from discord.utils import get
 from discord.ext import tasks
 from discord import Embed
+from discord import File
 
 # import bot functions and classes
 from inc.handy import *
@@ -69,6 +76,7 @@ class Chain(commands.Cog):
         deltaN = 600  # breathing messages every in second
         faction = ""  # use faction from key
         role = None
+        self_chain = True
 
         for arg in args:
             match = re.match(r'<@&([0-9])+>', arg)
@@ -77,6 +85,7 @@ class Chain(commands.Cog):
                 logging.debug(f"[chain/chain] role = {role}")
             elif arg.isdigit():
                 faction = int(arg)
+                self_chain = False
                 logging.debug(f"[chain/chain] factionId = {faction}")
                 continue
             else:
@@ -99,6 +108,7 @@ class Chain(commands.Cog):
 
         # Set Faction role
         factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
+        factionID = response["ID"]
 
         # if no chain
         if response.get("chain", dict({})).get("current", 0) == 0:
@@ -112,6 +122,7 @@ class Chain(commands.Cog):
         else:
             eb = Embed(title=f"{factionName} chain watching", description=f'Start watching. Will notify {role} on timeout', color=my_green)
             await send(ctx, embed=eb)
+
         lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
         while True:
 
@@ -130,10 +141,10 @@ class Chain(commands.Cog):
                     await send(ctx, embed=eb)
                     return
 
-            # Initial call to get faction name
-            status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-            if status < 0:
-                return
+            # # Initial call to get faction name
+            # status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+            # if status < 0:
+            #     return
 
             response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
             if e and 'error' in response:
@@ -180,8 +191,62 @@ class Chain(commands.Cog):
             # if long enough for a notification
             elif deltaLastNotified > deltaN:
                 lastNotified = now
-                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
-                await send(ctx, embed=eb)
+                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', url="https://yata.yt/faction/chains/0", color=my_blue)
+                file = None
+
+                # try get data from YATA
+                print(f"self_chain {self_chain}")
+                if self_chain:
+                    response, e = await self.bot.yata_api_call(f"faction/livechain/?key={key}")
+
+                    if e and "error" in response:
+                        eb.add_field(name="YATA error", value=response["error"]["error"])
+
+                    elif "chain" in response and "yata" in response["chain"]:
+                        yata_payload = response["chain"]["yata"]
+
+                        if "error" in yata_payload:
+                            eb.add_field(name="YATA error", value=yata_payload["error"])
+                        else:
+
+                            eb.add_field(name="Global hit rate", value=f'{60 * yata_payload["stats"]["global_hit_rate"]:,.2f} hits/min')
+                            eb.add_field(name="Recent hit rate", value=f'{60 * yata_payload["stats"]["current_hit_rate"]:,.2f} hits/min')
+                            eb.add_field(name="Next bonus ETA", value=f'{ts_format(yata_payload["stats"]["current_eta"], fmt="rounded")}')
+
+                            # plot
+                            time_elapsed = yata_payload["last"] - response["chain"]["start"]
+                            x = [datetime.datetime.fromtimestamp(int(_[0])) for _ in yata_payload["hits"]]
+                            y1 = [int(_[2]) for _ in yata_payload["hits"]]
+                            y2 = [60 * int(_[1]) / float(yata_payload["stats"]["bin_size"]) for _ in yata_payload["hits"]]
+
+                            plt.style.use('dark_background')
+                            fig, ax1 = plt.subplots()
+                            ax2 = ax1.twinx()
+                            ax1.plot(x, y1, zorder=1)
+                            ax2.plot(x, y2, zorder=2, linewidth=1, color='g', linestyle="--")
+                            ax1.axhline(y=response["chain"]["max"], color='r', label='Next Bonus')
+                            ax1.grid(linewidth=1, alpha=0.1)
+
+                            ax1.xaxis.set_minor_locator(mdates.DayLocator(interval=max(int(time_elapsed / (3600 * 24 * 2)), 1)))
+                            ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%m/%d'))
+                            ax1.xaxis.set_major_locator(mdates.HourLocator(interval=max(int(time_elapsed / (3600 * 6)), 1)))
+                            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+
+                            ax1.set_ylabel("Total hits")
+                            ax2.set_ylabel("Hit rate (hits/mins)")
+
+                            fig.tight_layout()
+                            fig.savefig(f'tmp/chain-{factionID}.png', dpi=420, bbox_inches='tight', transparent=True)
+                            file = File(f'tmp/chain-{factionID}.png', filename=f'chain-{factionID}.png')
+                            eb.set_image(url=f'attachment://chain-{factionID}.png')
+
+                            eb.set_footer(text=f'Last update: {ts_format(yata_payload["update"], fmt="short")}')
+                            eb.timestamp = datetime.datetime.fromtimestamp(yata_payload["update"], tz=pytz.UTC)
+
+                await send(ctx, file=file, embed=eb)
+
+
 
             # sleeps
             # logging.info(timeout, deltaW, delay, 30 - delay)

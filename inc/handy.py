@@ -35,12 +35,12 @@ my_red = 15544372
 my_green = 4175668
 
 # split message if needed
-async def send(obj, content='', embed=None, delete=False):
+async def send(obj, content='', file=None, embed=None, delete=False):
     # message list for delete
 
     msg_list = []
     try:
-        msg = await obj.send(content, embed=embed)
+        msg = await obj.send(content, embed=embed, file=file)
         msg_list.append(msg)
 
     except BaseException as e:
@@ -88,7 +88,7 @@ async def send(obj, content='', embed=None, delete=False):
 
                     embed = new_embed if len(new_embed) < 6000 else None
 
-                    msg = await obj.send(content, embed=embed)
+                    msg = await obj.send(content, embed=embed, file=file)
                     msg_list.append(msg)
 
         else:
@@ -132,6 +132,8 @@ def ts_format(timestamp, fmt=None):
         return d.strftime("%H:%M:%S TCT")
     elif fmt == "short":
         return d.strftime("%m/%d %H:%M:%S TCT")
+    elif fmt == "rounded":
+        return d.strftime("%m/%d %H:%M TCT")
     else:
         return d
 
