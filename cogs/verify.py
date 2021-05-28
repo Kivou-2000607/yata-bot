@@ -23,6 +23,7 @@ import asyncio
 import html
 import traceback
 import logging
+import random
 
 # import discord modules
 from discord.ext import commands
@@ -414,17 +415,20 @@ class Verify(commands.Cog):
         eb.add_field(name="Verified role", value=f'@{role}')
         await channel.send(embed=eb)
 
+        # get master keys
+        status, tornIds, keys = await self.bot.get_master_keys(guild)
+        if status == -1:
+            await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
+            return
+
         # loop over members
         members = guild.members
         for i, member in enumerate(members):
             if member.bot:
                 continue
 
-            # get key
-            status, tornId, key = await self.bot.get_master_key(guild)
-            if status == -1:
-                await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
-                return
+            # get a random key
+            tornId, key = random.choice(list(zip(tornIds, keys)))
 
             if force:
                 if ctx:
@@ -462,6 +466,15 @@ class Verify(commands.Cog):
         if not config:
             return
 
+        eb = Embed(title=f'Start checking factions of {guild}', color=my_blue)
+        await channel.send(embed=eb)
+
+        # get master keys
+        status, tornIds, keys = await self.bot.get_master_keys(guild)
+        if status == -1:
+            await self.bot.send_error_message(channel, f'No master key', title="Error on server members verification")
+            return
+
         # get verified role
         vrole = self.bot.get_module_role(guild.roles, config.get("roles_verified", {}))
 
@@ -487,12 +500,8 @@ class Verify(commands.Cog):
             eb.add_field(name="Unique role", value=f'@{html.unescape(faction_roles_unique[0].name)}')
             await channel.send(embed=eb)
 
-            # api call with members list from torn
-            status, tornIdForKey, key = await self.bot.get_master_key(guild)
-            if status == -1:
-                msg = "No master key given"
-                await channel.send(f"```md\n< error >{msg}```")
-                continue
+            # get a random key
+            tornIdForKey, key = random.choice(list(zip(tornIds, keys)))
 
             # api call
             response, e = await self.bot.api_call("faction", faction_id, ["basic"], key)
@@ -603,7 +612,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/dailyVerify] start task")
-        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        # await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        for guild in self.bot.guilds:
+            await _verify_guild(guild)
         logging.debug("[verify/dailyVerify] end task")
 
     @tasks.loop(hours=1)
@@ -653,7 +664,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/weeklyVerify] start task")
-        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        # await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        for guild in self.bot.guilds:
+            await _verify_guild(guild)
         logging.debug("[verify/weeklyVerify] end task")
 
     @tasks.loop(hours=1)
@@ -704,7 +717,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/dailyCheck] start task")
-        await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        # await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        for guild in self.bot.guilds:
+            await _check_guild(guild)
         logging.debug("[verify/dailyCheck] end task")
 
     @tasks.loop(hours=1)
@@ -755,7 +770,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/weeklyCheck] start task")
-        await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        # await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        for guild in self.bot.guilds:
+            await _check_guild(guild)
         logging.debug("[verify/weeklyCheck] end task")
 
     @dailyVerify.before_loop

@@ -75,6 +75,25 @@ class YataBot(Bot):
         else:
             return int(req['discord'].get("userID")), None
 
+    async def get_master_keys(self, guild):
+        """ gets a random master key from configuration
+            return 0, id, Name, Key: All good
+            return -1, None, None, None: no key given
+        """
+        c = self.configurations.get(guild.id)
+        if c is None:
+            return -1, None, None
+
+        masters = [await self.get_yata_user(v["torn_id"]) for k, v in c.get("admin", {}).get("server_admins", {}).items()]
+        masters = [tuple(m[0]) for m in masters if len(m)]
+        if len(masters):
+            return 0, [m[0] for m in masters], [m[2] for m in masters]
+
+        else:
+            logging.warning(f"[get_master_keys] {guild}: no master keys found")
+            return -1, None, None
+
+
     async def get_master_key(self, guild):
         """ gets a random master key from configuration
             return 0, id, Name, Key: All good
