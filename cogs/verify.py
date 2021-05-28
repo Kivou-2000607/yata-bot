@@ -612,9 +612,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/dailyVerify] start task")
-        # await asyncio.gather(*map(_verify_guild, self.bot.guilds))
-        for guild in self.bot.guilds:
-            await _verify_guild(guild)
+        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        # for guild in self.bot.guilds:
+        #     await _verify_guild(guild)
         logging.debug("[verify/dailyVerify] end task")
 
     @tasks.loop(hours=1)
@@ -664,9 +664,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/weeklyVerify] start task")
-        # await asyncio.gather(*map(_verify_guild, self.bot.guilds))
-        for guild in self.bot.guilds:
-            await _verify_guild(guild)
+        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        # for guild in self.bot.guilds:
+        #     await _verify_guild(guild)
         logging.debug("[verify/weeklyVerify] end task")
 
     @tasks.loop(hours=1)
@@ -717,9 +717,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/dailyCheck] start task")
-        # await asyncio.gather(*map(_check_guild, self.bot.guilds))
-        for guild in self.bot.guilds:
-            await _check_guild(guild)
+        await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        # for guild in self.bot.guilds:
+        #     await _check_guild(guild)
         logging.debug("[verify/dailyCheck] end task")
 
     @tasks.loop(hours=1)
@@ -770,9 +770,9 @@ class Verify(commands.Cog):
                 return
 
         logging.debug("[verify/weeklyCheck] start task")
-        # await asyncio.gather(*map(_check_guild, self.bot.guilds))
-        for guild in self.bot.guilds:
-            await _check_guild(guild)
+        await asyncio.gather(*map(_check_guild, self.bot.guilds))
+        # for guild in self.bot.guilds:
+        #     await _check_guild(guild)
         logging.debug("[verify/weeklyCheck] end task")
 
     @dailyVerify.before_loop
