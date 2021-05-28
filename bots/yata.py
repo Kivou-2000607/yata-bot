@@ -474,16 +474,36 @@ class YataBot(Bot):
                 try:
                     response = await r.json()
                 except BaseException:
-                    response = {'error': {'error': 'API is talking shit... response not serializable.', 'code': 0}}
+                    response = {'error': {'error': 'YATA API is talking shit... response not serializable.', 'code': 0}}
 
         if not isinstance(response, dict):
-            response = {'error': {'error': 'API is talking shit... invalid response format.', 'code': 0}}
+            response = {'error': {'error': 'YATA API is talking shit... invalid response format.', 'code': 0}}
 
         if 'error' in response:
             # change error message if it's a proxy error to format as per API error
             if error_channel:
                 await self.send_error_message(error_channel, response["error"]["error"], title=f'YATA API Error code {response["error"]["code"]}')
             return response, True
+        else:
+            return response, False
+
+    async def ts_api_call(self, url, error_channel=False):
+
+        url = f'https://www.tornstats.com/api/v1/{url}'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                try:
+                    response = await r.json()
+                except BaseException:
+                    response = {'error': {'error': 'Tornstats API is talking shit... response not serializable.', 'code': 0}}
+
+        if not isinstance(response, dict):
+            response = {'error': {'error': 'Tornstats API is talking shit... invalid response format.', 'code': 0}}
+
+        if not response.get("status", False):
+            if error_channel:
+                await self.send_error_message(error_channel, response["message"], title=f'Tornstats API Error')
+            return {'error': {'error': response["message"], 'code': 0}}, True
         else:
             return response, False
 

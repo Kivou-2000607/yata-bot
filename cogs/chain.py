@@ -581,7 +581,7 @@ class Chain(commands.Cog):
         eb = Embed(title="Retals tracking", description="START tracking", color=my_green)
         for k, v in current.items():
             eb.add_field(name=f'{k.replace("_", " ").title()}', value=f'{v[2]}{v[1]} [{v[0]}]')
-        await send(ctx.channel, embed=eb)
+        retal_msg = await send(ctx.channel, embed=eb)
         self.bot.configurations[ctx.guild.id]["chain"]["currents"][str(ctx.author.id)] = current
         await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
@@ -652,6 +652,7 @@ class Chain(commands.Cog):
         # faction id and name
         fId = response["ID"]
         fName = response["name"]
+        retal_messages_sent = []
 
         now = datetime.datetime.utcnow()
         epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
@@ -668,9 +669,11 @@ class Chain(commands.Cog):
                 tleft = 5 - delay
                 timeout = ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
 
-                embed = Embed(title=f'{html.unescape(fName)} have {tleft:.1f} minutes to retal',
-                              description=f'Target: [{v["attacker_name"]} [{v["attacker_id"]}]](https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
+                embed = Embed(title=f'{v["attacker_name"]} [{v["attacker_id"]}] from {html.unescape(v["attacker_factionname"])}',
+                              url=f'https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
                               color=550000)
+
+                embed.set_author(name=f'{html.unescape(fName)} have {tleft:.1f} minutes to retal on')
 
                 embed.add_field(name='Timeout', value=f'{timeout} TCT')
                 message = f':rage:{notified}{html.unescape(fName)} can retal on **{v["attacker_name"]} [{v["attacker_id"]}]**'
@@ -684,9 +687,11 @@ class Chain(commands.Cog):
                 embed.add_field(name='Chain Bonus', value=f'{v["chain"]} (x {v["modifiers"]["chain_bonus"]})')
                 embed.add_field(name='Respect', value=f'{v["respect_gain"]:.2f}')
                 embed.add_field(name=f'Log', value=f'[{v["result"]}](https://www.torn.com/loader.php?sid=attackLog&ID={v["code"]})')
+                embed = append_update(embed, nowts)
 
-                await send(channel, message, embed=embed)
+                msg = await send(channel, message, embed=embed)
                 retal["mentions"].append(str(k))
+                retal_messages_sent.append((msg, v["attacker_id"]))
 
             elif v["attacker_faction"] == int(fId) and float(v["modifiers"]["retaliation"]) > 1 and delay < 5:
                 attack_time = ts_to_datetime(int(v["timestamp_ended"]), fmt="time")
@@ -706,6 +711,47 @@ class Chain(commands.Cog):
         # async for message in channel.history(limit=50, before=fminutes):
         #     if message.author.bot:
         #         await message.delete()
+
+        # try to find spies
+        for retal_message, attacker_id in retal_messages_sent:
+            spy = False
+
+            # try tornstats
+            if not spy:
+                response, e = await self.bot.ts_api_call(f"{key}/spy/{attacker_id}")
+                if e and "error" in response:
+                    pass
+                else:
+                    spy_ts = response["spy"]
+                    if spy_ts.get("status", False):
+                        spy = {k: spy_ts[k] for k in ["strength", "speed", "defense", "dexterity", "total"] if spy_ts[k] not in ["N/A"]}
+                        spy["src"] = f'Tornstats {spy_ts["difference"]}'
+
+            # try yata
+            if not spy:
+                response, e = await self.bot.yata_api_call(f"spy/{attacker_id}?key={key}")
+                if e and "error" in response:
+                    pass
+                else:
+                    spy_yata = response["spies"][str(attacker_id)]
+                    if spy_yata is not None:
+                        spy = {k: spy_yata[k] for k in ["strength", "speed", "defense", "dexterity", "total"]}
+                        spy["src"] = f'YATA {ts_format(spy_yata["update"], fmt="date")}'
+
+            if spy:
+                embed_dict = retal_message.embeds[0].to_dict()
+                description = []
+                description.append('```')
+                description.append(f'str: {spy.get("strength", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'def: {spy.get("defense", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'spe: {spy.get("speed", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'dex: {spy.get("dexterity", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'tot: {spy.get("total", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'```*{spy["src"]}*'.lower())
+                embed_dict["description"] = "\n".join(description)
+                embed = Embed.from_dict(embed_dict)
+
+                await retal_message.edit(embed=embed)
 
         return True
 

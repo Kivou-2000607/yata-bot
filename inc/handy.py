@@ -134,6 +134,8 @@ def ts_format(timestamp, fmt=None):
         return d.strftime("%m/%d %H:%M:%S TCT")
     elif fmt == "rounded":
         return d.strftime("%m/%d %H:%M TCT")
+    elif fmt == "date":
+        return d.strftime("%y/%m/%d")
     else:
         return d
 
