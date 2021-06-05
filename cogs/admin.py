@@ -195,12 +195,12 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(679669933680230430, 669682126203125760)
-    async def info(self, ctx, *args):
+    async def server_details(self, ctx, *args):
         """Admin tool for the bot owner"""
         logging.info(f'[admin/info] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         if not (len(args) and args[0].isdigit()):
-            await self.bot.send_error_message(ctx, '!info < server id > or !info < member id >')
+            await self.bot.send_error_message(ctx, '!server_details < server id > or !server_details < member id >')
             return
 
         configurations = self.bot.configurations

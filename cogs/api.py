@@ -187,7 +187,7 @@ class API(commands.Cog):
         await send(ctx.author, embed=eb)
         return
 
-    @commands.command(aliases=['profile', 'p', 'id'])
+    @commands.command(aliases=['profile', 'p', 'id', 'info'])
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def who(self, ctx, *args):
