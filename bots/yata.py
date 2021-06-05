@@ -499,13 +499,10 @@ class YataBot(Bot):
 
         if not isinstance(response, dict):
             response = {'error': {'error': 'Tornstats API is talking shit... invalid response format.', 'code': 0}}
-
-        if response.status_code != 200:
-            return {'error': {'error': f'Tornstats API error code {response.status_code}', 'code': 0}}, True
-
+            
         if not response.get("status", False):
             if error_channel:
-                await self.send_error_message(error_channel, response.get("message", "no error messages found"), title=f'Tornstats API Error')
+                await self.send_error_message(error_channel, response.get("message", response), title=f'Tornstats API Error')
             return {'error': {'error': response.get("message", "no error messages found"), 'code': 0}}, True
         else:
             return response, False
