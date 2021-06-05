@@ -118,15 +118,16 @@ class Marvin(commands.Cog):
                                 "- give us the **name of the server**",
                                 "",
                                 "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
-                    'category': 'cat1',
+                    'category': 'tatat',
                     'close': "When you're all setup you can react below to close this channel. Thank you.",
-                    'roles': [],
+                    'roles': [789249556423770132],
                 },
                 'goldlaptop': {
                     'name': 'type2',
                     'message': ['message2'],
                     'category': 'prout 2',
-                    'roles': [789249556423770132]
+                    'close': "When you're all setup you can react below to close this channel. Thank you.",
+                    'roles': [755352458833821727]
                 },
             },
             827272764229419058: {
@@ -138,30 +139,30 @@ class Marvin(commands.Cog):
                                 "Please wait a moment for a staff member. They like to pretend they are busy...",
                                 "",
                                 "Here I am, brain the size of a planet, and they use me as a messenger. Call that job satisfaction, 'cause I don't."],
-                    'category': 'yata',
+                    'category': 'tickets',
                     'close': "When you're all setup you can react below to close this channel. Thank you.",
-                    'roles': [],
+                    'roles': [679669933680230430],
                 },
                 'amen': {
                     'name': 'suggestion',
                     'message': ['Hey, you can make your suggestion here.'],
-                    'category': 'yata',
+                    'category': 'tickets',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': [],
+                    'roles': [679669933680230430, 753300236918718545, 776353120912408588],
                 },
                 'bugswatter': {
                     'name': 'bug',
                     'message': ['You can report your bug here.'],
-                    'category': 'yata',
+                    'category': 'tickets',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': [],
+                    'roles': [679669933680230430, 753300236918718545, 776353120912408588],
                 },
                 'yoda': {
                     'name': 'help',
                     'message': ['You can ask your question here.'],
-                    'category': 'yata',
+                    'category': 'tickets',
                     'close': "You can close this channel by reacting below. Thank you.",
-                    'roles': [],
+                    'roles': [679669933680230430, 753300236918718545, 776353120912408588],
                 },
             }
         }
@@ -336,14 +337,22 @@ class Marvin(commands.Cog):
 
                 channel = await guild.create_text_channel(f'{name}-{member.nick.split(" ")[0]}', category=category)
 
+                # allow member to write
+                await channel.set_permissions(member, send_messages=True)
+                # allow other roles to write
+                for role in roles:
+                    await channel.set_permissions(role, send_messages=True)
+
+                # allow helper to write
+
                 message = [f'{member.mention}']
                 for m in emoji_data[payload.emoji.name]["message"]:
                     message.append(m)
                 if close:
                     message.append("")
                     message.append(f'*{close}*')
-                if len(roles):
-                    message.append(" ".join([f'{r.mention}' for r in roles]))
+                # if len(roles):
+                #     message.append(" ".join([f'{r.mention}' for r in roles]))
 
                 message = await channel.send("\n".join(message))
                 if close:
@@ -367,7 +376,7 @@ class Marvin(commands.Cog):
                 channel = self.channel_created[payload.message_id].get("channel")
                 await channel.send("*Ticket closed*")
                 # await asyncio.sleep(60)
-                await channel.edit(category=get(guild.categories, name='closed'), sync_permissions=True)
+                await channel.edit(category=get(guild.categories, name='closed-tickets'), sync_permissions=True)
                 await channel.set_permissions(member, read_messages=True, send_messages=False)
                 # await channel.delete()
                 del self.channel_created[payload.message_id]
@@ -380,7 +389,7 @@ class Marvin(commands.Cog):
                     channel = self.channel_created[payload.message_id].get("channel")
                     await channel.send("*Ticket closed*")
                     # await asyncio.sleep(60)
-                    await channel.edit(category=get(guild.categories, name='closed'), sync_permissions=True)
+                    await channel.edit(category=get(guild.categories, name='closed-tickets'), sync_permissions=True)
                     await channel.set_permissions(member, read_messages=True, send_messages=False)
                     # await channel.delete()
                     del self.channel_created[payload.message_id]
@@ -404,7 +413,7 @@ class Marvin(commands.Cog):
     async def clean_tickets(self):
         # delete old channels
         guild = get(self.bot.guilds, id=self.bot.main_server_id)
-        category = get(guild.categories, name='closed')
+        category = get(guild.categories, name='closed-tickets')
         for channel in category.channels:
             try:
                 last_message = await channel.fetch_message(channel.last_message_id)
