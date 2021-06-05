@@ -470,11 +470,14 @@ class YataBot(Bot):
 
         url = f'https://yata.yt/api/v1/{url}'
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    response = await r.json()
-                except BaseException:
-                    response = {'error': {'error': 'YATA API is talking shit... response not serializable.', 'code': 0}}
+            try:
+                async with session.get(url) as r:
+                    try:
+                        response = await r.json()
+                    except BaseException:
+                        response = {'error': {'error': 'YATA API is talking shit... response not serializable.', 'code': 0}}
+            except asyncio.TimeoutError:
+                return {'error': {'error': 'YATA API timed out.', 'code': 0}}, True
 
         if not isinstance(response, dict):
             response = {'error': {'error': 'YATA API is talking shit... invalid response format.', 'code': 0}}
@@ -491,19 +494,23 @@ class YataBot(Bot):
 
         url = f'https://www.tornstats.com/api/v1/{url}'
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                try:
-                    response = await r.json()
-                except BaseException:
-                    response = {'error': {'error': 'Tornstats API is talking shit... response not serializable.', 'code': 0}}
+            try:
+                async with session.get(url) as r:
+                    try:
+                        response = await r.json()
+                    except BaseException:
+                        response = {'error': {'error': 'Tornstats API is talking shit... response not serializable.', 'code': 0}}
+            except asyncio.TimeoutError:
+                return {'error': {'error': 'Tornstats API timed out.', 'code': 0}}, True
 
         if not isinstance(response, dict):
             response = {'error': {'error': 'Tornstats API is talking shit... invalid response format.', 'code': 0}}
-            
+
         if not response.get("status", False):
             if error_channel:
                 await self.send_error_message(error_channel, response.get("message", response), title=f'Tornstats API Error')
             return {'error': {'error': response.get("message", "no error messages found"), 'code': 0}}, True
+
         else:
             return response, False
 
