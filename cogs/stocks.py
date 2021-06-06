@@ -196,7 +196,7 @@ class Stocks(commands.Cog):
             # price
             alert_key = f"price_{stock_id}"
             p = stocks_data["tendency_h_a"] / stocks_data["current_price"]
-            if p > 1 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            if p > 0.01 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert price")
 
                 embed = Embed(
@@ -218,6 +218,8 @@ class Stocks(commands.Cog):
 
 
         await asyncio.gather(*map(_send_server_alerts, self.bot.get_guilds_by_module("stocks")))
+
+        logging.debug(f"[stocks/generic_alerts] end task")
 
 
     @tasks.loop(seconds=60)
