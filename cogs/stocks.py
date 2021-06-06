@@ -118,6 +118,54 @@ class Stocks(commands.Cog):
                 await self.bot.send_log_main(e, headers=headers)
 
 
+        def fill_stocks_embed(embed, stock_id, stocks_data):
+            # create embed
+
+            embed.add_field(name='Current price', value=f'{dol(stocks_data["current_price"], 2)}')
+            embed.add_field(name='Market cap', value=f'{dol(stocks_data["market_cap"]/1e9, 2)} b')
+            embed.add_field(name='Shares', value=f'{stocks_data["total_shares"]/1e9:,.2f} b')
+
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_l_a"], 0.05)} Live price', value=f'{dols(stocks_data["tendency_l_a"], 2)}/h')
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_h_a"], 0.05)} Hour price', value=f'{dols(stocks_data["tendency_h_a"], 2)}/h')
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_d_a"], 0.05)} Day price', value=f'{dols(stocks_data["tendency_d_a"], 2)}/h')
+
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_l_c"], 0.05)} Live cap', value=f'{dols(stocks_data["tendency_l_c"]/1e9, 2)} b/h')
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_h_c"], 0.05)} Hour cap', value=f'{dols(stocks_data["tendency_h_c"]/1e9, 2)} b/h')
+            embed.add_field(name=f'{self.uds(stocks_data["tendency_d_c"], 0.05)} Day cap', value=f'{dols(stocks_data["tendency_d_c"]/1e9, 2)} b/h')
+
+            embed.set_footer(text=f'Last update: {ts_format(stocks_data["timestamp"], fmt="short")}')
+            embed.timestamp = datetime.datetime.fromtimestamp(stocks_data["timestamp"], tz=pytz.UTC)
+
+            embed.set_thumbnail(url=f'https://yata.yt/media/stocks/{stock_id}.png')
+
+            data = [_ for _ in self.stocks_history[stock_id] if (int(time.time()) - _["timestamp"]) < (3600 * 24)]
+            x = [datetime.datetime.fromtimestamp(int(_["timestamp"])) for _ in data]
+            y1 = [float(_["current_price"]) for _ in data]
+            y2 = [int(_["total_shares"] / 1e6) for _ in data]
+
+            plt.style.use('dark_background')
+            fig, ax1 = plt.subplots()
+            ax2 = ax1.twinx()
+            ax1.plot(x, y1, zorder=1)
+            ax2.plot(x, y2, zorder=2, linewidth=1, color='g', linestyle="--")
+            ax1.grid(linewidth=1, alpha=0.1)
+
+            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Hh'))
+            ax1.yaxis.set_major_formatter(StrMethodFormatter('${x:,.0f}'))
+            ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+
+            ax1.set_ylabel("Current price")
+            ax2.set_ylabel("total_shares (b)")
+
+            fig.tight_layout()
+            fig.savefig(f'tmp/stocks-generic-alerts-{stock_id}.png', dpi=420, bbox_inches='tight', transparent=True)
+            file = File(f'tmp/stocks-generic-alerts-{stock_id}.png', filename=f'stocks-generic-alerts-{stock_id}.png')
+            embed.set_image(url=f'attachment://stocks-generic-alerts-{stock_id}.png')
+
+            embed.set_footer(text=f'Last update: {ts_format(stocks_data["timestamp"], fmt="short")}')
+            embed.timestamp = datetime.datetime.fromtimestamp(stocks_data["timestamp"], tz=pytz.UTC)
+
+            return embed, file
 
         for stock_id, stocks_data in self.stocks_status.items():
             # logging.debug(f"[stocks/generic_alerts] stock id {stock_id}")
@@ -128,7 +176,6 @@ class Stocks(commands.Cog):
             if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
-                # create embed
                 embed = Embed(
                     title=f'Important market cap fluctuation on {stocks_data["acronym"]}',
                     url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
@@ -136,55 +183,36 @@ class Stocks(commands.Cog):
                     description=f'Last hour, the market cap went {"up" if p > 0 else "down"} by {100 * p:,.1f}%'
                 )
 
-                embed.add_field(name='Current price', value=f'{dol(stocks_data["current_price"], 2)}')
-                embed.add_field(name='Market cap', value=f'{dol(stocks_data["market_cap"]/1e9, 2)} b')
-                embed.add_field(name='Shares', value=f'{stocks_data["total_shares"]/1e9:,.2f} b')
-
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_l_a"], 0.05)} Live price', value=f'{dols(stocks_data["tendency_l_a"], 2)}/h')
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_h_a"], 0.05)} Hour price', value=f'{dols(stocks_data["tendency_h_a"], 2)}/h')
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_d_a"], 0.05)} Day price', value=f'{dols(stocks_data["tendency_d_a"], 2)}/h')
-
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_l_c"], 0.05)} Live cap', value=f'{dols(stocks_data["tendency_l_c"]/1e9, 2)} b/h')
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_h_c"], 0.05)} Hour cap', value=f'{dols(stocks_data["tendency_h_c"]/1e9, 2)} b/h')
-                embed.add_field(name=f'{self.uds(stocks_data["tendency_d_c"], 0.05)} Day cap', value=f'{dols(stocks_data["tendency_d_c"]/1e9, 2)} b/h')
-
-                embed.set_footer(text=f'Last update: {ts_format(stocks_data["timestamp"], fmt="short")}')
-                embed.timestamp = datetime.datetime.fromtimestamp(stocks_data["timestamp"], tz=pytz.UTC)
-
-                embed.set_thumbnail(url=f'https://yata.yt/media/stocks/{stock_id}.png')
-
-                x = [datetime.datetime.fromtimestamp(int(_["timestamp"])) for _ in self.stocks_history[stock_id]]
-                y1 = [float(_["current_price"]) for _ in self.stocks_history[stock_id]]
-                y2 = [int(_["total_shares"] / 1e6) for _ in self.stocks_history[stock_id]]
-
-                plt.style.use('dark_background')
-                fig, ax1 = plt.subplots()
-                ax2 = ax1.twinx()
-                ax1.plot(x, y1, zorder=1)
-                ax2.plot(x, y2, zorder=2, linewidth=1, color='g', linestyle="--")
-                ax1.grid(linewidth=1, alpha=0.1)
-
-                ax1.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
-                ax1.yaxis.set_major_formatter(StrMethodFormatter('${x:,.0f}'))
-                ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
-
-                ax1.set_ylabel("Current price")
-                ax2.set_ylabel("total_shares (b)")
-
-                fig.tight_layout()
-                fig.savefig(f'tmp/stocks-generic-alerts-{stock_id}.png', dpi=420, bbox_inches='tight', transparent=True)
-                file = File(f'tmp/stocks-generic-alerts-{stock_id}.png', filename=f'stocks-generic-alerts-{stock_id}.png')
-                embed.set_image(url=f'attachment://stocks-generic-alerts-{stock_id}.png')
-
-                embed.set_footer(text=f'Last update: {ts_format(stocks_data["timestamp"], fmt="short")}')
-                embed.timestamp = datetime.datetime.fromtimestamp(stocks_data["timestamp"], tz=pytz.UTC)
-
+                embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
 
                 self.stocks_generic_alerts[alert_key] = {
                     "timestamp": int(time.time()),
                     "embed": embed,
                     "file": file,
                     "content": f'{stocks_data["acronym"]} market cap went {"up" if p > 0 else "down"} by {100 * p:,.1f}%',
+                    "sent": []
+                }
+
+            # price
+            alert_key = f"price_{stock_id}"
+            p = stocks_data["tendency_h_a"] / stocks_data["current_price"]
+            if p > 1 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+                logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert price")
+
+                embed = Embed(
+                    title=f'Important price fluctuation on {stocks_data["acronym"]}',
+                    url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
+                    color=my_blue,
+                    description=f'Last hour, the share price went {"up" if p > 0 else "down"} by {100 * p:,.1f}% to {dol(stocks_data["current_price"], 2)}'
+                )
+
+                embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
+
+                self.stocks_generic_alerts[alert_key] = {
+                    "timestamp": int(time.time()),
+                    "embed": embed,
+                    "file": file,
+                    "content": f'{stocks_data["acronym"]} price went {"up" if p > 0 else "down"} by {100 * p:,.1f}%',
                     "sent": []
                 }
 

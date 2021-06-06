@@ -822,7 +822,7 @@ class Verify(commands.Cog):
                     message.append(f'**{hour} h** ({len(guilds)})')
                     message.append('```')
                     for guild in guilds:
-                        message.append(f'- {guild.name} [{guild.id}]')
+                        message.append(f'- {guild.name} [{guild.id}]\n')
                     message.append('```')
 
             await send(ctx.channel, "\n".join(message))
