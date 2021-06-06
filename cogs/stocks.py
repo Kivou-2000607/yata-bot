@@ -106,10 +106,9 @@ class Stocks(commands.Cog):
                     content = alert["content"]
                     if role:
                         content += f' {role.mention}'
-                    try:
+                    if guild.id in [581227228537421825]:
                         await send(channel, content, file=alert["file"], embed=alert["embed"])
-                    except BaseException as e:
-                        logging.error(f"[stocks/generic_alerts] error sending image {guild}")
+                    else:
                         await send(channel, content, embed=alert["embed"])
 
                     # append guild id to alert to send it only once
@@ -181,11 +180,12 @@ class Stocks(commands.Cog):
             if p > 0.01 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
+                diff = asb(stocks_data["previous_market_cap"] - stocks_data["market_cap"])
                 embed = Embed(
                     title=f'Important market cap fluctuation on {stocks_data["acronym"]}',
                     url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                     color=my_blue,
-                    description=f'Last hour, the market cap went {"up" if p > 0 else "down"} by {100 * p:,.1f}%'
+                    description=f'Last hour, the market cap went {"up" if p > 0 else "down"} by {dol(diff / 1e9, 0)}b ({100 * p:,.1f}% {"increase" if p > 0 else "decrease"})'
                 )
 
                 embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
