@@ -125,12 +125,12 @@ class Stocks(commands.Cog):
             # market cap
             alert_key = f"market_cap_{stock_id}"
             p = stocks_data["tendency_h_c"] / stocks_data["market_cap"]
-            if p > 0.5 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 1800:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
                 # create embed
                 embed = Embed(
-                    title=f'Important market cap activity on {stocks_data["acronym"]}',
+                    title=f'Important market cap fluctuation on {stocks_data["acronym"]}',
                     url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                     color=my_blue,
                     description=f'Last hour, the market cap went {"up" if p > 0 else "down"} by {100 * p:,.1f}%'
