@@ -43,12 +43,28 @@ class Verify(commands.Cog):
         self.weeklyVerify.start()
         self.dailyCheck.start()
         self.weeklyCheck.start()
+        self.setCrons.start()
+        self.crontabs = {
+            "daily_verify": {i: [] for i in range(24)},
+            "weekly_verify": {i: [] for i in range(24)},
+            "daily_check": {i: [] for i in range(24)},
+            "weekly_check": {i: [] for i in range(24)},
+        }
 
     def cog_unload(self):
         self.dailyVerify.cancel()
         self.weeklyVerify.cancel()
         self.weeklyCheck.cancel()
         self.dailyCheck.cancel()
+        self.setCrons.cancel()
+
+    def get_crontab_id(self, cron_type):
+        min_len = min([len(v) for v in self.crontabs[cron_type].values()])
+        for k, v in self.crontabs[cron_type].items():
+            if len(v) == min_len:
+                return k
+
+        return 0
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -583,7 +599,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/dailyVerify] Failed to cast last update into int guild {guild}: {config["other"]["daily_verify"]}')
                     last_update = 1
-                if ts_now() - last_update < 24 * 3600:
+                if ts_now() - last_update < 23 * 3600:
                     logging.debug(f"[verify/dailyVerify] {guild}: skip {ts_now()} {last_update}")
                     return
 
@@ -611,8 +627,10 @@ class Verify(commands.Cog):
                 await self.bot.send_log_main(e, headers=headers, full=True)
                 return
 
-        logging.debug("[verify/dailyVerify] start task")
-        await asyncio.gather(*map(_verify_guild, self.bot.guilds))
+        crontab_hour = (int(time.time()) % (3600 * 24)) // 3600
+        crontab_guilds = self.crontabs["daily_verify"][crontab_hour]
+        logging.debug(f"[verify/dailyVerify] start task: {crontab_hour}h -> {len(crontab_guilds)} guilds")
+        await asyncio.gather(*map(_verify_guild, crontab_guilds))
         # for guild in self.bot.guilds:
         #     await _verify_guild(guild)
         logging.debug("[verify/dailyVerify] end task")
@@ -636,7 +654,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/weeklyVerify] Failed to cast last update into int guild {guild}: {config["other"]["weekly_verify"]}')
                     last_update = 1
-                if ts_now() - last_update < 7 * 24 * 3600:
+                if ts_now() - last_update < (7 * 24 * 3600 - 3600):
                     logging.debug(f"[verify/weeklyVerify] {guild}: skip {ts_now()} {last_update}")
                     return
 
@@ -688,7 +706,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/dailyCheck] Failed to cast last update into int guild {guild}: {config["other"]["daily_check"]}')
                     last_update = 1
-                if ts_now() - last_update < 24 * 3600:
+                if ts_now() - last_update < 23 * 3600:
                     logging.debug(f"[verify/dailyCheck] {guild}: skip {ts_now()} {last_update}")
                     return
 
@@ -741,7 +759,7 @@ class Verify(commands.Cog):
                 except BaseException as e:
                     logging.error(f'[verify/weeklyCheck] Failed to cast last update into int guild {guild}: {config["other"]["weekly_check"]}')
                     last_update = 1
-                if ts_now() - last_update < 7 * 24 * 3600:
+                if ts_now() - last_update < (7 * 24 * 3600 - 3600):
                     logging.debug(f"[verify/weeklyCheck] {guild}: skip {ts_now()} {last_update}")
                     return
 
@@ -775,6 +793,40 @@ class Verify(commands.Cog):
         #     await _check_guild(guild)
         logging.debug("[verify/weeklyCheck] end task")
 
+    @tasks.loop(hours=1)
+    async def setCrons(self):
+
+        for guild in self.bot.guilds:
+            config = self.bot.get_guild_configuration_by_module(guild, "verify")
+            if not config:
+                continue
+
+            for cron_type in self.crontabs:
+                if config.get("other", {}).get(cron_type, False):
+                    k = self.get_crontab_id(cron_type)
+                    self.crontabs[cron_type][k].append(guild)
+
+
+    @commands.command()
+    # @commands.has_any_role(679669933680230430, 669682126203125760)
+    @commands.guild_only()
+    async def crontabs(self, ctx):
+        """display crontabs"""
+        logging.info(f'[verify/crontabs] {ctx.guild}: {ctx.author} / {ctx.channel}')
+
+        for cron_type, crontab in self.crontabs.items():
+            message = [f'__{cron_type.replace("_", " ").title()}__']
+
+            for hour, guilds in crontab.items():
+                if len(guilds):
+                    message.append(f'**{hour} h** ({len(guilds)})')
+                    message.append('```')
+                    for guild in guilds:
+                        message.append(f'- {guild.name} [{guild.id}]')
+                    message.append('```')
+
+            await send(ctx.channel, "\n".join(message))
+
     @dailyVerify.before_loop
     async def before_dailyVerify(self):
         await self.bot.wait_until_ready()
@@ -794,3 +846,7 @@ class Verify(commands.Cog):
     async def before_weeklyCheck(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
+
+    @setCrons.before_loop
+    async def before_setCrons(self):
+        await self.bot.wait_until_ready()

@@ -125,7 +125,7 @@ class Stocks(commands.Cog):
             # market cap
             alert_key = f"market_cap_{stock_id}"
             p = stocks_data["tendency_h_c"] / stocks_data["market_cap"]
-            if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 1800:
+            if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
                 # create embed
