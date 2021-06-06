@@ -83,10 +83,8 @@ class Stocks(commands.Cog):
 
         async def _send_server_alerts(guild):
             """sends current alerts to a guild"""
-            logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] a")
 
             try:
-                logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] b")
                 config = self.bot.get_guild_configuration_by_module(guild, "stocks")
                 if not config:
                     return
@@ -95,31 +93,28 @@ class Stocks(commands.Cog):
                 role = self.bot.get_module_role(guild.roles, config.get("roles_alerts", {}))
                 channel = self.bot.get_module_channel(guild.channels, config.get("channels_alerts", {}))
 
-                logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] c")
                 if channel is None:
                     return
 
                 # loop over the alerts
                 for alert_key, alert in self.stocks_generic_alerts.items():
-                    logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] d {alert_key}")
 
                     # check if alert already sent
                     if guild.id in alert["sent"]:
                         continue
 
-                    logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] e {alert_key}")
                     content = alert["content"]
                     if role:
-                        logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] f {alert_key}")
                         content += f' {role.mention}'
-                    logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] g {alert_key} {channel} {content}")
-                    msg = await send(channel, content, file=alert["file"], embed=alert["embed"])
-                    logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] h {alert_key} {msg}")
+                    try:
+                        await send(channel, content, file=alert["file"], embed=alert["embed"])
+                    except BaseException as e:
+                        logging.error(f"[stocks/generic_alerts] error sending image {guild}")
+                        await send(channel, content, embed=alert["embed"])
 
                     # append guild id to alert to send it only once
                     alert["sent"].append(guild.id)
 
-                logging.error(f"[stocks/_send_server_alerts] {guild} [{guild.id}] i {alert_key}")
 
             except BaseException as e:
                 logging.error(f"[stocks/generic_alerts] {guild} [{guild.id}]: {hide_key(e)}")
@@ -206,7 +201,7 @@ class Stocks(commands.Cog):
             # price
             alert_key = f"price_{stock_id}"
             p = stocks_data["tendency_h_a"] / stocks_data["current_price"]
-            if p > 0.01 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert price")
 
                 embed = Embed(
