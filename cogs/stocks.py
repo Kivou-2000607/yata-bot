@@ -106,7 +106,7 @@ class Stocks(commands.Cog):
                     content = alert["content"]
                     if role:
                         content += f' {role.mention}'
-                    if guild.id in [581227228537421825]:
+                    if guild.id in [581227228537421825, 356137641814786052]:
                         await send(channel, content, file=alert["file"], embed=alert["embed"])
                     else:
                         await send(channel, content, embed=alert["embed"])
