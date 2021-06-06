@@ -56,6 +56,7 @@ from cogs.jfk import JFK
 
 # import includes
 from inc.yata_db import load_configurations
+from inc.yata_db import get_stocks_history
 
 # configure intents
 intents = discord.Intents.default()
@@ -133,8 +134,14 @@ bot.add_cog(Admin(bot))
 # 4: JFK
 
 if int(bot_id) in [1]:
-    bot.add_cog(Misc(bot))
-    bot.add_cog(JFK(bot))
+    # bot.add_cog(Misc(bot))
+    # bot.add_cog(JFK(bot))
+    # bot.add_cog(Verify(bot))
+    # bot.add_cog(Chain(bot))
+    # bot.add_cog(Marvin(bot))
+
+    stocks_history = get_stocks_history(database)
+    bot.add_cog(Stocks(bot, stocks_history))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
@@ -150,6 +157,8 @@ elif int(bot_id) in [3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
+    stocks_history = get_stocks_history(database)
+    bot.add_cog(Stocks(bot, stocks_history))
 
 elif int(bot_id) in [4]:
     # bot.add_cog(Verify(bot))
@@ -163,6 +172,8 @@ elif int(bot_id) in [4]:
     bot.add_cog(Misc(bot))
     # bot.add_cog(Repository(bot))
     bot.add_cog(JFK(bot))
+    stocks_history = get_stocks_history(database)
+    bot.add_cog(Stocks(bot, stocks_history))
 
 # run bot
 bot.run(token)

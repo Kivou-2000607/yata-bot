@@ -231,7 +231,7 @@ class Chain(commands.Cog):
                             ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%m/%d'))
                             ax1.xaxis.set_major_locator(mdates.HourLocator(interval=max(int(time_elapsed / (3600 * 6)), 1)))
                             ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-
+                            ax1.tick_params(axis="x", which="minor", pad=16)
 
                             ax1.set_ylabel("Total hits")
                             ax2.set_ylabel("Hit rate (hits/mins)")
