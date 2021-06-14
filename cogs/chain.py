@@ -26,6 +26,7 @@ import json
 import re
 import logging
 import html
+import time
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import FormatStrFormatter
@@ -46,19 +47,17 @@ from inc.handy import *
 class Chain(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.retalTask.start()
+        # self.retalTask.start()
+        self.chainTask.start()
 
     def cog_unload(self):
         self.retalTask.cancel()
+        self.chainTask.cancel()
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
     async def chain(self, ctx, *args):
-        """ Watch the chain status of a factions and gives notifications
-            Use: !chain <factionId> <@Role>
-                 factionId: torn id of the faction (by default the author's faction)
-        """
         logging.info(f'[chain/chain] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         # get configuration
@@ -71,188 +70,61 @@ class Chain(commands.Cog):
         if not allowed:
             return
 
-        # default values of the arguments
-        deltaW = 90  # warning timeout in seconds
-        deltaN = 600  # breathing messages every in second
-        faction = ""  # use faction from key
-        role = None
-        self_chain = True
+        # init current chains
+        if "chains" not in self.bot.configurations[ctx.guild.id]["chain"]:
+            self.bot.configurations[ctx.guild.id]["chain"]["chains"] = {}
 
+        currents = config.get("chains", {})
+
+        # delete if already exists
+        if str(ctx.author.id) in currents:
+            eb = Embed(title="STOP tracking chain", color=my_red)
+            for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "settings"]:
+                eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
+            await send(ctx.channel, embed=eb)
+            del self.bot.configurations[ctx.guild.id]["chain"]["chains"][str(ctx.author.id)]
+            await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
+            return
+
+        alert = 90
+        update = 15
         for arg in args:
-            match = re.match(r'<@&([0-9])+>', arg)
-            if match is not None:
-                role = match.string
-                logging.debug(f"[chain/chain] role = {role}")
-            elif arg.isdigit():
-                faction = int(arg)
-                self_chain = False
-                logging.debug(f"[chain/chain] factionId = {faction}")
-                continue
-            else:
-                await self.bot.send_error_message(ctx.channel, f'Ignore argument {arg}. The syntax is ```!chain <factionId> <@Role>```')
+            splt = arg.split("=")
+            if len(splt) == 2 and splt[1].isdigit():
+                if splt[0] == "timeout":
+                    alert = int(splt[1])
+                elif splt[0] == "update":
+                    update = int(splt[1])
 
-        # Initial call to get faction name
-        status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        current = {"channel": [str(ctx.channel.id), f'{ctx.channel.name}', '#'],
+                   "discord_user": [str(ctx.author.id), f'{ctx.author}', ''],
+                   "settings": [alert, update]}
+
+        # get torn user
+        status, tornId, name, key = await self.bot.get_user_key(ctx, ctx.author)
         if status < 0:
+            await self.bot.send_error_message(ctx.channel, f'Could not get {ctx.author}\'s API key')
             return
+        current["torn_user"] = [str(tornId), name, '', key]
 
-        response, e = await self.bot.api_call("faction", faction, ["basic", "chain"], key)
-        if e and "error" in response:
-            await self.bot.send_error_message(ctx.channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title="API error")
-            return
-
-        # handle no faction
-        if response["ID"] is None:
-            await self.bot.send_error_message(ctx.channel, f'No faction with id `{faction}`')
-            return
-
-        # Set Faction role
-        factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
-        factionID = response["ID"]
-
-        # if no chain
-        if response.get("chain", dict({})).get("current", 0) == 0:
-            eb = Embed(title=f"{factionName} chain watching", description=f'No chains on the horizon', color=my_red)
-            await send(ctx, embed=eb)
-            return
-
-        if role is None:
-            eb = Embed(title=f"{factionName} chain watching", description=f'Start watching', color=my_green)
-            await send(ctx, embed=eb)
+        # get role
+        if len(args) and args[0].replace("<@&", "").replace(">", "").isdigit():
+            role = get(ctx.guild.roles, id=int(int(args[0].replace("<@&", "").replace(">", ""))))
         else:
-            eb = Embed(title=f"{factionName} chain watching", description=f'Start watching. Will notify {role} on timeout', color=my_green)
-            await send(ctx, embed=eb)
+            role = None
 
-        lastNotified = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        while True:
+        if role is not None:
+            current["role"] = [str(role.id), f'{role}', '@']
 
-            # times needed
-            now = datetime.datetime.utcnow()
-            epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
+        eb = Embed(title="START tracking chain", color=my_green)
+        for k, v in [(k, v) for k, v in current.items() if k != "settings"]:
+            eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
+        eb.add_field(name="Update", value=f'Every {current["settings"][1]} minutes')
+        eb.add_field(name="Alert", value=f'{current["settings"][0]} seconds before timeout')
+        await send(ctx.channel, embed=eb)
+        self.bot.configurations[ctx.guild.id]["chain"]["chains"][str(ctx.author.id)] = current
+        await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
-            # check if needs to notify still watching
-
-            # check last 50 messages for a stop --- had to do it not async to catch only 1 stop
-            history = await ctx.channel.history(limit=50).flatten()
-            for m in history:
-                if m.content in ["!stopchain", "!stop"]:
-                    await m.delete()
-                    eb = Embed(title=f"{factionName} chain watching", description=f'Stop watching.', color=my_red)
-                    await send(ctx, embed=eb)
-                    return
-
-            # # Initial call to get faction name
-            # status, tornId, Name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-            # if status < 0:
-            #     return
-
-            response, e = await self.bot.api_call("faction", faction, ["chain", "timestamp"], key)
-            if e and 'error' in response:
-                eb = Embed(title=f"{factionName} chain watching", description=f'API error code {response["error"]["code"]} with master key: {response["error"]["error"]}.', color=my_red)
-                await send(ctx, embed=eb)
-                return
-
-            # get timings
-            timeout = response.get("chain", dict({})).get("timeout", 0)
-            cooldown = response.get("chain", dict({})).get("cooldown", 0)
-            current = response.get("chain", dict({})).get("current", 0)
-            # timeout = 7
-            # cooldown = 0
-            # current = 10
-
-            # get delay
-            nowts = (now - epoch).total_seconds()
-            apits = response.get("timestamp")
-
-            delay = int(nowts - apits)
-            txtDelay = f"   *API caching delay of {delay}s*" if delay else ""
-            deltaLastNotified = int((now - lastNotified).total_seconds())
-
-            # add delay to
-            # timeout -= delay
-
-            # if cooldown
-            if cooldown > 0:
-                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f}min', color=my_blue)
-                await send(ctx, embed=eb)
-                return
-
-            # if timeout
-            elif timeout == 0:
-                eb = Embed(title=f"{factionName} chain watching", description=f'Chain timed out', color=my_red)
-                await send(ctx, embed=eb)
-                return
-
-            # if warning
-            elif timeout < deltaW:
-                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
-                await send(ctx, "" if role is None else f'{role} chain timeout {timeout}s', embed=eb)
-
-            # if long enough for a notification
-            elif deltaLastNotified > deltaN:
-                lastNotified = now
-                eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', url="https://yata.yt/faction/chains/0", color=my_blue)
-                file = None
-
-                # try get data from YATA
-                print(f"self_chain {self_chain}")
-                if self_chain:
-                    response, e = await self.bot.yata_api_call(f"faction/livechain/?key={key}")
-
-                    if e and "error" in response:
-                        eb.add_field(name="YATA error", value=response["error"]["error"])
-
-                    elif "chain" in response and "yata" in response["chain"]:
-                        yata_payload = response["chain"]["yata"]
-
-                        if "error" in yata_payload:
-                            eb.add_field(name="YATA error", value=yata_payload["error"])
-                        else:
-
-                            eb.add_field(name="Global hit rate", value=f'{60 * yata_payload["stats"]["global_hit_rate"]:,.2f} hits/min')
-                            eb.add_field(name="Recent hit rate", value=f'{60 * yata_payload["stats"]["current_hit_rate"]:,.2f} hits/min')
-                            eb.add_field(name="Next bonus ETA", value=f'{ts_format(yata_payload["stats"]["current_eta"], fmt="rounded")}')
-
-                            # plot
-                            time_elapsed = yata_payload["last"] - response["chain"]["start"]
-                            x = [datetime.datetime.fromtimestamp(int(_[0])) for _ in yata_payload["hits"]]
-                            y1 = [int(_[2]) for _ in yata_payload["hits"]]
-                            y2 = [60 * int(_[1]) / float(yata_payload["stats"]["bin_size"]) for _ in yata_payload["hits"]]
-
-                            plt.style.use('dark_background')
-                            fig, ax1 = plt.subplots()
-                            ax2 = ax1.twinx()
-                            ax1.plot(x, y1, zorder=1)
-                            ax2.plot(x, y2, zorder=2, linewidth=1, color='g', linestyle="--")
-                            ax1.axhline(y=response["chain"]["max"], color='r', label='Next Bonus')
-                            ax1.grid(linewidth=1, alpha=0.1)
-
-                            ax1.xaxis.set_minor_locator(mdates.DayLocator(interval=max(int(time_elapsed / (3600 * 24 * 2)), 1)))
-                            ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%m/%d'))
-                            ax1.xaxis.set_major_locator(mdates.HourLocator(interval=max(int(time_elapsed / (3600 * 6)), 1)))
-                            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-                            ax1.tick_params(axis="x", which="minor", pad=16)
-
-                            ax1.set_ylabel("Total hits")
-                            ax2.set_ylabel("Hit rate (hits/mins)")
-
-                            fig.tight_layout()
-                            fig.savefig(f'tmp/chain-{factionID}.png', dpi=420, bbox_inches='tight', transparent=True)
-                            file = File(f'tmp/chain-{factionID}.png', filename=f'chain-{factionID}.png')
-                            eb.set_image(url=f'attachment://chain-{factionID}.png')
-
-                            eb.set_footer(text=f'Last update: {ts_format(yata_payload["update"], fmt="short")}')
-                            eb.timestamp = datetime.datetime.fromtimestamp(yata_payload["update"], tz=pytz.UTC)
-
-                await send(ctx, file=file, embed=eb)
-
-
-
-            # sleeps
-            # logging.info(timeout, deltaW, delay, 30 - delay)
-            sleep = max(30, timeout - deltaW)
-            logging.debug(f"[chain/chain] {ctx.guild} API delay of {delay} seconds, timeout of {timeout}: sleeping for {sleep} seconds")
-            await asyncio.sleep(sleep)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)
@@ -807,7 +679,178 @@ class Chain(commands.Cog):
                 headers = {"guild": guild, "guild_id": guild.id, "error": "error on retal task"}
                 await self.bot.send_log_main(e, headers=headers, full=True)
 
+
+    async def _chain(self, guild, chain):
+        logging.info(f'[chain/_chain] {guild}')
+
+        print(chain)
+        discord_id = chain.get("discord_user")[0] if len(chain.get("discord_user", {})) else "0"
+
+        # get channel
+        channelId = chain.get("channel")[0] if len(chain.get("channel", {})) else None
+        channel = get(guild.channels, id=int(channelId))
+        if channel is None:
+            return discord_id  # return discord id to delete outside of the chain
+
+        # get discord member
+        discord_member = get(guild.members, id=int(discord_id))
+        if discord_member is None:
+            await self.bot.send_error_message(channel, f'Chain tracking: Discord member #`{discord_id}` not found\n\nSTOP', title="Error tracking chains")
+            return discord_id  # return discord id to delete outside of the chain
+
+        # api call
+        key = chain["torn_user"][3]
+        response, e = await self.bot.api_call("faction", "", ["basic", "chain", "timestamp"], key)
+        if e and "error" in response:
+            await self.bot.send_error_message(channel, f'Code {response["error"]["code"]}: {response["error"]["error"]}', title=f'API error on chain watching ({chain["torn_user"][1]})')
+            return discord_id if response["error"]["code"] in [1, 2, 10, 13] else None
+
+        # Set Faction role
+        factionName = f'{html.unescape(response["name"])} [{response["ID"]}]'
+        factionID = response["ID"]
+
+        # if no chain
+        if response.get("chain", dict({})).get("current", 0) == 0:
+            eb = Embed(title=f"{factionName} chain watching", description=f'No chains on the horizon\n\nSTOP tracking', color=my_red)
+            await send(channel, embed=eb)
+            return discord_id  # return discord id to delete outside of the chain
+
+        # get timings
+        timeout = response.get("chain", dict({})).get("timeout", 0)
+        cooldown = response.get("chain", dict({})).get("cooldown", 0)
+        current = response.get("chain", dict({})).get("current", 0)
+        # timeout = 7
+        # cooldown = 10
+        # current = 10
+
+        # get delay
+        nowts = int(time.time())
+        apits = response.get("timestamp", 0)
+
+        delay = int(nowts - apits)
+        txtDelay = f"   *API caching delay of {delay}s*" if delay else ""
+
+        if cooldown > 0:
+            # if cooldown
+            eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** in cooldown for {cooldown/60:.1f} min', color=my_red)
+            await send(channel, embed=eb)
+            return discord_id  # return discord id to delete outside of the chain
+
+        elif timeout == 0:
+            # if timeout
+            eb = Embed(title=f"{factionName} chain watching", description=f'Chain timed out', color=my_red)
+            await send(channel, embed=eb)
+            return discord_id  # return discord id to delete outside of the chain
+
+        elif timeout < chain["settings"][0]:
+            # if warning
+            role = get(guild.roles, id=int(chain.get("role", [0])[0]))
+            eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
+            await send(channel, f'Chain timeout in {timeout}s {"" if role is None else role.mention}', embed=eb)
+
+
+        elif nowts - self.bot.configurations[guild.id]["chain"]["chains"][discord_id].get("timestamp", 0) > chain["settings"][1] * 60:
+            # if long enough for a notification
+            eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', url="https://yata.yt/faction/chains/0", color=my_blue)
+            file = None
+
+            # try get data from YATA
+            response, e = await self.bot.yata_api_call(f"faction/livechain/?key={key}")
+
+            if e and "error" in response:
+                eb.add_field(name="YATA error", value=response["error"]["error"])
+
+            elif "chain" in response and "yata" in response["chain"]:
+                yata_payload = response["chain"]["yata"]
+
+                if "error" in yata_payload:
+                    eb.add_field(name="YATA error", value=yata_payload["error"])
+                else:
+
+                    eb.add_field(name="Global hit rate", value=f'{60 * yata_payload["stats"]["global_hit_rate"]:,.2f} hits/min')
+                    eb.add_field(name="Recent hit rate", value=f'{60 * yata_payload["stats"]["current_hit_rate"]:,.2f} hits/min')
+                    eb.add_field(name="Next bonus ETA", value=f'{ts_format(yata_payload["stats"]["current_eta"], fmt="rounded")}')
+
+                    # plot
+                    time_elapsed = yata_payload["last"] - response["chain"]["start"]
+                    x = [datetime.datetime.fromtimestamp(int(_[0])) for _ in yata_payload["hits"]]
+                    y1 = [int(_[2]) for _ in yata_payload["hits"]]
+                    y2 = [60 * int(_[1]) / float(yata_payload["stats"]["bin_size"]) for _ in yata_payload["hits"]]
+
+                    plt.style.use('dark_background')
+                    fig, ax1 = plt.subplots()
+                    ax2 = ax1.twinx()
+                    ax1.plot(x, y1, zorder=1)
+                    ax2.plot(x, y2, zorder=2, linewidth=1, color='g', linestyle="--")
+                    ax1.axhline(y=response["chain"]["max"], color='r', label='Next Bonus')
+                    ax1.grid(linewidth=1, alpha=0.1)
+
+                    ax1.xaxis.set_minor_locator(mdates.DayLocator(interval=max(int(time_elapsed / (3600 * 24 * 2)), 1)))
+                    ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%m/%d'))
+                    ax1.xaxis.set_major_locator(mdates.HourLocator(interval=max(int(time_elapsed / (3600 * 6)), 1)))
+                    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                    ax1.tick_params(axis="x", which="minor", pad=16)
+
+                    ax1.set_ylabel("Total hits")
+                    ax2.set_ylabel("Hit rate (hits/mins)")
+
+                    fig.tight_layout()
+                    fig.savefig(f'tmp/chain-{factionID}.png', dpi=420, bbox_inches='tight', transparent=True)
+                    file = File(f'tmp/chain-{factionID}.png', filename=f'chain-{factionID}.png')
+                    eb.set_image(url=f'attachment://chain-{factionID}.png')
+
+                    eb.set_footer(text=f'Last update: {ts_format(yata_payload["update"], fmt="short")}')
+                    eb.timestamp = datetime.datetime.fromtimestamp(yata_payload["update"], tz=pytz.UTC)
+
+            await send(channel, file=file, embed=eb)
+
+            self.bot.configurations[guild.id]["chain"]["chains"][discord_id]["timestamp"] = nowts
+
+
+
+    async def _chain_main(self, guild):
+        try:
+
+            config = self.bot.get_guild_configuration_by_module(guild, "chain", check_key="chains")
+            if not config:
+                return
+
+            to_del = []
+
+            # loop over the chains of the server
+            for discord_user_id, chain in config["chains"].items():
+                discord_id = await self._chain(guild, chain)
+                if discord_id is not None:
+                    to_del.append(discord_id)
+
+            # delete chains in the bot memory
+            for discord_id in to_del:
+                del self.bot.configurations[guild.id]["chain"]["chains"][discord_id]
+
+            # send to db
+            if len(to_del):
+                await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
+
+
+
+        except BaseException as e:
+            logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')
+            await self.bot.send_log(e, guild_id=guild.id)
+            headers = {"guild": guild, "guild_id": guild.id, "error": "error on chains task"}
+            await self.bot.send_log_main(e, headers=headers, full=True)
+
+    @tasks.loop(seconds=10)
+    async def chainTask(self):
+        logging.debug("[chain/chainTask] start task")
+        await asyncio.gather(*map(self._chain_main, self.bot.get_guilds_by_module("chain")))
+        logging.debug("[chain/chainTask] start end")
+
     @retalTask.before_loop
     async def before_retalTask(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+    @chainTask.before_loop
+    async def before_chainTask(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
