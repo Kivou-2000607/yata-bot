@@ -79,7 +79,7 @@ class Chain(commands.Cog):
         # delete if already exists
         if str(ctx.author.id) in currents:
             eb = Embed(title="STOP tracking chain", color=my_red)
-            for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k != "settings"]:
+            for k, v in [(k, v) for k, v in currents[str(ctx.author.id)].items() if k not in ["settings", "timestamp"]]:
                 eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
             await send(ctx.channel, embed=eb)
             del self.bot.configurations[ctx.guild.id]["chain"]["chains"][str(ctx.author.id)]
@@ -117,7 +117,7 @@ class Chain(commands.Cog):
             current["role"] = [str(role.id), f'{role}', '@']
 
         eb = Embed(title="START tracking chain", color=my_green)
-        for k, v in [(k, v) for k, v in current.items() if k != "settings"]:
+        for k, v in [(k, v) for k, v in current.items() if k not in ["settings", "timestamp"]]:
             eb.add_field(name=k.replace("_", " ").title(), value=f'{v[2]}{v[1]} [{v[0]}]')
         eb.add_field(name="Update", value=f'Every {current["settings"][1]} minutes')
         eb.add_field(name="Alert", value=f'{current["settings"][0]} seconds before timeout')
@@ -683,7 +683,6 @@ class Chain(commands.Cog):
     async def _chain(self, guild, chain):
         logging.info(f'[chain/_chain] {guild}')
 
-        print(chain)
         discord_id = chain.get("discord_user")[0] if len(chain.get("discord_user", {})) else "0"
 
         # get channel
@@ -747,7 +746,6 @@ class Chain(commands.Cog):
             role = get(guild.roles, id=int(chain.get("role", [0])[0]))
             eb = Embed(title=f"{factionName} chain watching", description=f'Chain at **{current}** and timeout in **{timeout}s**{txtDelay}', color=my_blue)
             await send(channel, f'Chain timeout in {timeout}s {"" if role is None else role.mention}', embed=eb)
-
 
         elif nowts - self.bot.configurations[guild.id]["chain"]["chains"][discord_id].get("timestamp", 0) > chain["settings"][1] * 60:
             # if long enough for a notification
@@ -831,15 +829,13 @@ class Chain(commands.Cog):
             if len(to_del):
                 await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
 
-
-
         except BaseException as e:
             logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')
             await self.bot.send_log(e, guild_id=guild.id)
             headers = {"guild": guild, "guild_id": guild.id, "error": "error on chains task"}
             await self.bot.send_log_main(e, headers=headers, full=True)
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=30)
     async def chainTask(self):
         logging.debug("[chain/chainTask] start task")
         await asyncio.gather(*map(self._chain_main, self.bot.get_guilds_by_module("chain")))
