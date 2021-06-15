@@ -47,7 +47,7 @@ from inc.handy import *
 class Chain(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.retalTask.start()
+        self.retalTask.start()
         self.chainTask.start()
 
     def cog_unload(self):
