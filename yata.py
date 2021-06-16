@@ -157,15 +157,15 @@ elif int(bot_id) in [3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
-    stocks_history = get_stocks_history(database)
-    bot.add_cog(Stocks(bot, stocks_history))
+    #stocks_history = get_stocks_history(database)
+    #bot.add_cog(Stocks(bot, stocks_history))
 
 elif int(bot_id) in [4]:
     # bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
     bot.add_cog(Racket(bot))
     bot.add_cog(War(bot))
-    bot.add_cog(Revive(bot))
+    # bot.add_cog(Revive(bot))
     # bot.add_cog(Crimes(bot))
     bot.add_cog(API(bot))
     bot.add_cog(Chain(bot))

@@ -36,6 +36,10 @@ class Marvin(commands.Cog):
         self.bot = bot
         self.bot_id = self.bot.bot_id
         self.master_key = self.bot.master_key
+
+        self.clean_tickets.start()
+
+        
         self.quotes_lib = [
             "Life? Don't talk to me about life.",
             "I think you ought to know I'm feeling very depressed.",
@@ -169,11 +173,13 @@ class Marvin(commands.Cog):
 
         self.channel_created = {}
         self.roles_delete_channel = [679669933680230430]
-        self.clean_tickets.start()
 
-        def cog_unload(self):
-            self.get_assists.cancel()
 
+    def cog_unload(self):
+        self.get_assists.cancel()
+        self.clean_tickets.cancel()
+
+    
     @commands.Cog.listener()
     async def on_message(self, message):
 
@@ -429,4 +435,3 @@ class Marvin(commands.Cog):
     @clean_tickets.before_loop
     async def before_clean_tickets(self):
         await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
