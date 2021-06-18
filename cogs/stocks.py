@@ -178,7 +178,7 @@ class Stocks(commands.Cog):
             # market cap
             alert_key = f"market_cap_{stock_id}"
             diff = stocks_data["market_cap"] - stocks_data["previous_market_cap"]
-            if abs(diff) > 1e11 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            if abs(diff) > 99e9 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
                 description = f'The market cap went {"up" if diff > 0 else "down"} by {dol(abs(diff) / 1e9, 2)}b ({"+" if diff > 0 else "-"}{100 * (abs(diff) / float(stocks_data["market_cap"])):,.1f}%)'
