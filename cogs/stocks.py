@@ -163,6 +163,7 @@ class Stocks(commands.Cog):
 
             fig.tight_layout()
             fig.savefig(f'tmp/stocks-generic-alerts-{stock_id}.png', dpi=420, bbox_inches='tight', transparent=True)
+            plt.close()
             file = File(f'tmp/stocks-generic-alerts-{stock_id}.png', filename=f'stocks-generic-alerts-{stock_id}.png')
             embed.set_image(url=f'attachment://stocks-generic-alerts-{stock_id}.png')
 
@@ -176,16 +177,16 @@ class Stocks(commands.Cog):
 
             # market cap
             alert_key = f"market_cap_{stock_id}"
-            p = stocks_data["tendency_h_c"] / stocks_data["market_cap"]
-            if p > 0.01 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            diff = stocks_data["market_cap"] - stocks_data["previous_market_cap"]
+            if abs(diff) > 1e11 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
                 logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert market cap")
 
-                diff = abs(stocks_data["previous_market_cap"] - stocks_data["market_cap"])
+                description = f'The market cap went {"up" if diff > 0 else "down"} by {dol(abs(diff) / 1e9, 2)}b ({"+" if diff > 0 else "-"}{100 * (abs(diff) / float(stocks_data["market_cap"])):,.1f}%)'
                 embed = Embed(
-                    title=f'Important market cap fluctuation on {stocks_data["acronym"]}',
+                    title=f'Large amount of {stocks_data["acronym"]} has been {"bought" if diff > 0 else "sold"}',
                     url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                     color=my_blue,
-                    description=f'Last hour, the market cap went {"up" if p > 0 else "down"} by {dol(diff / 1e9, 2)}b ({"+" if p > 0 else "-"}{100 * p:,.1f}%)'
+                    description=description
                 )
 
                 embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
@@ -194,32 +195,32 @@ class Stocks(commands.Cog):
                     "timestamp": int(time.time()),
                     "embed": embed,
                     "file": file,
-                    "content": f'{stocks_data["acronym"]} market cap went {"up" if p > 0 else "down"} by {dol(diff / 1e9, 2)}b ({"+" if p > 0 else "-"}{100 * p:,.1f}%)',
+                    "content": description,
                     "sent": []
                 }
 
             # price
-            alert_key = f"price_{stock_id}"
-            p = stocks_data["tendency_h_a"] / stocks_data["current_price"]
-            if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
-                logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert price")
-
-                embed = Embed(
-                    title=f'Important price fluctuation on {stocks_data["acronym"]}',
-                    url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
-                    color=my_blue,
-                    description=f'Last hour, the share price went {"up" if p > 0 else "down"} by {100 * p:,.1f}% to {dol(stocks_data["current_price"], 2)}'
-                )
-
-                embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
-
-                self.stocks_generic_alerts[alert_key] = {
-                    "timestamp": int(time.time()),
-                    "embed": embed,
-                    "file": file,
-                    "content": f'{stocks_data["acronym"]} price went {"up" if p > 0 else "down"} by {100 * p:,.1f}%',
-                    "sent": []
-                }
+            # alert_key = f"price_{stock_id}"
+            # p = stocks_data["tendency_h_a"] / stocks_data["current_price"]
+            # if p > 0.05 and int(time.time()) - self.stocks_generic_alerts.get(alert_key, {"timestamp": 0})["timestamp"] > 3600:
+            #     logging.info(f"[stocks/generic_alerts] stock id {stock_id} alert price")
+            #
+            #     embed = Embed(
+            #         title=f'Important price fluctuation on {stocks_data["acronym"]}',
+            #         url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
+            #         color=my_blue,
+            #         description=f'Last hour, the share price went {"up" if p > 0 else "down"} by {100 * p:,.1f}% to {dol(stocks_data["current_price"], 2)}'
+            #     )
+            #
+            #     embed, file = fill_stocks_embed(embed, stock_id, stocks_data)
+            #
+            #     self.stocks_generic_alerts[alert_key] = {
+            #         "timestamp": int(time.time()),
+            #         "embed": embed,
+            #         "file": file,
+            #         "content": f'{stocks_data["acronym"]} price went {"up" if p > 0 else "down"} by {100 * p:,.1f}%',
+            #         "sent": []
+            #     }
 
 
         await asyncio.gather(*map(_send_server_alerts, self.bot.get_guilds_by_module("stocks")))
