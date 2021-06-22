@@ -103,9 +103,13 @@ class Stocks(commands.Cog):
                     if guild.id in alert["sent"]:
                         continue
 
+                    acronym = get(guild.roles, name=alert.get("acronym"))
+
                     content = alert["content"]
                     if role:
                         content += f' {role.mention}'
+                    if acronym:
+                        content += f' {acronym.mention}'
                     if guild.id in [356137641814786052, 650701692853288991]:
                         await send(channel, content, file=alert["file"], embed=alert["embed"])
                     else:
@@ -196,6 +200,7 @@ class Stocks(commands.Cog):
                     "embed": embed,
                     "file": file,
                     "content": description,
+                    "acronym": stocks_data["acronym"],
                     "sent": []
                 }
 
