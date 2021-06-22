@@ -79,6 +79,41 @@ class JFK(commands.Cog):
         # await msg.delete()
         # await ctx.message.delete()
 
+    @commands.command()
+    @commands.bot_has_permissions(send_messages=True)
+    @commands.guild_only()
+    async def invest(self, ctx):
+        """gives/removes the stocks role for jfk and jfk 2.1"""
+        # debug values
+        # channel_id_main = 650701692853288997
+        # channel_id_sub = 792138823853146133
+        # role_id_main = 826557408989151293
+        # role_id_sub = 789249556423770132
+
+        # jfk values
+        channel_id_main = 856913052201254952
+        role_id_main = 856913807631843329
+
+        if ctx.channel.id == channel_id_main:
+            guild = get(self.bot.guilds, id=ctx.guild.id)
+            channel = get(guild.channels, id=channel_id_main)
+            role = get(guild.roles, id=role_id_main)
+
+        else:
+            return
+
+
+        if role in ctx.author.roles:
+            await ctx.author.remove_roles(role)
+            msg = await ctx.send(f'```role @{role.name} removed to {ctx.author.display_name}```')
+        else:
+            await ctx.author.add_roles(role)
+            msg = await ctx.send(f'```role @{role.name} added to {ctx.author.display_name}```')
+
+        # await asyncio.sleep(5)
+        # await msg.delete()
+        # await ctx.message.delete()
+
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
