@@ -366,29 +366,65 @@ class Admin(commands.Cog):
         """help command"""
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        lst = [
-            "Have a look at the [online documentation](https://yata.yt/bot/documentation/) or browse the links.",
-            "If you need more information ping a @Staff in the [YATA server](https://yata.yt/discord).", ]
-        embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
 
-        lst = ["[General information](https://yata.yt/bot/)",
-               f"[Host the bot](https://yata.yt/bot/host/)",
-               # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.yt/bot/dashboard/)"
-               # "[FAQ]() soon...",
-               ]
-        embed.add_field(name='About the bot', value='\n'.join(lst))
+        if self.bot_id in [1, 4]:
+            lst = [
+            "The JFK bot is based on the YATA bot with a private extension just for our needs.",
+            "You can see the details of the YATA bot commands on the [online documentation](https://yata.yt/bot/documentation/).",
+            "",]
 
-        lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
-               "[Permissions](https://discord.com/developers/docs/topics/permissions) / [hierarchy](https://discord.com/developers/docs/topics/permissions#permission-hierarchy)", ]
-        embed.add_field(name='Links', value='\n'.join(lst))
+            # retal/chain jfk
+            channel = get(ctx.guild.channels, id=356171252706181140)
+            role = get(ctx.guild.roles, id=841431434572857354)
+            lst.append(f"`!stalk` in {channel} will toggle the {role} role for retal notifications (for JFK).")
+            role = get(ctx.guild.roles, id=629005125234589707)
+            lst.append(f"`!watch` in {channel} will toggle the {role} role for chain timeout notifications (for JFK).")
 
-        lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
-               "[Loot level timers](https://yata.yt/loot/)", ]
-        embed.add_field(name='Loot', value='\n'.join(lst))
+            # retal/chain jfk 2.1
+            channel = get(ctx.guild.channels, id=356143232435879937)
+            role = get(ctx.guild.roles, id=841431662318452786)
+            lst.append(f"`!stalk` in {channel} will toggle the {role} role for retal notifications (for JFK 2.1).")
+            role = get(ctx.guild.roles, id=629005185880162355)
+            lst.append(f"`!watch` in {channel} will toggle the {role} role for chain timeout notifications (for JFK 2.1).")
 
-        embed.set_thumbnail(url="https://yata.yt/media/yata.png")
+            # stocks
+            channel = get(ctx.guild.channels, id=627980378996604938)
+            role = get(ctx.guild.roles, id=628403308192596038)
+            lst.append(f"`!watch` in {channel} will toggle the {role} role for automated stocks notifications.")
+            channel = get(ctx.guild.channels, id=856913052201254952)
+            role = get(ctx.guild.roles, id=856913807631843329)
+            lst.append(f"`!invest` in {channel} will toggle the {role} role for member based stocks notifications.")
 
-        await send(ctx, "", embed=embed)
+            embed = Embed(title="JFK bot help", description="\n".join(lst), color=550000)
+
+            await send(ctx, "", embed=embed)
+
+        else:
+            lst = [
+                "Have a look at the [online documentation](https://yata.yt/bot/documentation/) or browse the links.",
+                "If you need more information ping a @Staff in the [YATA server](https://yata.yt/discord).", ]
+            embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
+
+            lst = ["[General information](https://yata.yt/bot/)",
+                   f"[Host the bot](https://yata.yt/bot/host/)",
+                   # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.yt/bot/dashboard/)"
+                   # "[FAQ]() soon...",
+                   ]
+            embed.add_field(name='About the bot', value='\n'.join(lst))
+
+            lst = ["[Official TORN verification](https://discordapp.com/api/oauth2/authorize?client_id=441210177971159041&redirect_uri=https%3A%2F%2Fwww.torn.com%2Fdiscord.php&response_type=code&scope=identify)",
+                   "[Permissions](https://discord.com/developers/docs/topics/permissions) / [hierarchy](https://discord.com/developers/docs/topics/permissions#permission-hierarchy)", ]
+            embed.add_field(name='Links', value='\n'.join(lst))
+
+            lst = ["[Forum tutorial](https://www.torn.com/forums.php#/p=threads&f=61&t=16121398)",
+                   "[Loot level timers](https://yata.yt/loot/)", ]
+            embed.add_field(name='Loot', value='\n'.join(lst))
+
+            embed.set_thumbnail(url="https://yata.yt/media/yata.png")
+
+            await send(ctx, "", embed=embed)
+
+
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, manage_messages=True)

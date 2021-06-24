@@ -37,6 +37,7 @@ class JFK(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
@@ -117,7 +118,7 @@ class JFK(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
-    async def stocks(self, ctx, *args):
+    async def watch(self, ctx, *args):
         """gives/removes the stocks role for jfk and jfk 2.1"""
         # debug values
         # channel_id_main = 650701692853288997

@@ -218,6 +218,7 @@ class Stocks(commands.Cog):
             embed = Embed(
                 title="Stocks personal alerts",
                 description=f'{ctx.author.mention}: All stocks alerts removed ({", ".join(stocks_removed)}).',
+                url=f'https://www.torn.com/page.php?sid=stocks',
                 color=my_blue
             )
             await send(ctx.channel, embed=embed)
@@ -238,6 +239,7 @@ class Stocks(commands.Cog):
             embed = Embed(
                 title="Stocks personal alerts",
                 description="\n".join(description),
+                url=f'https://www.torn.com/page.php?sid=stocks',
                 color=my_blue
             )
             await send(ctx.channel, embed=embed)
@@ -248,20 +250,19 @@ class Stocks(commands.Cog):
             return
 
         if args[0].upper() not in self.stocks_acronym_to_id:
-            await self.bot.send_error_message(ctx.channel, f"Stocks acronym {args[0].upper()} doesn't exists.", title="Stocks personal alerts error")
+            await self.bot.send_error_message(ctx.channel, f"Unknown stocks acronym {args[0].upper()}.", title="Stocks personal alerts error")
             return
 
         acronym = args[0].upper()
         stock_id = self.stocks_acronym_to_id[acronym]
 
         if args[1] == "off":
-            stocks_removed = []
             if str(ctx.author.id) in config["personal_alerts"][stock_id]:
-                stocks_removed.append(self.stocks_status.get(stock_id, {}).get("acronym"))
                 del self.bot.configurations[ctx.guild.id]["stocks"]["personal_alerts"][stock_id][str(ctx.author.id)]
             embed = Embed(
                 title="Stocks personal alerts",
-                description=f'{ctx.author.mention}: All stocks alerts removed ({", ".join(stocks_removed)}).',
+                description=f'{ctx.author.mention}: {acronym} stocks alerts removed.',
+                url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                 color=my_blue
             )
             await send(ctx.channel, embed=embed)
@@ -290,7 +291,7 @@ class Stocks(commands.Cog):
         logging.debug(f"[stocks/generic_alerts] start task")
 
         for stock_id, stocks_data in self.stocks_status.items():
-            logging.debug(f"[stocks/generic_alerts] stock id {stock_id}")
+            # logging.debug(f"[stocks/generic_alerts] stock id {stock_id}")
 
             # market cap
             alert_key = f"market_cap_{stock_id}"
@@ -374,6 +375,7 @@ class Stocks(commands.Cog):
                 logging.debug(f"[stocks/personal_alerts] stock id {stock_id}: member {member} -> {alerts}")
                 # print(stocks_data)
                 for alert_price in alerts:
+                    logging.debug(f"[stocks/personal_alerts] stock id {stock_id}: member {member} -> {alert_price} ({previous_price}, {current_price})")
                     sign_PB = previous_price > alert_price
                     sign_CB = current_price > alert_price
                     if sign_CB != sign_PB:
