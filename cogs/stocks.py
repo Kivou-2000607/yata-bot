@@ -369,7 +369,6 @@ class Stocks(commands.Cog):
 
         # get data directly from the API
         response, e = await self.bot.api_call("torn", "", ["stocks"], key=random.choice(keys))
-        print(response, keys)
         if not e:
             self.stocks_status_previous = self.stocks_status_now if len(self.stocks_status_now) else response["stocks"]
             self.stocks_status_now = response["stocks"]
@@ -392,7 +391,6 @@ class Stocks(commands.Cog):
                     continue
 
                 logging.debug(f"[stocks/personal_alerts] stock id {stock_id}: member {member} -> {alerts}")
-                # print(stocks_data)
                 for alert_price in alerts:
                     logging.debug(f"[stocks/personal_alerts] stock id {stock_id}: member {member} -> {alert_price} ({previous_price}, {current_price})")
                     sign_PB = previous_price > alert_price

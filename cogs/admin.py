@@ -374,6 +374,7 @@ class Admin(commands.Cog):
             "",]
 
             # retal/chain jfk
+            lst.append("**Chains and retals**")
             channel = get(ctx.guild.channels, id=356171252706181140)
             role = get(ctx.guild.roles, id=841431434572857354)
             lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK).")
@@ -386,16 +387,23 @@ class Admin(commands.Cog):
             lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK 2.1).")
             role = get(ctx.guild.roles, id=629005185880162355)
             lst.append(f"`!notify` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK 2.1).")
-
             lst.append("")
 
             # stocks
+            lst.append("**Stocks**")
             channel = get(ctx.guild.channels, id=627980378996604938)
             role = get(ctx.guild.roles, id=628403308192596038)
             lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for automated stocks notifications.")
             channel = get(ctx.guild.channels, id=856913052201254952)
             role = get(ctx.guild.roles, id=856913807631843329)
             lst.append(f"`!invest` in {channel.mention} toggles {role.mention} for member based stocks notifications.")
+            lst.append("**Stocks personal alerts**")
+            lst.append("The `!alert` command allows you to setup stocks prices thresholds for personal DM")
+            lst.append("`!alert THS 300 300.5 301 302 303` (sets limits to those #s for THS, erase previous alerts off this stock)")
+            lst.append("`!alert THS off` (clears alert from THS stock)")
+            lst.append("`!alert off` (clears all alerts from all stocks)")
+            lst.append("`!alert list` (list all your current alerts)")
+
 
             embed = Embed(title="JFK bot help", description="\n".join(lst), color=550000)
 
