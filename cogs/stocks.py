@@ -25,6 +25,7 @@ import datetime
 import pytz
 import re
 import logging
+import random
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import StrMethodFormatter
@@ -53,6 +54,8 @@ class Stocks(commands.Cog):
     def __init__(self, bot, stocks_history):
         self.bot = bot
         self.stocks_history = stocks_history
+        self.stocks_status_now = {}
+        self.stocks_status_previous = {}
         self.stocks_status = {}
         self.stocks_acronym_to_id = {}
         self.stocks_id_to_acronym = {}
@@ -353,18 +356,34 @@ class Stocks(commands.Cog):
 
         # get personal alerts from all servers
         personal_alerts = {}
+        keys = []
         for guild in self.bot.get_guilds_by_module("stocks"):
+            _, _, master_key = await self.bot.get_master_key(guild)
+            keys.append(master_key)
             for stock_id, members_alerts in self.bot.get_guild_configuration_by_module(guild, "stocks").get("personal_alerts", {}).items():
                 if stock_id not in personal_alerts:
                     personal_alerts[stock_id] = {}
                 for member, alerts in members_alerts.items():
                     personal_alerts[stock_id][member] = list(set(personal_alerts[stock_id].get(member, []) + alerts))
 
+
+        # get data directly from the API
+        response, e = await self.bot.api_call("torn", "", ["stocks"], key=random.choice(keys))
+        print(response, keys)
+        if not e:
+            self.stocks_status_previous = self.stocks_status_now if len(self.stocks_status_now) else response["stocks"]
+            self.stocks_status_now = response["stocks"]
+
         for stock_id, stocks_data in self.stocks_status.items():
             # logging.debug(f"[stocks/personal_alerts] stock id {stock_id}")
 
-            current_price = stocks_data["current_price"]
-            previous_price = stocks_data["previous_price"]
+            if e:
+                current_price = stocks_data["current_price"]
+                previous_price = stocks_data["previous_price"]
+            else:
+                current_price = self.stocks_status_now[stock_id]["current_price"]
+                previous_price = self.stocks_status_previous[stock_id]["current_price"]
+
             up = current_price > previous_price
 
             for member_id, alerts in personal_alerts.get(stock_id, {}).items():
@@ -420,6 +439,7 @@ class Stocks(commands.Cog):
                 )
                 self.stocks_acronym_to_id[v["acronym"]] = str(k)
                 self.stocks_id_to_acronym[str(k)] = v["acronym"]
+
 
             logging.debug(f"[stocks/update_data] end")
 
