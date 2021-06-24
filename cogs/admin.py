@@ -376,24 +376,26 @@ class Admin(commands.Cog):
             # retal/chain jfk
             channel = get(ctx.guild.channels, id=356171252706181140)
             role = get(ctx.guild.roles, id=841431434572857354)
-            lst.append(f"`!stalk` in {channel} will toggle the {role} role for retal notifications (for JFK).")
+            lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK).")
             role = get(ctx.guild.roles, id=629005125234589707)
-            lst.append(f"`!watch` in {channel} will toggle the {role} role for chain timeout notifications (for JFK).")
+            lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK).")
 
             # retal/chain jfk 2.1
             channel = get(ctx.guild.channels, id=356143232435879937)
             role = get(ctx.guild.roles, id=841431662318452786)
-            lst.append(f"`!stalk` in {channel} will toggle the {role} role for retal notifications (for JFK 2.1).")
+            lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK 2.1).")
             role = get(ctx.guild.roles, id=629005185880162355)
-            lst.append(f"`!watch` in {channel} will toggle the {role} role for chain timeout notifications (for JFK 2.1).")
+            lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK 2.1).")
+
+            lst.append("")
 
             # stocks
             channel = get(ctx.guild.channels, id=627980378996604938)
             role = get(ctx.guild.roles, id=628403308192596038)
-            lst.append(f"`!watch` in {channel} will toggle the {role} role for automated stocks notifications.")
+            lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for automated stocks notifications.")
             channel = get(ctx.guild.channels, id=856913052201254952)
             role = get(ctx.guild.roles, id=856913807631843329)
-            lst.append(f"`!invest` in {channel} will toggle the {role} role for member based stocks notifications.")
+            lst.append(f"`!invest` in {channel.mention} toggles {role.mention} for member based stocks notifications.")
 
             embed = Embed(title="JFK bot help", description="\n".join(lst), color=550000)
 
