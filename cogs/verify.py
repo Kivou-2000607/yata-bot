@@ -404,7 +404,7 @@ class Verify(commands.Cog):
 
             nl = '\n'
             str1, str2 = (", you", "You") if author_verif else ("", "They")
-            return f'{member}{str1} have been verified and are now known as **{member.display_name}**.\n{str2} have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
+            return f'`{member}`{str1} have been verified and are now known as **{member.display_name}**.\n{str2} have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
