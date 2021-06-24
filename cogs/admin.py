@@ -378,14 +378,14 @@ class Admin(commands.Cog):
             role = get(ctx.guild.roles, id=841431434572857354)
             lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK).")
             role = get(ctx.guild.roles, id=629005125234589707)
-            lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK).")
+            lst.append(f"`!notify` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK).")
 
             # retal/chain jfk 2.1
             channel = get(ctx.guild.channels, id=356143232435879937)
             role = get(ctx.guild.roles, id=841431662318452786)
             lst.append(f"`!stalk` in {channel.mention} toggles {role.mention} for retal notifications (JFK 2.1).")
             role = get(ctx.guild.roles, id=629005185880162355)
-            lst.append(f"`!watch` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK 2.1).")
+            lst.append(f"`!notify` in {channel.mention} toggles {role.mention} for chain timeout notifications (JFK 2.1).")
 
             lst.append("")
 
