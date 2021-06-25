@@ -367,7 +367,7 @@ class Admin(commands.Cog):
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
 
-        if channel.id in [356137641814786053, 665592053308063767, 856913052201254952, 627980378996604938, 356143232435879937, 356171252706181140]:
+        if ctx.channel.id in [356137641814786053, 665592053308063767, 856913052201254952, 627980378996604938, 356143232435879937, 356171252706181140]:
             lst = [
                 "The JFK bot is based on the YATA bot with a private extension just for our needs.",
                 "You can see the details of the YATA bot commands on the [online documentation](https://yata.yt/bot/documentation/).",
