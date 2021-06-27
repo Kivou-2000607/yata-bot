@@ -125,7 +125,7 @@ class Stocks(commands.Cog):
             headers = {"guild": guild, "guild_id": guild.id, "error": "error on stock generic_alerts"}
             await self.bot.send_log_main(e, headers=headers)
 
-    def _fill_stocks_embed(self, embed, stock_id, stocks_data):
+    def _fill_stocks_embed(self, embed, stock_id, stocks_data, hours_of_history=24):
         # create embed
 
         embed.add_field(name='Current price', value=f'{dol(stocks_data["current_price"], 2)}')
@@ -145,7 +145,7 @@ class Stocks(commands.Cog):
 
         embed.set_thumbnail(url=f'https://yata.yt/media/stocks/{stock_id}.png')
 
-        data = [_ for _ in self.stocks_history[stock_id] if (int(time.time()) - _["timestamp"]) < (3600 * 24)]
+        data = [_ for _ in self.stocks_history[stock_id] if (int(time.time()) - _["timestamp"]) < (3600 * hours_of_history)]
         x = [datetime.datetime.fromtimestamp(int(_["timestamp"])) for _ in data]
         y1 = [float(_["current_price"]) for _ in data]
         y2 = [int(_["total_shares"] / 1e6) for _ in data]
@@ -220,10 +220,11 @@ class Stocks(commands.Cog):
             await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             embed = Embed(
                 title="Stocks personal alerts",
-                description=f'{ctx.author.mention}: All stocks alerts removed ({", ".join(stocks_removed)}).',
+                description=f'All stocks alerts removed ({", ".join(stocks_removed)}).',
                 url=f'https://www.torn.com/page.php?sid=stocks',
                 color=my_blue
             )
+            embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
             await send(ctx.channel, embed=embed)
             return
 
@@ -245,6 +246,7 @@ class Stocks(commands.Cog):
                 url=f'https://www.torn.com/page.php?sid=stocks',
                 color=my_blue
             )
+            embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
             await send(ctx.channel, embed=embed)
             return
 
@@ -264,10 +266,11 @@ class Stocks(commands.Cog):
                 del self.bot.configurations[ctx.guild.id]["stocks"]["personal_alerts"][stock_id][str(ctx.author.id)]
             embed = Embed(
                 title="Stocks personal alerts",
-                description=f'{ctx.author.mention}: {acronym} stocks alerts removed.',
+                description=f'{acronym} stocks alerts removed.',
                 url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                 color=my_blue
             )
+            embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
             await send(ctx.channel, embed=embed)
             await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
             return
@@ -281,6 +284,7 @@ class Stocks(commands.Cog):
                 url=f'https://www.torn.com/page.php?sid=stocks&stockID={stock_id}&tab=owned',
                 color=my_blue
             )
+            embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
             embed.set_thumbnail(url=f'https://yata.yt/media/stocks/{stock_id}.png')
             await send(ctx.channel, embed=embed)
             self.bot.configurations[ctx.guild.id]["stocks"]["personal_alerts"][stock_id][str(ctx.author.id)] = alerts_values
@@ -407,7 +411,7 @@ class Stocks(commands.Cog):
                             description=description
                         )
 
-                        embed, file = self._fill_stocks_embed(embed, stock_id, stocks_data)
+                        embed, file = self._fill_stocks_embed(embed, stock_id, stocks_data, hours_of_history=2)
 
                         await send(member, description, embed=embed, file=file)
                         break
