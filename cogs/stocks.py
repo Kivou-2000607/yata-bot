@@ -235,11 +235,11 @@ class Stocks(commands.Cog):
                     alerts_listed[self.stocks_id_to_acronym[stock_id]] = ", ".join([f'${_:.1f}' for _ in members[str(ctx.author.id)]])
 
             if len(alerts_listed):
-                description = [f'{ctx.author.mention}: alert listed', '']
+                description = [f'Alerts listed:']
                 for k, v in alerts_listed.items():
                     description.append(f'**{k}** {v}')
             else:
-                description = [f'{ctx.author.mention}: None.']
+                description = [f'Alerts listed: None.']
             embed = Embed(
                 title="Stocks personal alerts",
                 description="\n".join(description),
