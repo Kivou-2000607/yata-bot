@@ -40,7 +40,7 @@ class JFK(commands.Cog):
     @commands.command(aliases=["n"])
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
-    async def stalk(self, ctx):
+    async def notify(self, ctx):
         """self assign command for jfk server"""
 
         if not len(args):
@@ -194,40 +194,40 @@ class JFK(commands.Cog):
             msg = await ctx.send(f'```role @{role.name} added to {ctx.author.display_name}```')
 
 
-    @commands.command()
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.guild_only()
-    async def notify(self, ctx):
-        """gives/removes the chain role for jfk and jfk 2.1"""
-        # debug values
-        # channel_id_main = 650701692853288997
-        # channel_id_sub = 792138823853146133
-        # role_id_main = 826557408989151293
-        # role_id_sub = 789249556423770132
-
-        # jfk values
-        channel_id_main = 356171252706181140
-        channel_id_sub = 356143232435879937
-        role_id_main = 629005125234589707
-        role_id_sub = 629005185880162355
-
-        if ctx.channel.id == channel_id_main:
-            guild = get(self.bot.guilds, id=ctx.guild.id)
-            channel = get(guild.channels, id=channel_id_main)
-            role = get(guild.roles, id=role_id_main)
-
-        elif ctx.channel.id == channel_id_sub:
-            guild = get(self.bot.guilds, id=ctx.guild.id)
-            channel = get(guild.channels, id=channel_id_sub)
-            role = get(guild.roles, id=role_id_sub)
-
-        else:
-            return
-
-
-        if role in ctx.author.roles:
-            await ctx.author.remove_roles(role)
-            msg = await ctx.send(f'```role @{role.name} removed to {ctx.author.display_name}```')
-        else:
-            await ctx.author.add_roles(role)
-            msg = await ctx.send(f'```role @{role.name} added to {ctx.author.display_name}```')
+    # @commands.command()
+    # @commands.bot_has_permissions(send_messages=True)
+    # @commands.guild_only()
+    # async def notify(self, ctx):
+    #     """gives/removes the chain role for jfk and jfk 2.1"""
+    #     # debug values
+    #     # channel_id_main = 650701692853288997
+    #     # channel_id_sub = 792138823853146133
+    #     # role_id_main = 826557408989151293
+    #     # role_id_sub = 789249556423770132
+    #
+    #     # jfk values
+    #     channel_id_main = 356171252706181140
+    #     channel_id_sub = 356143232435879937
+    #     role_id_main = 629005125234589707
+    #     role_id_sub = 629005185880162355
+    #
+    #     if ctx.channel.id == channel_id_main:
+    #         guild = get(self.bot.guilds, id=ctx.guild.id)
+    #         channel = get(guild.channels, id=channel_id_main)
+    #         role = get(guild.roles, id=role_id_main)
+    #
+    #     elif ctx.channel.id == channel_id_sub:
+    #         guild = get(self.bot.guilds, id=ctx.guild.id)
+    #         channel = get(guild.channels, id=channel_id_sub)
+    #         role = get(guild.roles, id=role_id_sub)
+    #
+    #     else:
+    #         return
+    #
+    #
+    #     if role in ctx.author.roles:
+    #         await ctx.author.remove_roles(role)
+    #         msg = await ctx.send(f'```role @{role.name} removed to {ctx.author.display_name}```')
+    #     else:
+    #         await ctx.author.add_roles(role)
+    #         msg = await ctx.send(f'```role @{role.name} added to {ctx.author.display_name}```')
