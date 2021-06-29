@@ -66,6 +66,13 @@ class JFK(commands.Cog):
         elif arg_key in ["cha"] and ctx.channel.id in war_channels:
             ri = { 356171252706181140: 629005125234589707, 356143232435879937: 629005185880162355 }
             role = get(ctx.guild.roles, id=ri[ctx.channel.id])
+        elif args[0].upper() in [ "ASS", "BAG", "CNC", "ELT", "EVL", "EWM", "FHG", "GRN", "HRG", "IIL", "IOU", "IST", "LAG", "LSC", "MCS", "MSG", "PRN", "SYM", "SYS", "TCB", "TCC", "TCM", "TCP", "TCT", "TGP", "THS", "TMI", "TSB", "WLT", "WSU", "YAZ" ] and ctx.channel.id in jfk_channels + stocks_channels:
+            role = get(ctx.guild.roles, name=args[0].upper())
+            if role is None:
+                try:
+                    await ctx.guild.create_role(name=args[0].upper(), mentionable=True, reason="For the stock bot")
+                except:
+                    pass
         else:
             await self.bot.send_error_message(ctx.channel, f"Unkown role assignement or wrong channel", title="Self assign roles")
             return
