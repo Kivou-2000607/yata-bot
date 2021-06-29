@@ -40,7 +40,7 @@ class JFK(commands.Cog):
     @commands.command(aliases=["n"])
     @commands.bot_has_permissions(send_messages=True)
     @commands.guild_only()
-    async def notify(self, ctx):
+    async def notify(self, ctx, *args):
         """self assign command for jfk server"""
 
         if not len(args):
