@@ -63,11 +63,12 @@ class JFK(commands.Cog):
         elif arg_key in ["ret"] and ctx.channel.id in war_channels:
             ri = { 356171252706181140: 841431434572857354, 356143232435879937: 841431662318452786 }
             role = get(ctx.guild.roles, id=ri[ctx.channel.id])
-        elif arg_key in ["chai"] and ctx.channel.id in war_channels:
+        elif arg_key in ["cha"] and ctx.channel.id in war_channels:
             ri = { 356171252706181140: 629005125234589707, 356143232435879937: 629005185880162355 }
             role = get(ctx.guild.roles, id=ri[ctx.channel.id])
-
-
+        else:
+            await self.bot.send_error_message(ctx.channel, f"Unkown role assignement or wrong channel", title="Self assign roles")
+            return
 
         # if role is None
         if role is None:
@@ -80,7 +81,7 @@ class JFK(commands.Cog):
         else:
             await ctx.author.add_roles(role)
             action = "assigned"
-        embed = Embed(description=f"Role {role.mention} {action}.")
+        embed = Embed(description=f"Role {role.mention} {action}.", color=my_blue)
         embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
         await send(ctx.channel, embed=embed)
 
