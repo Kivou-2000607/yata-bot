@@ -117,6 +117,7 @@ def get_stocks_history(database):
 
     for r in rows:
         stock_id = str(r[0]) if r[0] <= 23 else str(r[0] + 1)
+        stock_id = "24" if r[0] == 32
         if stock_id not in stocks_history:
             stocks_history[stock_id] = []
         stocks_history[stock_id].append(
