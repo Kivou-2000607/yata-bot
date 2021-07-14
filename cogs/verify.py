@@ -120,7 +120,7 @@ class Verify(commands.Cog):
             await member.send(embed=eb)
 
     @commands.command()
-    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True)
     @commands.guild_only()
     async def tag(self, ctx, *args):
         if len(args):
@@ -136,7 +136,7 @@ class Verify(commands.Cog):
             await self.bot.send_error_message(ctx.channel, "You need to enter a tag: `!tag uk`")
 
     @commands.command(aliases=["v"])
-    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True)
     @commands.guild_only()
     async def verify(self, ctx, *args):
         await self._verify(ctx, *args)
@@ -211,7 +211,7 @@ class Verify(commands.Cog):
         await ctx.send(embed=eb)
 
     @commands.command(aliases=["verifyall"])
-    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True)
     @commands.guild_only()
     async def verifyAll(self, ctx, *args):
         """Verify all members based on discord ID"""
@@ -241,7 +241,7 @@ class Verify(commands.Cog):
                 await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
     @commands.command(aliases=["checkfactions"])
-    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, manage_nicknames=True)
     @commands.guild_only()
     async def checkFactions(self, ctx, *args):
         """ Check faction role of members"""
