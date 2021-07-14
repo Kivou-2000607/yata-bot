@@ -542,7 +542,7 @@ class Chain(commands.Cog):
                 timeout = ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
 
                 embed = Embed(title=f'{v["attacker_name"]} [{v["attacker_id"]}] from {html.unescape(v["attacker_factionname"])}',
-                              url=f'https://www.torn.com/profiles.php?XID={v["attacker_id"]})',
+                              url=f'https://www.torn.com/profiles.php?XID={v["attacker_id"]}',
                               color=550000)
 
                 embed.set_author(name=f'{html.unescape(fName)} have {tleft:.1f} minutes to retal on')
