@@ -27,10 +27,12 @@ import re
 import traceback
 import logging
 import html
+import time
 
 # import discord modules
 from discord.ext import commands
 from discord.utils import get
+from discord.utils import escape_markdown
 from discord.ext import tasks
 from discord import Embed
 
@@ -42,11 +44,9 @@ class Crimes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.ocTask.start()
-        self.ocTask_v2.start()
 
     def cog_unload(self):
         self.ocTask.cancel()
-        self.ocTask_v2.cancel()
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
@@ -81,15 +81,26 @@ class Crimes(commands.Cog):
         for k, v in crimes.items():
             ready = not v["time_left"] and not v["time_completed"]
             if ready:
-                description = [f'Started: {ts_to_datetime(v["time_started"], fmt="short")}', f'Ready: {ts_to_datetime(v["time_ready"], fmt="short")}']
-                eb = Embed(title=f'{v["crime_name"]} #{k} ready', description="\n".join(description), color=my_blue)
-                # logging.info(k, v)
                 participants = []
+                greatest_inactivity = int(time.time())
+                greatest_inactivity_string = ""
                 for p in v["participants"]:
                     tId = list(p)[0]
-                    name = members.get(tId, dict({"name": "Player"}))["name"]
-                    status = list(p.values())[0]
-                    participants.append(f'- {name}: {status["state"]} ({status["description"]})')
+                    participant = members.get(tId, {})
+                    name = participant.get("name", "Player") + "_test"
+                    status = participant.get("status", {"state": "?", "description": "?"})
+                    last_action = participant.get("last_action", {"timestamp": 0, "relative": "?"})
+                    participants.append(f'- {escape_markdown(name)}: {status["state"]} ({last_action["relative"]})')
+                    if last_action["timestamp"] < greatest_inactivity:
+                        greatest_inactivity = last_action["timestamp"]
+                        greatest_inactivity_string = f'{last_action["relative"]} ({name})'
+
+                description = [
+                    f'Started: {ts_to_datetime(v["time_started"], fmt="short")}',
+                    f'Ready: {ts_to_datetime(v["time_ready"], fmt="short")}',
+                    f'Inactivity: {greatest_inactivity_string}'
+                ]
+                eb = Embed(title=f'{v["crime_name"]} #{k} ready', description="\n".join(description), color=my_blue)
                 eb.add_field(name=f'{len(v["participants"])} participants', value="\n".join(participants))
 
                 await send(ctx, embed=eb)
@@ -154,154 +165,7 @@ class Crimes(commands.Cog):
         self.bot.configurations[ctx.guild.id]["oc"]["currents"][str(ctx.author.id)] = current
         await self.bot.set_configuration(ctx.guild.id, ctx.guild.name, self.bot.configurations[ctx.guild.id])
 
-    async def _oc(self, guild, oc):
-
-        # get channel
-        channelId = oc.get("channel")[0] if len(oc.get("channel", {})) else None
-        channel = get(guild.channels, id=int(channelId))
-        if channel is None:
-            return False
-
-        # get discord member
-        discord_id = oc.get("discord_user")[0] if len(oc.get("discord_user", {})) else "0"
-        discord_member = get(guild.members, id=int(discord_id))
-        if discord_member is None:
-            await self.bot.send_error_message(channel, f'Discord member #{discord_id} not found\n\nSTOP', title="Error tracking organized crimes")
-            return False
-
-        # get torn id, name and key
-        # status, tornId, name, key = await self.bot.get_user_key(False, discord_member, guild=guild)
-        #
-        # if status < 0:
-        #     await send(channel, f'```md\n# Tracking organized crimes\n< error > could not find torn identity of discord member {discord_member}```')
-        #     return False
-
-        if len(oc.get("torn_user")) < 4:
-            await self.bot.send_error_message(channel, f'Sorry it\'s my bad. I had to change how the tracking is built. You can launch it again now.\nKivou\n\nSTOP', title="Error tracking organized crimes")
-            return False
-
-        tornId = oc.get("torn_user")[0]
-        name = oc.get("torn_user")[1]
-        key = oc.get("torn_user")[3]
-
-        roleId = oc.get("role")[0] if len(oc.get("role", {})) else None
-        notified = "OC" if roleId is None else f"<@&{roleId}>"
-
-        response, e = await self.bot.api_call("faction", "", ["basic", "crimes"], key)
-        if e and 'error' in response:
-
-            lst = [f'Error code {response["error"]["code"]} with {name} [{tornId}]\'s key: {response["error"]["error"]}']
-            if response["error"]["code"] in [7]:
-                lst.append("It means that you don't have the required AA permission (AA for API access) for this API request")
-                lst.append("This is an in-game permission that faction leader and co-leader can grant to their members")
-
-            if response["error"]["code"] in [1, 2, 6, 7, 10]:
-                lst += ["", "STOP"]
-                await self.bot.send_error_message(channel, "\n".join(lst), title="OC tracking API key error")
-                return False
-            else:
-                lst += ["", "CONTINUE"]
-                await self.bot.send_error_message(channel, "\n".join(lst), title="Error tracking organized crimes")
-                return True
-
-        if response is None or "ID" not in response:
-            await self.bot.send_error_message(channel, f'API is talking shit... #blameched\n\nCONTINUE', title="Error tracking organized crimes")
-            return True
-
-        if not int(response["ID"]):
-            await self.bot.send_error_message(channel, f'No faction found for {name} [{tornId}]\n\nSTOP', title="Error tracking organized crimes")
-            return False
-
-        # faction id and name
-        fId = response["ID"]
-        fName = response["name"]
-
-        # faction members
-        members = response["members"]
-
-        # get timestamps
-        now = datetime.datetime.utcnow()
-        epoch = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        nowts = (now - epoch).total_seconds()
-
-        # init mentions if empty
-        if "mentions" not in oc:
-            oc["mentions"] = []
-
-        # loop over crimes
-        for k, v in response["crimes"].items():
-
-            # is already mentionned
-            mentionned = True if str(k) in oc["mentions"] else False
-
-            # is ready (without members)
-            ready = v["time_left"] == 0
-
-            # is completed
-            completed = v["time_completed"] > 0
-
-            # exit if not ready
-            if not ready:
-                continue
-
-            # if completed and already mentionned -> remove the already mentionned
-            if completed and mentionned:
-                initId = str(v["initiated_by"])
-                fields = {
-                    "Faction": f'{fName}',
-                    "Crime": f'{v["crime_name"]}',
-                    "Initiated": f'{members.get(initId, {"name": "Player"})["name"]} [{v["initiated_by"]}].',
-                    "Money": f'${v["money_gain"]:,}',
-                    "Respect": f'{v["respect_gain"]:,}'}
-                eb = Embed(title=f'{v["crime_name"]} completed', color=my_blue)
-                for name, value in fields.items():
-                    eb.add_field(name=name, value=value)
-                await send(channel, embed=eb)
-                oc["mentions"].remove(str(k))
-
-            # exit if completed
-            if completed:
-                continue
-
-            # change ready based on participants
-            participants = [list(p.values())[0] for p in v["participants"] if v is not None]
-            for p in participants:
-                if p["state"] != "Okay":
-                    ready = False
-
-            # if ready and not already mentionned -> mention
-            if ready and not mentionned:
-                eb = Embed(title=f'OC ready', description=f'[{v["crime_name"]}](https://www.torn.com/factions.php?step=your#/tab=crimes)', color=my_green)
-                eb.add_field(name="Crime ID", value=f'{k}')
-                eb.add_field(name="Faction", value=f'{fName}')
-                await send(channel, f'{notified} {v["crime_name"]}', embed=eb)
-                oc["mentions"].append(str(k))
-
-            # if not ready (because of participants) and already mentionned -> remove the already mentionned
-            if not ready and mentionned:
-                eb = Embed(title=f'OC not ready anymore', description=v["crime_name"], color=my_red)
-                eb.add_field(name="Crime ID", value=f'{k}')
-                eb.add_field(name="Faction", value=f'{fName}')
-                await send(channel, embed=eb)
-                oc["mentions"].remove(str(k))
-
-        # clean mentions
-        cleanedMentions = []
-        for k in oc["mentions"]:
-            if str(k) in response["crimes"]:
-                cleanedMentions.append(str(k))
-
-        oc["mentions"] = cleanedMentions
-
-        # delete old messages
-        # fminutes = now - datetime.timedelta(minutes=5)
-        # async for message in channel.history(limit=50, before=fminutes):
-        #     if message.author.bot:
-        #         await message.delete()
-
-        return True
-
-    async def _oc_v2(self, guild, oc, notifications):
+    async def _oc(self, guild, oc, notifications):
         # get channel
         channelId = oc.get("channel")[0] if len(oc.get("channel", {})) else None
         channel = get(guild.channels, id=int(channelId))
@@ -388,6 +252,12 @@ class Crimes(commands.Cog):
             # is completed
             completed = v["time_completed"] > 0
 
+            # DEBUG
+            # print(k)
+            # if k in ["9218624", "9218622"]:
+            #     print("force ready")
+            #     ready = True
+            #     # completed = False
 
             # exit if not ready
             if not ready:
@@ -411,24 +281,28 @@ class Crimes(commands.Cog):
 
             # DEBUG: handy to comment this to have fake ready
             # change ready based on participants
-            participants = [list(p.values())[0] for p in v["participants"] if v is not None]
-            n_p_tot = len(participants)
+            n_p_tot = len(v["participants"])
             n_p_rea = 0
-            for p in participants:
-                if p["state"] != "Okay":
+            greatest_inactivity = int(time.time())
+            greatest_inactivity_string = ""
+            for p in v["participants"]:
+                tId = list(p)[0]
+                participant = members.get(tId, {})
+                status = participant.get("status", {"state": "?", "description": "?"})
+                last_action = participant.get("last_action", {"timestamp": 0, "relative": "?"})
+                name = participant.get("name", "Player")
+                if status["state"] != "Okay":
                     ready = False
                 else:
                     n_p_rea += 1
 
-            # DEBUG
-            # if k in ["8096922"]:
-            #     print("force ready")
-            #     ready = True
-            #     completed = False
+                if last_action["timestamp"] < greatest_inactivity:
+                    greatest_inactivity = last_action["timestamp"]
+                    greatest_inactivity_string = f'{last_action["relative"]} ({name})'
 
             # if ready and not already mentionned -> mention
             if ready:
-                crimes_fields["ready"].append([str(k), v["crime_name"]])
+                crimes_fields["ready"].append([str(k), v["crime_name"], greatest_inactivity_string])
                 need_to_display.append(v["crime_name"])
                 if not mentionned and str(v["crime_id"]) in notifications:
                     need_to_mention = True
@@ -469,8 +343,8 @@ class Crimes(commands.Cog):
         embed = Embed(title=title, color=my_blue)
         if len(crimes_fields["ready"]):
             list_of_crimes = []
-            for k, v in crimes_fields["ready"]:
-                list_of_crimes.append(f':white_check_mark: [{v}](https://www.torn.com/factions.php?step=your#/tab=crimes) `{k}`')
+            for crime_id, crime_name, inactivity in crimes_fields["ready"]:
+                list_of_crimes.append(f':white_check_mark: [{crime_name}](https://www.torn.com/factions.php?step=your#/tab=crimes) `{crime_id}`\n Longest inactivity: {inactivity}')
                 if len("\n".join(list_of_crimes)) > 1000:
                     list_of_crimes[-1] = '...'
                     break
@@ -541,64 +415,6 @@ class Crimes(commands.Cog):
         return True
 
     @tasks.loop(seconds=300)
-    async def ocTask_v2(self):
-        logging.debug(f"[oc/notifications] start task")
-
-        # iteration over all guilds
-        for guild in self.bot.get_guilds_by_module("oc"):
-            try:
-
-                config = self.bot.get_guild_configuration_by_module(guild, "oc", check_key="currents")
-                if not config:
-                    logging.debug(f"[oc/notifications] <{guild}> No OC tracking")
-                    continue
-
-                if not self.bot.get_guild_beta(guild):
-                    logging.debug(f"[oc/notifications] <{guild}> Skip OC beta because this server is not beta tester")
-                    continue
-
-                logging.debug(f"[oc/notifications] <{guild}>  OC tracking")
-
-                # iteration over all members asking for oc watch
-                # guild = self.bot.get_guild(guild.id)
-                todel = []
-                tochange = {}
-                for discord_user_id, oc in config["currents"].items():
-                    # logging.debug(f"[oc/notifications] {guild}: {oc}")
-
-                    # call oc faction
-                    previous_mentions = list(oc.get("mentions", []))
-                    status = await self._oc_v2(guild, oc, config.get("notifications", {}))
-
-                    if status and previous_mentions != oc.get("mentions", []):
-                        tochange[discord_user_id] = oc
-                    elif not status:
-                        todel.append(discord_user_id)
-
-                changes = False
-                for d in todel:
-                    logging.debug(f"[oc/notifications] <{guild}> delete current {d}")
-                    del self.bot.configurations[guild.id]["oc"]["currents"][d]
-                    changes = True
-
-                for discord_user_id, oc in tochange.items():
-                    logging.debug(f"[oc/notifications] <{guild}> change current {discord_user_id}")
-                    self.bot.configurations[guild.id]["oc"]["currents"][discord_user_id] = oc
-                    changes = True
-
-                if changes:
-                    await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
-                    logging.debug(f"[oc/notifications] <{guild}> push notifications")
-                else:
-                    logging.debug(f"[oc/notifications] <{guild}> don't push notifications")
-
-            except BaseException as e:
-                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                await self.bot.send_log(f'error on oc notifications: {e}', guild_id=guild.id)
-                headers = {"guild": guild, "guild_id": guild.id, "error": "error on oc notifications"}
-                await self.bot.send_log_main(e, headers=headers, full=True)
-
-    @tasks.loop(seconds=300)
     async def ocTask(self):
         logging.debug(f"[oc/notifications] start task")
 
@@ -611,9 +427,9 @@ class Crimes(commands.Cog):
                     logging.debug(f"[oc/notifications] <{guild}> No OC tracking")
                     continue
 
-                if self.bot.get_guild_beta(guild):
-                    logging.debug(f"[oc/notifications] <{guild}> Skip OC because because server is beta tester")
-                    continue
+                # if not self.bot.get_guild_beta(guild):
+                #     logging.debug(f"[oc/notifications] <{guild}> Skip OC beta because this server is not beta tester")
+                #     continue
 
                 logging.debug(f"[oc/notifications] <{guild}>  OC tracking")
 
@@ -626,7 +442,7 @@ class Crimes(commands.Cog):
 
                     # call oc faction
                     previous_mentions = list(oc.get("mentions", []))
-                    status = await self._oc(guild, oc)
+                    status = await self._oc(guild, oc, config.get("notifications", {}))
 
                     if status and previous_mentions != oc.get("mentions", []):
                         tochange[discord_user_id] = oc
@@ -658,10 +474,5 @@ class Crimes(commands.Cog):
 
     @ocTask.before_loop
     async def before_ocTask(self):
-        await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
-
-    @ocTask_v2.before_loop
-    async def before_ocTask_v2(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
