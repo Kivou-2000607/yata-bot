@@ -297,7 +297,7 @@ class Verify(commands.Cog):
             # case no userID and no discordID is given (author verify itself)
             if author_verif:
                 author = ctx.author
-                response, e = await self.bot.api_call("user", author.id, ["discord"], API_KEY)
+                response, e = await self.bot.api_call("user", author.id, ["profile", "discord"], API_KEY)
                 if e and "error" in response:
                     return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
@@ -308,7 +308,7 @@ class Verify(commands.Cog):
             # case discordID is given
             # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
             if discordID is not None:  # use this condition to force API call to check userID even if it is given
-                response, e = await self.bot.api_call("user", discordID, ["discord"], API_KEY)
+                response, e = await self.bot.api_call("user", discordID, ["profile", "discord"], API_KEY)
                 if e and "error" in response:
                     return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
@@ -320,7 +320,7 @@ class Verify(commands.Cog):
             logging.info(f"[verify/_member] verifying userID = {userID}")
 
             # api call request
-            response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
+            # response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
             if e and "error" in response:
                 if int(response["error"]["code"]) == 6:
                     return f"Torn ID {userID} is not known. Please check again.", False
