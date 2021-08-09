@@ -56,7 +56,6 @@ from cogs.jfk import JFK
 
 # import includes
 from inc.yata_db import load_configurations
-from inc.yata_db import get_stocks_history
 
 # configure intents
 intents = discord.Intents.default()
@@ -131,17 +130,17 @@ bot.add_cog(Admin(bot))
 # 1: Chappie (dev bot)
 # 2: Marvin (YATA server administrator)
 # 3: YATA (the public bot)
-# 4: JFK
 
 if int(bot_id) in [1]:
     # bot.add_cog(Misc(bot))
     # bot.add_cog(JFK(bot))
-    # bot.add_cog(Verify(bot))
+    bot.add_cog(Verify(bot))
     # bot.add_cog(Chain(bot))
     # bot.add_cog(Marvin(bot))
+    # bot.add_cog(Crimes(bot))
 
-    stocks_history = get_stocks_history(database)
-    bot.add_cog(Stocks(bot, stocks_history))
+    # stocks_history = get_stocks_history(database)
+    # bot.add_cog(Stocks(bot, stocks_history))
 
 elif int(bot_id) in [2]:
     bot.add_cog(Marvin(bot))
@@ -157,23 +156,6 @@ elif int(bot_id) in [3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
-    #stocks_history = get_stocks_history(database)
-    #bot.add_cog(Stocks(bot, stocks_history))
-
-elif int(bot_id) in [4]:
-    # bot.add_cog(Verify(bot))
-    bot.add_cog(Loot(bot))
-    bot.add_cog(Racket(bot))
-    bot.add_cog(War(bot))
-    # bot.add_cog(Revive(bot))
-    # bot.add_cog(Crimes(bot))
-    bot.add_cog(API(bot))
-    bot.add_cog(Chain(bot))
-    bot.add_cog(Misc(bot))
-    # bot.add_cog(Repository(bot))
-    bot.add_cog(JFK(bot))
-    stocks_history = get_stocks_history(database)
-    bot.add_cog(Stocks(bot, stocks_history))
 
 # run bot
 bot.run(token)

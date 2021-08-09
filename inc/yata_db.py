@@ -95,44 +95,6 @@ def load_configurations(bot_id, database):
     return token, configurations
 
 
-def get_stocks_history(database):
-    print("get stocks history")
-    db_cred = {
-        "dbname": database.get("database"),
-        "user": database.get("user"),
-        "password": database.get("password"),
-        "host": database.get("host"),
-        "port": database.get("port")
-    }
-    con = psycopg2.connect(**db_cred)
-
-
-    # get bot
-    cur = con.cursor()
-    cur.execute(f'SELECT stock_id, timestamp, current_price, market_cap, total_shares FROM stocks_history WHERE timestamp >= {int(time.time()) - 3600 * 24};')
-    rows = cur.fetchall()
-    cur.close()
-
-    stocks_history = {}
-
-    for r in rows:
-        stock_id = str(r[0]) if r[0] <= 23 else str(r[0] + 1)
-        stock_id = "24" if r[0] == 32 else stock_id
-        if stock_id not in stocks_history:
-            stocks_history[stock_id] = []
-        stocks_history[stock_id].append(
-            {
-                "timestamp": r[1],
-                "current_price": r[2],
-                "market_cap": r[3],
-                "total_shares": r[4]
-            }
-        )
-
-    print("get stocks history -> done")
-    con.close()
-    return stocks_history
-
 
 # async def get_configuration(bot_id, discord_id):
 #     db_cred = get_credentials()
