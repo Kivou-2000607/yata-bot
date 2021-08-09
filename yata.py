@@ -41,7 +41,6 @@ from bots.yata import YataBot
 # import cogs
 from cogs.verify import Verify
 from cogs.loot import Loot
-from cogs.stocks import Stocks
 from cogs.api import API
 from cogs.chain import Chain
 from cogs.racket import Racket
@@ -52,7 +51,7 @@ from cogs.misc import Misc
 from cogs.crimes import Crimes
 from cogs.repository import Repository
 from cogs.marvin import Marvin
-from cogs.jfk import JFK
+
 
 # import includes
 from inc.yata_db import load_configurations
