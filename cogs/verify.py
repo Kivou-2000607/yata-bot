@@ -310,7 +310,10 @@ class Verify(commands.Cog):
             if discordID is not None:  # use this condition to force API call to check userID even if it is given
                 response, e = await self.bot.api_call("user", discordID, ["profile", "discord"], API_KEY)
                 if e and "error" in response:
-                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
+                    if int(response["error"]["code"]) == 6:
+                        return f"Torn ID {userID} is not known. Please check again.", False
+                    else:
+                        return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
                 if response['discord'].get("userID") == '':
                     return f"{guild.get_member(discordID)} is not officially verified by Torn", False
@@ -321,11 +324,11 @@ class Verify(commands.Cog):
 
             # api call request
             # response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
-            if e and "error" in response:
-                if int(response["error"]["code"]) == 6:
-                    return f"Torn ID {userID} is not known. Please check again.", False
-                else:
-                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
+            # if e and "error" in response:
+            #     if int(response["error"]["code"]) == 6:
+            #         return f"Torn ID {userID} is not known. Please check again.", False
+            #     else:
+            #         return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
             # check != id shouldn't append or problem in torn API
             dis = response.get("discord")
