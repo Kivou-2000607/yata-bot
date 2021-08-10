@@ -311,11 +311,11 @@ class Verify(commands.Cog):
                 response, e = await self.bot.api_call("user", discordID, ["profile", "discord"], API_KEY)
                 if e and "error" in response:
                     if int(response["error"]["code"]) == 6:
-                        return f"Torn ID {userID} is not known. Please check again.", False
+                        return f"{guild.get_member(discordID)} is not officially verified by Torn", False
                     else:
                         return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
-                if response['discord'].get("userID") == '':
+                if response['discord'].get("userID") == '':  # this one should be useless now
                     return f"{guild.get_member(discordID)} is not officially verified by Torn", False
                 else:
                     userID = int(response['discord'].get("userID"))
