@@ -50,7 +50,6 @@ from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
 from cogs.repository import Repository
-from cogs.marvin import Marvin
 
 
 # import includes
@@ -127,7 +126,6 @@ bot.add_cog(Admin(bot))
 
 # bot ids:
 # 1: Chappie (dev bot)
-# 2: Marvin (YATA server administrator)
 # 3: YATA (the public bot)
 
 if int(bot_id) in [1]:
@@ -140,9 +138,6 @@ if int(bot_id) in [1]:
 
     # stocks_history = get_stocks_history(database)
     # bot.add_cog(Stocks(bot, stocks_history))
-
-elif int(bot_id) in [2]:
-    bot.add_cog(Marvin(bot))
 
 elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
