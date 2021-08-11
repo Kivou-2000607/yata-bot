@@ -293,50 +293,49 @@ class Verify(commands.Cog):
 
             # boolean that check if the member is verifying himself with no id given
             author_verif = userID is None and discordID is None
-            # logging.debug(f"[verify/_member] author_verif {author_verif}")
-            # case no userID and no discordID is given (author verify itself)
             if author_verif:
+                # case no userID and no discordID is given (author verify itself)
                 author = ctx.author
-                response, e = await self.bot.api_call("user", author.id, ["profile", "discord"], API_KEY)
+                response, e = await self.bot.api_call("user", author.id, ["profile"], API_KEY)
                 if e and "error" in response:
-                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
-
-                userID = response['discord'].get("userID")
-                if userID == '':
-                    return f"{author}, you are not officially verified by Torn", False
-
-            # case discordID is given
-            # if discordID is not None and userID is None:  # use this condition to skip API call if userID is given
-            if discordID is not None:  # use this condition to force API call to check userID even if it is given
-                response, e = await self.bot.api_call("user", discordID, ["profile", "discord"], API_KEY)
-                if e and "error" in response:
-                    if int(response["error"]["code"]) == 6:
-                        return f"{guild.get_member(discordID)} is not officially verified by Torn", False
-                    else:
+                    if int(response["error"]["code"]) == 6:  # not verified
+                        return f"{author}, you're not officially verified by Torn", False
+                    else:  # API error
                         return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
-                if response['discord'].get("userID") == '':  # this one should be useless now
-                    return f"{guild.get_member(discordID)} is not officially verified by Torn", False
-                else:
-                    userID = int(response['discord'].get("userID"))
+                userID = int(response.get("player_id"))
+                discordID = author.id
 
-            logging.info(f"[verify/_member] verifying userID = {userID}")
+            elif discordID is not None:
+                # case discordID is given
+                response, e = await self.bot.api_call("user", discordID, ["profile"], API_KEY)
+                if e and "error" in response:
+                    if int(response["error"]["code"]) == 6:  # not verified
+                        return f"{guild.get_member(discordID)} is not officially verified by Torn", False
+                    else:  # API error
+                        return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
 
-            # api call request
-            # response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
-            # if e and "error" in response:
-            #     if int(response["error"]["code"]) == 6:
-            #         return f"Torn ID {userID} is not known. Please check again.", False
-            #     else:
-            #         return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
+                userID = int(response.get("player_id"))
+                discordID = int(discordID)
 
-            # check != id shouldn't append or problem in torn API
-            dis = response.get("discord")
-            if int(dis.get("userID")) != userID:
-                return f'That\'s odd... {userID} != {dis.get("userID")}', False
+            elif userID is not None:
+                # case userID is given
+                response, e = await self.bot.api_call("user", userID, ["profile", "discord"], API_KEY)
+                if e and "error" in response:  # API error
+                    return f'API error code {response["error"]["code"]}: {response["error"]["error"]}', False
+                elif response["discord"].get("discordID") == "":  # not verified
+                    return f'{response["name"]} [{userID}] is not officially verified by Torn', False
+
+                userID = int(userID)
+                discordID = int(response["discord"]["discordID"])
+
+            else:
+                return f'WTF... Torn ID = {userID} and discord ID = {discordID}', False
+
+
+            logging.info(f"[verify/_member] verifying userID = {userID} / discordID = {discordID}")
 
             # check if registered in torn discord
-            discordID = None if dis.get("discordID") in [''] else int(dis.get("discordID"))
             name = response.get("name", "???")
             nickname = f'{name}'
             add_ID = not config.get("other", {}).get("disable_id", False)
@@ -346,10 +345,9 @@ class Verify(commands.Cog):
                 tag_str = f"{'' if add_ID else ' '}[{tag}]"
                 nickname += tag_str
 
-            if discordID is None:
-                # the guy did not log into torn discord
-                return f"{nickname} is not officially verified by Torn", False
-
+            print(API_KEY)
+            print(discordID)
+            print(userID)
             # the guy already log in torn discord
             member = ctx.author if author_verif else get(ctx.guild.members, id=discordID)
             if member is None:
