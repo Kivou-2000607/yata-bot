@@ -345,9 +345,6 @@ class Verify(commands.Cog):
                 tag_str = f"{'' if add_ID else ' '}[{tag}]"
                 nickname += tag_str
 
-            print(API_KEY)
-            print(discordID)
-            print(userID)
             # the guy already log in torn discord
             member = ctx.author if author_verif else get(ctx.guild.members, id=discordID)
             if member is None:
