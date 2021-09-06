@@ -84,9 +84,9 @@ class Elimination(commands.Cog):
                 logging.error(f"[elimination score] guild {guild}: {e}")
 
         # sleep to the minute
-        # sleep = 65 - ts_now() % 60
-        # logging.info(f'[elimination score] sleep for {sleep}s')
-        # await asyncio.sleep(sleep)
+        sleep = 65 - ts_now() % 60
+        logging.info(f'[elimination score] sleep for {sleep}s')
+        await asyncio.sleep(sleep)
 
         # create embed
         embed = Embed(title="Elimination scores", color=550000)
