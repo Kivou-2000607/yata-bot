@@ -134,7 +134,6 @@ if int(bot_id) in [1]:
     # bot.add_cog(JFK(bot))
     # bot.add_cog(Verify(bot))
     # bot.add_cog(Chain(bot))
-    # bot.add_cog(Marvin(bot))
     # bot.add_cog(Crimes(bot))
     bot.add_cog(Elimination(bot))
 

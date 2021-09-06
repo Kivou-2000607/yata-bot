@@ -41,7 +41,6 @@ class Elimination(commands.Cog):
         self.bot = bot
         self.score.start()
         self.wave.start()
-        self.scores_embed = None
 
     def cog_unload(self):
         self.wave.cancel()
@@ -50,40 +49,47 @@ class Elimination(commands.Cog):
     @tasks.loop(seconds=60)
     async def score(self):
 
-        async def _update_score(guild):
-            if guild is None:
-                logging.info(f"[elimination score] guild {guild}: None")
-                return
-
-            # get configuration
-            config = self.bot.get_guild_configuration_by_module(guild, "elim", check_key="channels_scores")
-            if not config:
-                logging.info(f"[elimination score] guild {guild}: score not enabled")
-                return
-
-            # get channel
-            for k, v in config["channels_scores"].items():  # only the first one
-                channel = get(guild.channels, id=int(k))
-                if channel is None:
-                    logging.info(f"[elimination score] guild {guild}: channel {v} [{k}]")
-                    return
-                break
-
+        async def _update_score(guild, embed):
             try:
-                msg = await channel.fetch_message(channel.last_message_id)
-                await msg.edit(embed=self.scores_embed)
-                logging.info(f"[elimination score] guild {guild}: edit message")
-                return
+                if guild is None:
+                    logging.debug(f"[elimination score] guild {guild}: None")
+                    return
+
+                # get configuration
+                config = self.bot.get_guild_configuration_by_module(guild, "elim", check_key="channels_scores")
+                if not config:
+                    logging.debug(f"[elimination score] guild {guild}: score not enabled")
+                    return
+
+                # get channel
+                for k, v in config["channels_scores"].items():  # only the first one
+                    channel = get(guild.channels, id=int(k))
+                    if channel is None:
+                        logging.debug(f"[elimination score] guild {guild}: channel {v} [{k}]")
+                        return
+                    break
+
+                try:
+                    msg = await channel.fetch_message(channel.last_message_id)
+                    await msg.edit(embed=embed)
+                    logging.debug(f"[elimination score] guild {guild}: edit message")
+                    return
+
+                except BaseException as e:
+                    await channel.send(embed=embed)
+                    logging.debug(f"[elimination score] guild {guild}: send message")
+                    return
 
             except BaseException as e:
-                await channel.send(embed=self.scores_embed)
-                logging.info(f"[elimination score] guild {guild}: send message")
-                return
+                logging.error(f"[elimination score] guild {guild}: {e}")
 
         # sleep to the minute
-        sleep = 60 - ts_now() % 60 + 5
-        logging.info(f'[elimination score] sleep for {sleep}s')
-        await asyncio.sleep(sleep)
+        # sleep = 65 - ts_now() % 60
+        # logging.info(f'[elimination score] sleep for {sleep}s')
+        # await asyncio.sleep(sleep)
+
+        # create embed
+        embed = Embed(title="Elimination scores", color=550000)
 
         # update scores
         guild = self.bot.get_guild(self.bot.main_server_id)
@@ -91,62 +97,74 @@ class Elimination(commands.Cog):
 
         r, e = await self.bot.api_call("torn", "", ["competition", "timestamp"], key)
         if e:
-            logging.error(f"[elimination score] Error {e}")
-            return
+            logging.warning(f"[elimination score] Error {e}")
+            embed.add_field(name=f'API error code #{r["error"]["code"]}', value=r["error"]["error"])
+            embed.set_footer(text=f'Last update: {ts_format(ts_now(), fmt="time")}')
 
-        # create message content
-        self.scores_embed = Embed(title="Elimination scores", color=550000)
-        for team in r["competition"]["teams"]:
-            values = [f'[Participants: {team["participants"]}](https://www.torn.com/competition.php#/p=team&team={team["team"]})',
-                      f'Score: {team["score"]}',
-                      f'Lives: **{team["lives"]}**']
-            self.scores_embed.add_field(name=f'#{team["position"]} {team["name"]}', value='\n'.join(values))
-            self.scores_embed.set_footer(text=f'Last update: {ts_format(ts_now(), fmt="time")}')
+        else:
+            for team in r["competition"]["teams"]:
+                values = [f'[Participants: {team["participants"]}](https://www.torn.com/competition.php#/p=team&team={team["team"]})',
+                          f'Score: {team["score"]}',
+                          f'Lives: **{team["lives"]}**']
+                embed.add_field(name=f'#{team["position"]} {team["name"]}', value='\n'.join(values))
+                embed.set_footer(text=f'Last update: {ts_format(r["timestamp"], fmt="time")}')
 
         # get score guild
         guilds = self.bot.get_guilds_by_module("elim")
-        await asyncio.gather(*map(_update_score, guilds))
+        await asyncio.gather(*map(_update_score, guilds, [embed] * len(guilds)))
 
     @tasks.loop(seconds=10)
     async def wave(self):
-        logging.info("prout")
+
         async def _update_wave(guild):
-            if guild is None:
-                logging.info(f"[elimination wave] guild {guild}: None")
-                return
-
-            # get configuration
-            config = self.bot.get_guild_configuration_by_module(guild, "elim", check_key="channels_scores")
-            if not config:
-                logging.info(f"[elimination wave] guild {guild}: score not enabled")
-                return
-
-            # get channel
-            for k, v in config["channels_scores"].items():  # only the first one
-                channel = get(guild.channels, id=int(k))
-                if channel is None:
-                    logging.info(f"[elimination wave] guild {guild}: channel {v} [{k}]")
-                    return
-                break
-
-            m = 14 - datetime.datetime.now().time().minute % 15
-            s = 59 - datetime.datetime.now().time().second
-            content = f"Next wave in **{m}:{s:02d}** seconds"
-
             try:
-                msg = await channel.fetch_message(channel.last_message_id)
-                await msg.edit(content=content)
-                logging.info(f"[elimination wave] guild {guild}: edit message")
-                return
+                if guild is None:
+                    logging.debug(f"[elimination wave] guild {guild}: None")
+                    return
+
+                # get configuration
+                config = self.bot.get_guild_configuration_by_module(guild, "elim", check_key="channels_scores")
+                if not config:
+                    logging.debug(f"[elimination wave] guild {guild}: score not enabled")
+                    return
+
+                # get channel
+                for k, v in config["channels_scores"].items():  # only the first one
+                    channel = get(guild.channels, id=int(k))
+                    if channel is None:
+                        logging.debug(f"[elimination wave] guild {guild}: channel {v} [{k}]")
+                        return
+                    break
+
+                now = ts_now()
+                start = 1631275200
+                if now < start:
+                    content = f"Elimination starts in **{s_to_hms(start - now)}**"
+
+                else:
+                    now = ts_to_datetime(now)
+                    m = 14 - now.minute % 15
+                    s = 59 - now.second
+                    content = f"Next wave in **{m}:{s:02d}**"
+
+                try:
+                    msg = await channel.fetch_message(channel.last_message_id)
+                    await msg.edit(content=content)
+                    logging.debug(f"[elimination wave] guild {guild}: edit message")
+                    return
+
+                except BaseException as e:
+                    await channel.send(content=content)
+                    logging.debug(f"[elimination wave] guild {guild}: send message")
+                    return
 
             except BaseException as e:
-                await channel.send(content=content)
-                logging.info(f"[elimination wave] guild {guild}: send message")
+                logging.error(f"[elimination wave] guild {guild}: {e}")
                 return
 
         # sleep to 10 seconds
         sleep = 9 - ts_now() % 10
-        logging.info(f'[elimination score] sleep for {sleep}s')
+        logging.info(f'[elimination wave] sleep for {sleep}s')
         await asyncio.sleep(sleep)
 
         # get score guild
