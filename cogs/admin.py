@@ -144,7 +144,7 @@ class Admin(commands.Cog):
         configuration["admin"]["last_sync"] = ts_now()
 
         # update modules
-        for module in ["admin", "rackets", "wars", "loot", "revive", "verify", "oc", "stocks", "chain"]:
+        for module in ["admin", "rackets", "wars", "loot", "revive", "verify", "oc", "elim", "chain"]:
             # if configuration_db.get("rackets", False) and len(configuration_db["rackets"].get("channels", [])):
             if configuration_db.get(module, False):
                 if module not in configuration:
@@ -158,7 +158,7 @@ class Admin(commands.Cog):
                             updates.append(f":x: **{module} {key}** disabled")
 
                 # choose how to sync
-                if module in ["rackets", "wars", "loot", "revive", "verify", "oc", "stocks", "chain"]:
+                if module in ["rackets", "wars", "loot", "revive", "verify", "oc", "elim", "chain"]:
                     # db erase completely bot config
                     configuration[module] = configuration_db[module]
                 elif module in ["admin"]:

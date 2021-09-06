@@ -50,6 +50,7 @@ from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
 from cogs.repository import Repository
+from cogs.elimination import Elimination
 
 
 # import includes
@@ -131,13 +132,11 @@ bot.add_cog(Admin(bot))
 if int(bot_id) in [1]:
     # bot.add_cog(Misc(bot))
     # bot.add_cog(JFK(bot))
-    bot.add_cog(Verify(bot))
+    # bot.add_cog(Verify(bot))
     # bot.add_cog(Chain(bot))
     # bot.add_cog(Marvin(bot))
     # bot.add_cog(Crimes(bot))
-
-    # stocks_history = get_stocks_history(database)
-    # bot.add_cog(Stocks(bot, stocks_history))
+    bot.add_cog(Elimination(bot))
 
 elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
@@ -150,6 +149,7 @@ elif int(bot_id) in [3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
+    bot.add_cog(Elimination(bot))
 
 # run bot
 bot.run(token)
