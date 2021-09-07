@@ -52,6 +52,22 @@ class Verify(commands.Cog):
             "weekly_check": {i: [] for i in range(24)},
         }
 
+        # I shouldn't need it but currently the API is switching from name to team format...
+        self.elim_name = {
+			"victorious-secret": ["victorious-secret", "Victorious Secret"],
+			"short-bus": ["short-bus", "Short Bus"],
+			"sea-men": ["sea-men", "Sea Men"],
+			"pandemic": ["pandemic", "Pandemic"],
+			"dongs": ["dongs", "Dongs"],
+			"snowflakes": ["snowflakes", "Snowflakes"],
+			"illuminati": ["illuminati", "Illuminati"],
+			"keyboard-warriors": ["keyboard-warriors", "Keyboard Warriors"],
+			"lettuce-win": ["lettuce-win", "Lettuce Win!"],
+			"chicken-nuggets": ["chicken-nuggets", "Chicken Nuggets"],
+			"cereal-killers": ["cereal-killers", "Cereal Killers"],
+			"goat": ["goat", "G.O.A.T"],
+        }
+
     def cog_unload(self):
         self.dailyVerify.cancel()
         self.weeklyVerify.cancel()
@@ -380,6 +396,34 @@ class Verify(commands.Cog):
             # deduce all role to remove
             all_roles_to_remove = [r for r in member.roles if r in all_roles_possible and r not in all_roles_to_add]
 
+            # special elimination roles
+            elim_config = self.bot.get_guild_configuration_by_module(ctx.guild, "elim")
+            if elim_config and elim_config.get("team_name"):
+                elim_name = elim_config.get("team_name")
+                elim_roles_to_add = [r for r in self.bot.get_module_role(ctx.guild.roles, elim_config.get("roles_team", {}), all=True) if r is not None]
+                actual_team = response["competition"].get("team")
+                if actual_team is None:
+                    line_member_team = f"Member team: **Didn't join elimination**"
+                elif not len(actual_team):
+                    line_member_team = f"Member team: **Not known**"
+                else:
+                    line_member_team = f'Member team: **{self.elim_name.get(actual_team, [None, "???"])[1]}**'
+
+                special_event = ["__Role management for special event__",
+                                 f'Server eliminiation team: **{self.elim_name[elim_name][1]}**',
+                                 line_member_team]
+
+                if actual_team in self.elim_name.get(elim_name, []):
+                    all_roles_to_add = [r for r in list(set(all_roles_to_add + elim_roles_to_add))]
+                    special_event += [f'**@{elim_role}** added' for elim_role in elim_roles_to_add]
+                # else:
+                #     all_roles_to_remove = [r for r in list(set(all_roles_to_remove + elim_roles_to_add))]
+                #     special_event += [f'**@{elim_role}** removed' for elim_role in elim_roles_to_add]
+
+            else:
+                special_event = []
+
+
             # clean roles
             await member.remove_roles(*all_roles_to_remove)
 
@@ -400,6 +444,7 @@ class Verify(commands.Cog):
             roles_list = [f'**@{html.unescape(verified_role.name)}** (verified role)']
             roles_list += [f'**@{faction_role}** (faction {html.unescape(faction_name)})' for faction_role in faction_roles_to_add]
             roles_list += [f'**@{position_role}** (position {html.unescape(member_position)})' for position_role in position_roles_to_add]
+            roles_list += special_event
 
             nl = '\n'
             str1, str2 = (", you", "You") if author_verif else ("", "They")
