@@ -42,6 +42,9 @@ class Elimination(commands.Cog):
         self.score.start()
         self.wave.start()
 
+        # temp store message ID to avoid message history lookup
+        self.message_id = {}
+
     def cog_unload(self):
         self.wave.cancel()
         self.score.cancel()
@@ -70,12 +73,13 @@ class Elimination(commands.Cog):
                     break
 
                 try:
-                    msg = await channel.fetch_message(channel.last_message_id)
+                    msg = await channel.fetch_message(self.message_id.get(guild.id))
                     await msg.edit(embed=embed)
                     logging.debug(f"[elimination score] guild {guild}: edit message")
                     return
 
                 except BaseException as e:
+                    logging.warning(f"[elimination score] guild {guild}: base error {e}")
                     return
 
             except BaseException as e:
@@ -145,25 +149,46 @@ class Elimination(commands.Cog):
                     s = 59 - now.second
                     content = f"Next wave in **{m}:{s:02d}**"
 
+                # look for the message
+                message_id = None
+                if guild.id in self.message_id:
+                    message_id = self.message_id[guild.id]
+                    logging.debug(f"[elimination wave] guild {guild}: message ID {message_id} found in memory")
+                else:
+                    for msg in [m for m in await channel.history(limit=5).flatten() if m.author == self.bot.user]:
+                        message_id = msg.id
+                        logging.debug(f"[elimination wave] guild {guild}: message ID {message_id} found in history")
+                        break
+
+                if message_id is None:
+                    logging.debug(f"[elimination wave] guild {guild}: message not found")
+                    if guild.id in self.message_id:  # cleanup in case None was recorded
+                        del self.message_id[guild.id]
+                        logging.warning(f"[elimination wave] guild {guild}: purging message ID from memory")
+
                 try:
-                    msg = await channel.fetch_message(channel.last_message_id)
-                    await msg.edit(content=content)
-                    logging.debug(f"[elimination wave] guild {guild}: edit message")
+                    if message_id is None:
+                        msg = await channel.send(content=content)
+                        logging.debug(f"[elimination wave] guild {guild}: send message (message ID was None)")
+                    else:
+                        msg = await channel.fetch_message(message_id)
+                        await msg.edit(content=content)
+                        logging.debug(f"[elimination wave] guild {guild}: edit message")
+
+                    self.message_id[guild.id] = msg.id
                     return
 
                 except (discord.NotFound, discord.Forbidden) as e:
-                    await channel.send(content=content)
+                    msg = await channel.send(content=content)
                     logging.debug(f"[elimination wave] guild {guild}: send message ({e})")
-                    # msg = await channel.send(f'`{e}`')
-                    # await asyncio.sleep(5)
-                    # await msg.delete()
+                    self.message_id[guild.id] = msg.id
                     return
 
                 except discord.HTTPException as e:
                     logging.warning(f"[elimination wave] guild {guild}: http exception ({e})")
-                    msg = await channel.send(f'`http exception {e}`')
-                    await asyncio.sleep(5)
-                    await msg.delete()
+                    if guild.id in self.message_id:
+                        del self.message_id[guild.id]
+                        logging.warning(f"[elimination wave] guild {guild}: purging message ID from memory")
                     return
 
             except BaseException as e:
