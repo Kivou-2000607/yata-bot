@@ -75,9 +75,19 @@ class Elimination(commands.Cog):
                     logging.debug(f"[elimination score] guild {guild}: edit message")
                     return
 
-                except BaseException as e:
+                except (discord.NotFound, discord.Forbidden) as e:
                     await channel.send(embed=embed)
-                    logging.debug(f"[elimination score] guild {guild}: send message")
+                    logging.debug(f"[elimination score] guild {guild}: send message ({e})")
+                    msg = await channel.send(f'`{e}`')
+                    await asyncio.sleep(5)
+                    await msg.delete()
+                    return
+
+                except discord.HTTPException as e:
+                    logging.warning(f"[elimination score] guild {guild}: http exception ({e})")
+                    msg = await channel.send(f'`http exception {e}`')
+                    # await asyncio.sleep(5)
+                    # await msg.delete()
                     return
 
             except BaseException as e:
@@ -153,9 +163,19 @@ class Elimination(commands.Cog):
                     logging.debug(f"[elimination wave] guild {guild}: edit message")
                     return
 
-                except BaseException as e:
+                except (discord.NotFound, discord.Forbidden) as e:
                     await channel.send(content=content)
-                    logging.debug(f"[elimination wave] guild {guild}: send message")
+                    logging.debug(f"[elimination wave] guild {guild}: send message ({e})")
+                    msg = await channel.send(f'`{e}`')
+                    await asyncio.sleep(5)
+                    await msg.delete()
+                    return
+
+                except discord.HTTPException as e:
+                    logging.warning(f"[elimination wave] guild {guild}: http exception ({e})")
+                    msg = await channel.send(f'`http exception {e}`')
+                    await asyncio.sleep(5)
+                    await msg.delete()
                     return
 
             except BaseException as e:
