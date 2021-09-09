@@ -132,58 +132,6 @@ class Elimination(commands.Cog):
         eb.set_footer(text="Dataset from Pyrit [2111649]")
         await send(ctx.channel, embed=eb)
 
-    @commands.command(aliases=['elim_scan'])
-    @commands.guild_only()
-    async def elimination_scan(self, ctx):
-        for member in ctx.guild.members:
-            if member.bot:
-                continue
-                
-            status, tornId, key = await self.bot.get_master_key(member.guild)
-            if status == -1:
-                return
-
-            # make api call
-            r, e = await self.bot.api_call("user", member.id, [], key, error_channel=ctx.channel)
-            if e:
-                continue
-
-            description = ["**Elimination scores**", ""]
-            if "team" in r["competition"]:
-                if r["competition"]["team"]:
-                    description.append(f'**2021** {r["competition"]["team"]}')
-                    description.append("```")
-                    description.append(f'Attacks: {r["competition"]["attacks"]:>5,d}')
-                    description.append(f'Score: {r["competition"]["score"]:>5,d}')
-                    description.append("```")
-                else:
-                    now = ts_now()
-                    start = 1631275200
-                    description.append(f"**2021** Elimination starts in {s_to_hms(start - now)}\n")
-            else:
-                description.append("**2021** did not participate\n")
-
-            # past years
-            s = self.elim_scores.get(str(r["player_id"]))
-            if s is None:
-                description.append("\n*No data found from previous years*")
-            else:
-                for y in ["2020", "2019"]:
-                    if y in s:
-                        description.append(f'**{y}** {s[y][0].replace("-", " ").title()}')
-                        description.append("```")
-                        for i, k in enumerate(["attacks", "rank_team", "rank_overall"]):
-                            title = f'{k.replace("_", " ").title()}:'
-                            description.append(f'{title:<13} {s[y][i + 1]:>5,d}')
-                        description.append("```")
-                    else:
-                        description.append(f"**{y}** did not participate")
-
-            eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description="\n".join(description), colour=my_blue)
-            eb.set_footer(text="Dataset from Pyrit [2111649]")
-            await send(ctx.channel, embed=eb)
-            await asyncio.sleep(2)
-
 
     #########
     # SCORE #
