@@ -41,6 +41,8 @@ class Elimination(commands.Cog):
         self.bot = bot
         self.score.start()
         self.wave.start()
+        self.elim_scores = json.load(open("inc/elim_scores.json", 'r+'))
+        logging.info(f"[elimination/init] loads {len(self.elim_scores)} scores")
 
         # temp store message ID to avoid message history lookup
         self.message_id = {}
@@ -49,6 +51,91 @@ class Elimination(commands.Cog):
         self.wave.cancel()
         self.score.cancel()
 
+    ############
+    # COMMANDS #
+    ############
+    @commands.command(aliases=['elim'])
+    @commands.guild_only()
+    async def elimination(self, ctx, *args):
+        """Get elimination scores"""
+        logging.info(f'[elimination/elim] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
+
+        # init variables
+        helpMsg = f"You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
+
+        logging.debug(f'[elimination/elim] args: {args}')
+
+        # self restults if not args
+        if not len(args):
+            torn_or_discord_id = ctx.author.id
+
+        # check if arg is int
+        elif args[0].isdigit():
+            logging.debug(f'[elimination/elim] 1 int given -> torn user')
+            torn_or_discord_id = int(args[0])  # now it can also be a user ID
+
+        # check if arg is a mention of a discord user ID
+        elif re.match(r'<@!?\d+>', args[0]):
+            torn_or_discord_id = re.findall(r'\d+', args[0])[0]
+            logging.debug(f'[elimination/elim] 1 mention given -> discord member')
+
+        # other cases I didn't think of
+        else:
+            await self.bot.send_help_message(ctx.channel, helpMsg)
+            return
+
+        # get user key
+        status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
+        if status < 0:
+            await self.bot.send_error_message(ctx.channel, "Author key not found to make the API call")
+            return
+
+
+        logging.debug(f'[elimination/elim] id {torn_or_discord_id}')
+        # make api call
+        r, e = await self.bot.api_call("user", torn_or_discord_id, [], key, error_channel=ctx.channel)
+        if e:
+            return
+
+        description = ["**Elimination scores**", ""]
+        if "team" in r["competition"]:
+            if r["competition"]["team"]:
+                description.append(f'**2021** {r["competition"]["team"]}')
+                description.append("```")
+                description.append(f'Attacks: {r["competition"]["attacks"]:>5,d}')
+                description.append(f'Score: {r["competition"]["score"]:>5,d}')
+                description.append("```")
+            else:
+                now = ts_now()
+                start = 1631275200
+                description.append(f"**2021** Elimination starts in {s_to_hms(start - now)}\n")
+        else:
+            description.append("**2021** did not participate\n")
+
+        # past years
+        s = self.elim_scores.get(str(r["player_id"]))
+        if s is None:
+            description.append("\n*No data found from previous years*")
+        else:
+            for y in ["2020", "2019"]:
+                if y in s:
+                    description.append(f'**{y}** {s[y][0].replace("-", " ").title()}')
+                    description.append("```")
+                    for i, k in enumerate(["attacks", "rank_team", "rank_overall"]):
+                        title = f'{k.replace("_", " ").title()}:'
+                        description.append(f'{title:<13} {s[y][i + 1]:>5,d}')
+                    description.append("```")
+                else:
+                    description.append(f"**{y}** did not participate")
+
+        eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description="\n".join(description), colour=my_blue)
+        eb.set_footer(text="Dataset from Pyrit [2111649]")
+        await send(ctx.channel, embed=eb)
+
+
+    #########
+    # SCORE #
+    #########
     @tasks.loop(seconds=60)
     async def score(self):
 
@@ -115,6 +202,13 @@ class Elimination(commands.Cog):
         guilds = self.bot.get_guilds_by_module("elim")
         await asyncio.gather(*map(_update_score, guilds, [embed] * len(guilds)))
 
+    @score.before_loop
+    async def before_score(self):
+        await self.bot.wait_until_ready()
+
+    #########
+    # WAVES #
+    #########
     @tasks.loop(seconds=10)
     async def wave(self):
 
@@ -204,9 +298,6 @@ class Elimination(commands.Cog):
         guilds = self.bot.get_guilds_by_module("elim")
         await asyncio.gather(*map(_update_wave, guilds))
 
-    @score.before_loop
-    async def before_score(self):
-        await self.bot.wait_until_ready()
 
     @wave.before_loop
     async def before_wave(self):
