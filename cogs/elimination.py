@@ -37,12 +37,11 @@ from inc.handy import *
 
 
 class Elimination(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, api_token):
         self.bot = bot
+        self.api_token = api_token
         self.score.start()
         self.wave.start()
-        self.elim_scores = json.load(open("inc/elim_scores.json", 'r+'))
-        logging.info(f"[elimination/init] loads {len(self.elim_scores)} scores")
 
         # temp store message ID to avoid message history lookup
         self.message_id = {}
@@ -50,6 +49,19 @@ class Elimination(commands.Cog):
     def cog_unload(self):
         self.wave.cancel()
         self.score.cancel()
+
+    async def elim_api_call(self, id):
+        url = f'https://elimination.me/api/user/{id}/elimination'
+        headers={"Authorization": f"Bearer {self.api_token}"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(url) as r:
+                if r.status == 200:
+                    return await r.json()
+                elif r.status == 404:
+                    return {'error': {'error': 'Invalid or unkown user ID', 'code': 404}}
+                else:
+                    return {'error': {'error': 'Invalid or unkown user ID', 'code': r.status}}
+
 
     ############
     # COMMANDS #
@@ -92,7 +104,7 @@ class Elimination(commands.Cog):
 
 
         logging.debug(f'[elimination/elim] id {torn_or_discord_id}')
-        # make api call
+        # make torn api call
         r, e = await self.bot.api_call("user", torn_or_discord_id, [], key, error_channel=ctx.channel)
         if e:
             return
@@ -100,10 +112,9 @@ class Elimination(commands.Cog):
         description = ["**Elimination scores**", ""]
         if "team" in r["competition"]:
             if r["competition"]["team"]:
-                description.append(f'**2021** {r["competition"]["team"]}')
+                description.append(f'**2021** {r["competition"]["team"].replace("-", " ").title()}')
                 description.append("```")
                 description.append(f'Attacks: {r["competition"]["attacks"]:>5,d}')
-                description.append(f'Score: {r["competition"]["score"]:>5,d}')
                 description.append("```")
             else:
                 now = ts_now()
@@ -113,17 +124,32 @@ class Elimination(commands.Cog):
             description.append("**2021** did not participate\n")
 
         # past years
-        s = self.elim_scores.get(str(r["player_id"]))
-        if s is None:
+        # make pyrit api call
+        s = await self.elim_api_call(torn_or_discord_id)
+        if "error" in s:
             description.append("\n*No data found from previous years*")
         else:
-            for y in ["2020", "2019"]:
-                if y in s:
-                    description.append(f'**{y}** {s[y][0].replace("-", " ").title()}')
+            for y in ["2021", "2020", "2019"]:
+                if s[y]:
+                    description.append(f'**{y}** {s[y]["team"].replace("-", " ").title()}')
                     description.append("```")
-                    for i, k in enumerate(["attacks", "rank_team", "rank_overall"]):
-                        title = f'{k.replace("_", " ").title()}:'
-                        description.append(f'{title:<13} {s[y][i + 1]:>5,d}')
+
+                    k = "attacks"
+                    title = f'{k.replace("_", " ").title()}:'
+                    description.append(f'{title:<13} {s[y][k]:>5,d}')
+                    k = "rank_in_team"
+                    title = f'{k.replace("_", " ").title()}:'
+                    if s[y]["percentile"]:
+                        description.append(f'{title:<13} {s[y][k]:>5,d} ({s[y]["percentile"]}%)')
+                    else:
+                        description.append(f'{title:<13} {s[y][k]:>5,d}')
+                    k = "rank"
+                    title = f'{k.replace("_", " ").title()}:'
+                    description.append(f'{title:<13} {s[y][k]:>5,d}')
+                    k = "deserted"
+                    title = f'{k.replace("_", " ").title()}:'
+                    description.append(f'{title:<13} {"yes" if s[y][k] else "no":>5}')
+
                     description.append("```")
                 else:
                     description.append(f"**{y}** did not participate")
