@@ -135,7 +135,7 @@ if int(bot_id) in [1]:
     # bot.add_cog(Verify(bot))
     # bot.add_cog(Chain(bot))
     # bot.add_cog(Crimes(bot))
-    bot.add_cog(Elimination(bot))
+    bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
 
 elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
@@ -148,7 +148,7 @@ elif int(bot_id) in [3]:
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
     bot.add_cog(Repository(bot))
-    bot.add_cog(Elimination(bot))
+    bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
 
 # run bot
 bot.run(token)
