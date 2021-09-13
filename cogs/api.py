@@ -314,7 +314,7 @@ class API(commands.Cog):
             lst = [
                     f'Name: [{html.unescape(f["faction_name"])} [{f["faction_id"]}]](https://www.torn.com/factions.php?&step=profile&ID={f["faction_id"]})',
                     f'Position: {f["position"]}',
-                    f'Days: since {f["days_in_faction"]} days'
+                    f'Days: for {f["days_in_faction"]} days'
                     ]
             eb.add_field(name="Faction", value="\n".join(lst))
 
