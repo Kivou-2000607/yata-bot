@@ -410,7 +410,7 @@ class Verify(commands.Cog):
                     line_member_team = f'Member team: **{self.elim_name.get(actual_team, [None, "???"])[1]}**'
 
                 special_event = ["__Role management for special event__",
-                                 f'Server eliminiation team: **{self.elim_name[elim_name][1]}**',
+                                 f'Server elimination team: **{self.elim_name[elim_name][1]}**',
                                  line_member_team]
 
                 if actual_team in self.elim_name.get(elim_name, []):
