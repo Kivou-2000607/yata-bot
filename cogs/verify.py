@@ -416,9 +416,9 @@ class Verify(commands.Cog):
                 if actual_team in self.elim_name.get(elim_name, []):
                     all_roles_to_add = [r for r in list(set(all_roles_to_add + elim_roles_to_add))]
                     special_event += [f'**@{elim_role}** added' for elim_role in elim_roles_to_add]
-                # else:
-                #     all_roles_to_remove = [r for r in list(set(all_roles_to_remove + elim_roles_to_add))]
-                #     special_event += [f'**@{elim_role}** removed' for elim_role in elim_roles_to_add]
+                else:
+                    all_roles_to_remove = [r for r in list(set(all_roles_to_remove + elim_roles_to_add))]
+                    special_event += [f'**@{elim_role}** removed' for elim_role in elim_roles_to_add]
 
             else:
                 special_event = []
