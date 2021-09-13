@@ -194,73 +194,25 @@ class API(commands.Cog):
         """Gives information on a user"""
         logging.info(f'[api/who] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # init variables
-        helpMsg = f"You have to mention a member `!who @Kivou [2000607]` or enter a Torn ID or `!who 2000607`."
-
         logging.debug(f'[api/who] args: {args}')
 
-        # send error message if no arg (return)
+        # self restults if not args
         if not len(args):
-            logging.debug(f'[api/who] no args given')
-            await self.bot.send_help_message(ctx.channel, helpMsg)
-            return
+            torn_or_discord_id = ctx.author.id
 
         # check if arg is int
         elif args[0].isdigit():
-            if len(args[0]) <= 7:  # torn ID
-                logging.debug(f'[api/who] 1 int given -> torn user')
-                tornId = int(args[0])
-            else:  # discord ID (requires an API call)
-                logging.debug(f'[api/who] 1 int given -> discord user')
-                # get author key
-                status, id, name, key = await self.bot.get_user_key(ctx, ctx.author, needPerm=False)
-                if status < 0:
-                    await self.bot.send_error_message(ctx.channel, "Author key not found to make the API call")
-                    return
-                r, e = await self.bot.api_call("user", int(args[0]), ["discord"], key, error_channel=ctx.channel)
-                if e or 'discord' not in r:
-                    return
-                tornId = r.get('discord', {}).get('userID', 0)
-                if str(tornId).isdigit():
-                    tornId = int(tornId)
-                else:
-                    await self.bot.send_error_message(ctx.channel, f"Discord ID `{args[0]}` not verified")
-                    return
+            logging.debug(f'[api/who] 1 int given -> torn user')
+            torn_or_discord_id = int(args[0])  # now it can also be a user ID
 
         # check if arg is a mention of a discord user ID
         elif re.match(r'<@!?\d+>', args[0]):
-            discordId = re.findall(r'\d+', args[0])
+            torn_or_discord_id = re.findall(r'\d+', args[0])[0]
             logging.debug(f'[api/who] 1 mention given -> discord member')
-
-            if len(discordId) and discordId[0].isdigit():
-                member = ctx.guild.get_member(int(discordId[0]))
-            else:
-                await self.bot.send_help_message(ctx.channel, helpMsg)
-                return
-
-            # check if member
-            if member is None:
-                await self.bot.send_error_message(ctx.channel, f"Couldn't find discord member: {discordId}.\nTry `!who < torn ID >`.")
-                return
-
-            # try to parse Torn user ID
-            regex = re.findall(r'\[(\d{1,7})\]', member.display_name)
-            if len(regex) == 1 and regex[0].isdigit():
-                tornId = int(regex[0])
-            else:
-                status, tornId, _, _ = await self.bot.get_user_key(ctx, member, needPerm=False)
-                if status in [-1, -2, -3]:
-                    await self.bot.send_error_message(ctx.channel, "Could not find Torn ID within their display name and verification failed.\nTry `!who < Torn ID >`.")
-                    return
 
         # other cases I didn't think of
         else:
-            await self.bot.send_help_message(ctx.channel, helpMsg)
-            return
-
-        # at this point tornId should be a interger corresponding to a torn ID
-        if ctx.message.content[1:3] == "id":
-            await send(ctx, f"https://www.torn.com/profiles.php?XID={tornId}")
+            await self.bot.send_help_message(ctx.channel, "You have to mention a member `!who @mention` or enter a Torn ID or `!who 2000607`.")
             return
 
         # get configuration for guild
@@ -272,8 +224,14 @@ class API(commands.Cog):
 
         # Torn API call
         selections = ["profile", "personalstats", "discord", "timestamp"]
-        r, e = await self.bot.api_call("user", tornId, selections, key, error_channel=ctx.channel)
+        r, e = await self.bot.api_call("user", torn_or_discord_id, selections, key, error_channel=ctx.channel)
         if e:
+            return
+
+        tornId = r["player_id"]
+        # at this point tornId should be a interger corresponding to a torn ID
+        if ctx.message.content[1:3] == "id":
+            await send(ctx, f'https://www.torn.com/profiles.php?XID={tornId}')
             return
 
         eb = Embed(description=f'Level {r["level"]} | {r["rank"]} | {r["age"]:,d} days old', colour=my_blue)

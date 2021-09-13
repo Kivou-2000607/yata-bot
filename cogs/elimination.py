@@ -72,9 +72,6 @@ class Elimination(commands.Cog):
         """Get elimination scores"""
         logging.info(f'[elimination/elim] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
-        # init variables
-        helpMsg = f"You have to mention a member `!elim @mention` or enter a Torn ID or `!elim 2000607`."
-
         logging.debug(f'[elimination/elim] args: {args}')
 
         # self restults if not args
@@ -93,7 +90,7 @@ class Elimination(commands.Cog):
 
         # other cases I didn't think of
         else:
-            await self.bot.send_help_message(ctx.channel, helpMsg)
+            await self.bot.send_help_message(ctx.channel, "You have to mention a member `!elim @mention` or enter a Torn ID or `!elim 2000607`.")
             return
 
         # get user key
