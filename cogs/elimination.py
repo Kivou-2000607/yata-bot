@@ -109,29 +109,31 @@ class Elimination(commands.Cog):
         if e:
             return
 
-        description = ["**Elimination scores**", ""]
+        description = []
         if "team" in r["competition"]:
             if r["competition"]["team"]:
-                description.append(f'**2021** {r["competition"]["team"].replace("-", " ").title()}')
+                description.append(f'**Live data**')
+                description.append(f'__2021__ {r["competition"]["team"].replace("-", " ").title()}')
                 description.append("```")
                 description.append(f'Attacks: {r["competition"]["attacks"]:>5,d}')
                 description.append("```")
             else:
                 now = ts_now()
                 start = 1631275200
-                description.append(f"**2021** Elimination starts in {s_to_hms(start - now)}\n")
+                description.append(f"__2021__ Elimination starts in {s_to_hms(start - now)}\n")
         else:
-            description.append("**2021** did not participate\n")
+            description.append("__2021__ did not participate\n")
 
         # past years
         # make pyrit api call
+        description.append(f'**Ranks**')
         s = await self.elim_api_call(torn_or_discord_id)
         if "error" in s:
-            description.append("\n*No data found from previous years*")
+            description.append("\n*No data found*")
         else:
             for y in ["2021", "2020", "2019"]:
                 if s[y]:
-                    description.append(f'**{y}** {s[y]["team"].replace("-", " ").title()}')
+                    description.append(f'__{y}__ {s[y]["team"].replace("-", " ").title()}')
                     description.append("```")
 
                     k = "attacks"
@@ -154,7 +156,7 @@ class Elimination(commands.Cog):
                 else:
                     description.append(f"**{y}** did not participate")
 
-        eb = Embed(title=f'{r["name"]} [{r["player_id"]}]', description="\n".join(description), colour=my_blue)
+        eb = Embed(title=f'Elimination: {r["name"]} [{r["player_id"]}]', description="\n".join(description), colour=my_blue)
         eb.set_footer(text="Dataset from Pyrit [2111649]")
         await send(ctx.channel, embed=eb)
 
