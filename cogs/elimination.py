@@ -151,7 +151,7 @@ class Elimination(commands.Cog):
 
                     description.append("```")
                 else:
-                    description.append(f"**{y}** did not participate")
+                    description.append(f"__{y}__ did not participate")
 
         eb = Embed(title=f'Elimination: {r["name"]} [{r["player_id"]}]', description="\n".join(description), colour=my_blue)
         eb.set_footer(text="Dataset from Pyrit [2111649]")
