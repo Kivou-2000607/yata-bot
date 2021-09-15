@@ -112,14 +112,14 @@ class Elimination(commands.Cog):
                 description.append(f'**Live data**')
                 description.append(f'__2021__ {r["competition"]["team"].replace("-", " ").title()}')
                 description.append("```")
-                description.append(f'Attacks: {r["competition"]["attacks"]:>5,d}')
+                description.append(f'{"Attacks:":<12} {r["competition"]["attacks"]:>5,d}')
                 description.append("```")
             else:
                 now = ts_now()
                 start = 1631275200
                 description.append(f"__2021__ Elimination starts in {s_to_hms(start - now)}\n")
         else:
-            description.append("__2021__ did not participate\n")
+            description.append("__2021__ Not affiliated to a team\n")
 
         # past years
         # make pyrit api call
@@ -133,21 +133,16 @@ class Elimination(commands.Cog):
                     description.append(f'__{y}__ {s[y]["team"].replace("-", " ").title()}')
                     description.append("```")
 
-                    k = "attacks"
-                    title = f'{k.replace("_", " ").title()}:'
-                    description.append(f'{title:<13} {s[y][k]:>5,d}')
-                    k = "rank_in_team"
-                    title = f'{k.replace("_", " ").title()}:'
-                    if s[y]["percentile"]:
-                        description.append(f'{title:<13} {s[y][k]:>5,d} ({s[y]["percentile"]}%)')
-                    else:
-                        description.append(f'{title:<13} {s[y][k]:>5,d}')
-                    k = "rank"
-                    title = f'{k.replace("_", " ").title()}:'
-                    description.append(f'{title:<13} {s[y][k]:>5,d}')
-                    k = "deserted"
-                    title = f'{k.replace("_", " ").title()}:'
-                    description.append(f'{title:<13} {"yes" if s[y][k] else "no":>5}')
+                    if s[y]["attacks"]:
+                        description.append(f'{"Attacks:":<12} {s[y]["attacks"]:>5,d}')
+                    if s[y]["rank_in_team"]:
+                        if s[y]["percentile"]:
+                            description.append(f'{"Team rank:":<12} {s[y]["rank_in_team"]:>5,d} ({s[y]["percentile"]}%)')
+                        else:
+                            description.append(f'{"Team rank:":<12} {s[y]["rank_in_team"]:>5,d}')
+                    if s[y]["rank"]:
+                        description.append(f'{"Global rank:":<12} {s[y]["rank"]:>5,d}')
+                    description.append(f'{"Deserted:":<12} {"Yes" if s[y]["deserted"] else "No":>5}')
 
                     description.append("```")
                 else:
