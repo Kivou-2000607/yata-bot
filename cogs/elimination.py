@@ -211,12 +211,18 @@ class Elimination(commands.Cog):
             embed.set_footer(text=f'Last update: {ts_format(ts_now(), fmt="time")}')
 
         else:
+            eliminated = []
             for team in r["competition"]["teams"]:
-                values = [f'[Participants: {team["participants"]}](https://www.torn.com/competition.php#/p=team&team={team["team"]})',
-                          f'Score: {team["score"]}',
-                          f'Lives: **{team["lives"]}**']
-                embed.add_field(name=f'#{team["position"]} {team["name"]}', value='\n'.join(values))
-                embed.set_footer(text=f'Last update: {ts_format(r["timestamp"], fmt="time")}')
+                if team["lives"]:
+                    values = [f'[Participants: {team["participants"]}](https://www.torn.com/competition.php#/p=team&team={team["team"]})',
+                              f'Score: {team["score"]}',
+                              f'Lives: **{team["lives"]}**']
+                    embed.add_field(name=f'#{team["position"]} {team["name"]}', value='\n'.join(values))
+                else:
+                    eliminated.append(f'#{team["position"]:<2} {team["name"]}')
+            if len(eliminated):
+                embed.add_field(name="Eliminated", value='\n'.join(eliminated))
+            embed.set_footer(text=f'Last update: {ts_format(r["timestamp"], fmt="time")}')
 
         # get score guild
         guilds = self.bot.get_guilds_by_module("elim")
