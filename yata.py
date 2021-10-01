@@ -49,8 +49,7 @@ from cogs.admin import Admin
 from cogs.revive import Revive
 from cogs.misc import Misc
 from cogs.crimes import Crimes
-from cogs.repository import Repository
-from cogs.elimination import Elimination
+# from cogs.elimination import Elimination
 
 
 # import includes
@@ -130,12 +129,13 @@ bot.add_cog(Admin(bot))
 # 3: YATA (the public bot)
 
 if int(bot_id) in [1]:
-    # bot.add_cog(Misc(bot))
+    bot.add_cog(Misc(bot))
     # bot.add_cog(JFK(bot))
     # bot.add_cog(Verify(bot))
     # bot.add_cog(Chain(bot))
     # bot.add_cog(Crimes(bot))
-    bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
+    # bot.add_cog(API(bot))
+    # bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
 
 elif int(bot_id) in [3]:
     bot.add_cog(Verify(bot))
@@ -147,8 +147,7 @@ elif int(bot_id) in [3]:
     bot.add_cog(API(bot))
     bot.add_cog(Chain(bot))
     bot.add_cog(Misc(bot))
-    bot.add_cog(Repository(bot))
-    bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
+    # bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
 
 # run bot
 bot.run(token)
