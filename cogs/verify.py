@@ -397,31 +397,31 @@ class Verify(commands.Cog):
             all_roles_to_remove = [r for r in member.roles if r in all_roles_possible and r not in all_roles_to_add]
 
             # special elimination roles
-            elim_config = self.bot.get_guild_configuration_by_module(ctx.guild, "elim")
-            if elim_config and elim_config.get("team_name"):
-                elim_name = elim_config.get("team_name")
-                elim_roles_to_add = [r for r in self.bot.get_module_role(ctx.guild.roles, elim_config.get("roles_team", {}), all=True) if r is not None]
-                actual_team = response["competition"].get("team")
-                if actual_team is None:
-                    line_member_team = f"Member team: **Didn't join elimination**"
-                elif not len(actual_team):
-                    line_member_team = f"Member team: **Not known**"
-                else:
-                    line_member_team = f'Member team: **{self.elim_name.get(actual_team, [None, "???"])[1]}**'
-
-                special_event = ["__Role management for special event__",
-                                 f'Server elimination team: **{self.elim_name[elim_name][1]}**',
-                                 line_member_team]
-
-                if actual_team in self.elim_name.get(elim_name, []):
-                    all_roles_to_add = [r for r in list(set(all_roles_to_add + elim_roles_to_add))]
-                    special_event += [f'**@{elim_role}** added' for elim_role in elim_roles_to_add]
-                else:
-                    all_roles_to_remove = [r for r in list(set(all_roles_to_remove + elim_roles_to_add))]
-                    special_event += [f'**@{elim_role}** removed' for elim_role in elim_roles_to_add]
-
-            else:
-                special_event = []
+            # elim_config = self.bot.get_guild_configuration_by_module(ctx.guild, "elim")
+            # if elim_config and elim_config.get("team_name"):
+            #     elim_name = elim_config.get("team_name")
+            #     elim_roles_to_add = [r for r in self.bot.get_module_role(ctx.guild.roles, elim_config.get("roles_team", {}), all=True) if r is not None]
+            #     actual_team = response["competition"].get("team")
+            #     if actual_team is None:
+            #         line_member_team = f"Member team: **Didn't join elimination**"
+            #     elif not len(actual_team):
+            #         line_member_team = f"Member team: **Not known**"
+            #     else:
+            #         line_member_team = f'Member team: **{self.elim_name.get(actual_team, [None, "???"])[1]}**'
+            #
+            #     special_event = ["__Role management for special event__",
+            #                      f'Server elimination team: **{self.elim_name[elim_name][1]}**',
+            #                      line_member_team]
+            #
+            #     if actual_team in self.elim_name.get(elim_name, []):
+            #         all_roles_to_add = [r for r in list(set(all_roles_to_add + elim_roles_to_add))]
+            #         special_event += [f'**@{elim_role}** added' for elim_role in elim_roles_to_add]
+            #     else:
+            #         all_roles_to_remove = [r for r in list(set(all_roles_to_remove + elim_roles_to_add))]
+            #         special_event += [f'**@{elim_role}** removed' for elim_role in elim_roles_to_add]
+            #
+            # else:
+            #     special_event = []
 
 
             # clean roles
@@ -444,7 +444,7 @@ class Verify(commands.Cog):
             roles_list = [f'**@{html.unescape(verified_role.name)}** (verified role)']
             roles_list += [f'**@{faction_role}** (faction {html.unescape(faction_name)})' for faction_role in faction_roles_to_add]
             roles_list += [f'**@{position_role}** (position {html.unescape(member_position)})' for position_role in position_roles_to_add]
-            roles_list += special_event
+            # roles_list += special_event
 
             nl = '\n'
             str1, str2 = (", you", "You") if author_verif else ("", "They")
