@@ -534,7 +534,7 @@ class Chain(commands.Cog):
         for k, v in response["attacks"].items():
             delay = int(nowts - v["timestamp_ended"]) / float(60)
             if str(k) in retal["mentions"]:
-                # logging.debug(f"[chain/_retalTask] ignore mention #{k}")
+                logging.debug(f"[chain/_retalTask] guild {guild}: ignore mention #{k}")
                 continue
 
             if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
@@ -561,6 +561,7 @@ class Chain(commands.Cog):
                 embed.add_field(name=f'Log', value=f'[{v["result"]}](https://www.torn.com/loader.php?sid=attackLog&ID={v["code"]})')
                 embed = append_update(embed, nowts)
 
+                logging.debug(f"[chain/_retalTask] guild={guild} channel={channel} retal message {message}")
                 msg = await send(channel, message, embed=embed)
                 retal["mentions"].append(str(k))
                 retal_messages_sent.append((msg, v["attacker_id"]))
@@ -646,11 +647,13 @@ class Chain(commands.Cog):
                 todel = []
                 tochange = {}
                 for discord_user_id, retal in config["currents"].items():
-                    # logging.debug(f"[chain/retal-notifications] {guild}: {retal}")
+                    logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status=BEFORE)")
 
                     # call retal faction
                     previous_mentions = list(retal.get("mentions", []))
                     status = await self._retal(guild, retal)
+
+                    logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status={status})")
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
                     if status and previous_mentions != retal.get("mentions", []):
