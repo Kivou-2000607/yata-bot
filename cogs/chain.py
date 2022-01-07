@@ -534,10 +534,12 @@ class Chain(commands.Cog):
         for k, v in response["attacks"].items():
             delay = int(nowts - v["timestamp_ended"]) / float(60)
             if str(k) in retal["mentions"]:
-                logging.debug(f"[chain/_retalTask] guild {guild}: ignore mention #{k}")
+                # logging.debug(f"[chain/_retalTask] guild {guild}: ignore mention #{k}")
                 continue
 
-            if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and float(v["respect_gain"]) > 0 and delay < 5:
+            logging.debug(f'[chain/_retalTask] guild {guild}: attack={k} {v["defender_faction"]}, {int(fId)}, {v["attacker_id"]}, {float(v["modifiers"]["overseas"])}, {float(v["respect_gain"])}, {float(v["respect_lost"]}, {v["raid"]}, {delay}')
+            if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and (float(v["respect_gain"]) > 0 or (float(v["respect_lost"]) > 0 and v["raid"])) and delay < 5:
+                logging.debug(f'[chain/_retalTask] guild {guild}: attack={k} in')
                 tleft = 5 - delay
                 timeout = ts_to_datetime(int(v["timestamp_ended"]) + 5 * 60, fmt="time")
 
@@ -647,13 +649,13 @@ class Chain(commands.Cog):
                 todel = []
                 tochange = {}
                 for discord_user_id, retal in config["currents"].items():
-                    logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status=BEFORE)")
+                    # logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status=BEFORE)")
 
                     # call retal faction
                     previous_mentions = list(retal.get("mentions", []))
                     status = await self._retal(guild, retal)
 
-                    logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status={status})")
+                    # logging.debug(f"[chain/retal-notifications] {guild}: {retal} (status={status})")
 
                     # update metionned messages (but don't save in database, will remention in case of reboot)
                     if status and previous_mentions != retal.get("mentions", []):
