@@ -537,7 +537,7 @@ class Chain(commands.Cog):
                 # logging.debug(f"[chain/_retalTask] guild {guild}: ignore mention #{k}")
                 continue
 
-            logging.debug(f'[chain/_retalTask] guild {guild}: attack={k} {v["defender_faction"]}, {int(fId)}, {v["attacker_id"]}, {float(v["modifiers"]["overseas"])}, {float(v["respect_gain"])}, {float(v["respect_lost"])}, {v["raid"]}, {delay}')
+            logging.debug(f'[chain/_retalTask] guild {guild}: attack={k} {v["defender_faction"]}, {int(fId)}, {v["attacker_id"]}, {float(v["modifiers"]["overseas"])}, {float(v["respect_gain"])}, {float(v["respect_loss"])}, {v["raid"]}, {delay}')
             if v["defender_faction"] == int(fId) and v["attacker_id"] and not float(v["modifiers"]["overseas"]) > 1 and (float(v["respect_gain"]) > 0 or (float(v["respect_lost"]) > 0 and v["raid"])) and delay < 5:
                 logging.debug(f'[chain/_retalTask] guild {guild}: attack={k} in')
                 tleft = 5 - delay
