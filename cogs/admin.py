@@ -27,7 +27,6 @@ import logging
 import html
 import asyncio
 import datetime
-import lorem
 
 # import discord modules
 import discord
@@ -132,6 +131,8 @@ class Admin(commands.Cog):
         if "admin" not in configuration:
             configuration["admin"] = {}
         bot = get(ctx.guild.members, id=self.bot.user.id)
+        if bot is None:
+            bot = await self.bot.fetch_user(self.bot.user.id)
         configuration["admin"]["joined_at"] = int(datetime.datetime.timestamp(bot.joined_at))
         configuration["admin"]["guild_id"] = str(ctx.guild.id)
         configuration["admin"]["guild_name"] = ctx.guild.name
@@ -214,6 +215,9 @@ class Admin(commands.Cog):
             for i, (k, v) in enumerate(server_admins.items()):
                 lst = []
                 member = get(guild.members, id=int(k))
+                if member is None:
+                    member = await self.bot.fetch_user(int(k))
+
                 if member is not None:
                     lst.append(f'__Discord__: {member} [{member.id}] aka {member.display_name}')
                 else:
@@ -235,6 +239,9 @@ class Admin(commands.Cog):
 
         if str(id) in contacts:
             member = get(ctx.guild.members, id=id)
+            if member is None:
+                member = await self.bot.fetch_user(id)
+
             guild_ids = [k for k, v in configurations.items() if str(id) in v.get("admin", {}).get("server_admins", {})]
 
             if member is None:
@@ -640,11 +647,11 @@ class Admin(commands.Cog):
             logging.error(error)
             return
 
-        # if isinstance(error, discord.Forbidden):
-        #     headers["error"] = 'Forbidden'
-        #     logging.error(error)
-        #     await self.bot.send_log_main(error, headers=headers, full=True)
-        #     return
+        if isinstance(error, discord.Forbidden):
+            # headers["error"] = 'Forbidden'
+            # logging.error(error)
+            # await self.bot.send_log_main(error, headers=headers, full=True)
+            return
 
         if isinstance(error, commands.CommandInvokeError):
             headers["error"] = 'CommandInvokeError'
@@ -715,6 +722,9 @@ class Admin(commands.Cog):
         for server in self.bot.guilds:
             config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
             bot = get(server.members, id=self.bot.user.id)
+            if bot is None:
+                bot = await self.bot.fetch_user(self.bot.user.id)
+
             days_since_join = (ts_now() - int(datetime.datetime.timestamp(bot.joined_at))) / (60 * 60 * 24.)
 
             # logging.info(f'[admin/servers] Bot in server {server} [{server.id}]')

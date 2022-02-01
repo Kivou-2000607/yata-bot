@@ -397,7 +397,10 @@ class API(commands.Cog):
                 async with con.transaction():
                     async for record in con.cursor(sql, prefetch=100, timeout=2):
                         # get corresponding discord member
-                        member = get(guild.members, id=record["dId"])
+                        member = get(guild.members, id=int(record["dId"]))
+                        if member is None:
+                            member = await self.bot.fetch_user(int(record["dId"]))
+
                         if member is None:
                             logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
                             # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}

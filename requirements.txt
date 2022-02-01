@@ -1,4 +1,4 @@
-discord.py>=1.5.1
+discord.py>=1.7.3
 requests
 pytz
 psycopg2-binary
@@ -8,15 +8,9 @@ sentry-sdk
 python-decouple>=3.3
 sh
 
-# for repo
-PyGithub>=1.51
-
-# for stock alerts
-termplotlib
-
 # chat
-websockets>=8.1
-cloudscraper
+#websockets>=8.1
+#cloudscraper
 
 # for xkcd
 xkcd

@@ -362,7 +362,13 @@ class Verify(commands.Cog):
                 nickname += tag_str
 
             # the guy already log in torn discord
-            member = ctx.author if author_verif else get(ctx.guild.members, id=discordID)
+            if author_verif:
+                member = ctx.author
+            else:
+                member = get(ctx.guild.members, id=discordID)
+                if member is None:  # recover discord member if not in cache
+                    member = await self.bot.fetch_user(int(discordID))
+
             if member is None:
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False
 
