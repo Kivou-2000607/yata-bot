@@ -173,7 +173,6 @@ class Racket(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
 
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')

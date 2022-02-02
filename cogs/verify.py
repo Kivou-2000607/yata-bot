@@ -458,7 +458,7 @@ class Verify(commands.Cog):
 
         except discord.Forbidden as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
-            pass
+            return
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
@@ -676,7 +676,7 @@ class Verify(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
+                return
 
             except BaseException as e:
                 logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
@@ -734,7 +734,7 @@ class Verify(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
+                return
 
             except BaseException as e:
                 logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
@@ -791,7 +791,7 @@ class Verify(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
+                return
 
             except BaseException as e:
                 logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
@@ -848,7 +848,7 @@ class Verify(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
+                return
 
             except BaseException as e:
                 logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')

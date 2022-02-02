@@ -598,7 +598,6 @@ class API(commands.Cog):
 
         except discord.Forbidden as e:
             logging.info("[api/notifications] permission error before loop")
-            pass
 
         except BaseException as e:
             headers = {"error": "personal notification error before loop"}

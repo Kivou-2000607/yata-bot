@@ -471,7 +471,6 @@ class Crimes(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
 
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')

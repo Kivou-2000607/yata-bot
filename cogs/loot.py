@@ -214,7 +214,6 @@ class Loot(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
 
             except BaseException as e:
                 logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')

@@ -680,7 +680,6 @@ class Chain(commands.Cog):
 
             except discord.Forbidden as e:
                 logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')
-                pass
 
             except BaseException as e:
                 logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')
@@ -846,7 +845,6 @@ class Chain(commands.Cog):
 
         except discord.Forbidden as e:
             logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')
-            pass
 
         except BaseException as e:
             logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')
