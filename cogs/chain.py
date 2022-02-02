@@ -678,6 +678,10 @@ class Chain(commands.Cog):
                 else:
                     logging.debug(f"[chain/retal-notifications] don't push notifications for {guild}")
 
+            except discord.Forbidden as e:
+                logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[chain/retal-notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
@@ -839,6 +843,10 @@ class Chain(commands.Cog):
             # send to db
             if len(to_del):
                 await self.bot.set_configuration(guild.id, guild.name, self.bot.configurations[guild.id])
+
+        except discord.Forbidden as e:
+            logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')
+            pass
 
         except BaseException as e:
             logging.error(f'[chain/_chain_main] {guild} [{guild.id}]: {hide_key(e)}')

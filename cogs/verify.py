@@ -456,6 +456,10 @@ class Verify(commands.Cog):
             str1, str2 = (", you", "You") if author_verif else ("", "They")
             return f'{escape_markdown(member.name)}#{member.discriminator}{str1} have been verified and are now known as **{escape_markdown(member.display_name)}**.\n{str2} have been given the role{"s" if len(roles_list)>1 else ""}:{nl}{nl.join(roles_list)}', True
 
+        except discord.Forbidden as e:
+            logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
+            pass
+
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
             await self.bot.send_log_main(e, full=True)
@@ -670,6 +674,10 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/dailyVerify] {guild}: end")
                 return
 
+            except discord.Forbidden as e:
+                logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[verify/dailyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
@@ -724,6 +732,10 @@ class Verify(commands.Cog):
                 logging.debug(f"[verify/weeklyVerify] {guild}: end")
                 return
 
+            except discord.Forbidden as e:
+                logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[verify/weeklyVerify] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
@@ -777,6 +789,10 @@ class Verify(commands.Cog):
                 logging.debug(f"[check/dailyCheck] checking all {guild}: end")
                 return
 
+            except discord.Forbidden as e:
+                logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[check/dailyCheck] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(e, guild_id=guild.id)
@@ -829,6 +845,10 @@ class Verify(commands.Cog):
                 await self._loop_check(guild, channel, force=True)
                 logging.debug(f"[check/weeklyCheck] checking all {guild}: end")
                 return
+
+            except discord.Forbidden as e:
+                logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
 
             except BaseException as e:
                 logging.error(f'[check/weeklyCheck] {guild} [{guild.id}]: {hide_key(e)}')

@@ -208,6 +208,10 @@ class War(commands.Cog):
                 for m in mentions:
                     msg = await send(channel, '' if role is None else f'Wars update {role.mention}', embed=m)
 
+            except discord.Forbidden as e:
+                logging.error(f'[war/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[war/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a war alert: {e}', guild_id=guild.id)

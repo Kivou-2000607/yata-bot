@@ -469,6 +469,10 @@ class Crimes(commands.Cog):
                 else:
                     logging.debug(f"[oc/notifications] <{guild}> don't push notifications")
 
+            except discord.Forbidden as e:
+                logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[oc/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'error on oc notifications: {e}', guild_id=guild.id)

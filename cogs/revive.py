@@ -200,6 +200,10 @@ class Revive(commands.Cog):
                     else:
                         await self.bot.send_log(f'Error sending revive call to server {remote_guild}: revive channel not found', guild_id=ctx.guild.id)
 
+            except discord.Forbidden as e:
+                logging.info(f"[revive] Error sending revive call to server {remote_guild}: {e}")
+                pass
+
             except BaseException as e:
                 await self.bot.send_log(f'Error sending revive call to server {remote_guild}: {e}', guild_id=ctx.guild.id)
                 await self.bot.send_log_main(e, full=True)

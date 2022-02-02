@@ -212,6 +212,10 @@ class Loot(commands.Cog):
                     msg = f'{m} {"" if role is None else role.mention}'
                     await channel.send(msg, embed=e)
 
+            except discord.Forbidden as e:
+                logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a loot alert: {e}', guild_id=guild.id)
@@ -302,6 +306,10 @@ class Loot(commands.Cog):
                     logging.debug(f"[LOOT] guild {guild}: mention {m}.")
                     msg = f'{m} {"" if role is None else role.mention}'
                     await channel.send(msg, embed=e)
+
+            except discord.Forbidden as e:
+                logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
 
             except BaseException as e:
                 logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')

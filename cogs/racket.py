@@ -171,6 +171,10 @@ class Racket(commands.Cog):
                 for m in mentions:
                     msg = await channel.send('' if role is None else f'Rackets update {role.mention}', embed=m)
 
+            except discord.Forbidden as e:
+                logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
+                pass
+
             except BaseException as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')
                 await self.bot.send_log(f'Error during a racket alert: {e}', guild_id=guild.id)
