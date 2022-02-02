@@ -458,7 +458,7 @@ class Verify(commands.Cog):
 
         except discord.Forbidden as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
-            return
+            return f"Error while doing the verification: {hide_key(e)}", False
 
         except BaseException as e:
             logging.error(f'[verify/_member] {guild} [{guild.id}]: {hide_key(e)}')
