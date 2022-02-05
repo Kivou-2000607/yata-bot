@@ -367,7 +367,7 @@ class Verify(commands.Cog):
             else:
                 member = get(ctx.guild.members, id=discordID)
                 if member is None:  # recover discord member if not in cache
-                    member = await self.bot.fetch_user(int(discordID))
+                    member = await ctx.guild.fetch_member(int(discordID))
 
             if member is None:
                 return f"You are trying to verify {nickname} but they didn't join this server... Maybe they are using a different discord account on the official Torn discord server.", False

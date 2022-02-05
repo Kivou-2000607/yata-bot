@@ -399,7 +399,7 @@ class API(commands.Cog):
                         # get corresponding discord member
                         member = get(guild.members, id=int(record["dId"]))
                         if member is None:
-                            member = await self.bot.fetch_user(int(record["dId"]))
+                            member = await guild.fetch_member(int(record["dId"]))
 
                         if member is None:
                             logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')

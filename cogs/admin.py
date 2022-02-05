@@ -132,7 +132,7 @@ class Admin(commands.Cog):
             configuration["admin"] = {}
         bot = get(ctx.guild.members, id=self.bot.user.id)
         if bot is None:
-            bot = await self.bot.fetch_user(self.bot.user.id)
+            bot = await ctx.guild.fetch_member(self.bot.user.id)
         configuration["admin"]["joined_at"] = int(datetime.datetime.timestamp(bot.joined_at))
         configuration["admin"]["guild_id"] = str(ctx.guild.id)
         configuration["admin"]["guild_name"] = ctx.guild.name
@@ -216,7 +216,7 @@ class Admin(commands.Cog):
                 lst = []
                 member = get(guild.members, id=int(k))
                 if member is None:
-                    member = await self.bot.fetch_user(int(k))
+                    member = await guild.fetch_member(int(k))
 
                 if member is not None:
                     lst.append(f'__Discord__: {member} [{member.id}] aka {member.display_name}')
@@ -240,7 +240,7 @@ class Admin(commands.Cog):
         if str(id) in contacts:
             member = get(ctx.guild.members, id=id)
             if member is None:
-                member = await self.bot.fetch_user(id)
+                member = await ctx.guild.fetch_member(id)
 
             guild_ids = [k for k, v in configurations.items() if str(id) in v.get("admin", {}).get("server_admins", {})]
 
@@ -723,7 +723,7 @@ class Admin(commands.Cog):
             config = self.bot.get_guild_configuration_by_module(server, "admin", check_key="server_admins")
             bot = get(server.members, id=self.bot.user.id)
             if bot is None:
-                bot = await self.bot.fetch_user(self.bot.user.id)
+                bot = await server.fetch_member(self.bot.user.id)
 
             days_since_join = (ts_now() - int(datetime.datetime.timestamp(bot.joined_at))) / (60 * 60 * 24.)
 

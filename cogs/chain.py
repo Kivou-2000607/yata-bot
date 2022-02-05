@@ -702,10 +702,10 @@ class Chain(commands.Cog):
         # get discord member
         discord_member = get(guild.members, id=int(discord_id))
         if discord_member is None:  # recover discord member if not in cache
-            discord_member = await self.bot.fetch_user(int(discord_id))
+            discord_member = await guild.fetch_member(int(discord_id))
 
         if discord_member is None:  # recover discord member if not in cache
-            discord_member = await self.bot.fetch_user(int(discord_id))
+            discord_member = await guild.fetch_member(int(discord_id))
 
         if discord_member is None:
             await self.bot.send_error_message(channel, f'Chain tracking: Discord member #`{discord_id}` not found\n\nSTOP', title="Error tracking chains")
