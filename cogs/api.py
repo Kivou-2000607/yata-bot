@@ -401,8 +401,11 @@ class API(commands.Cog):
                         logging.debug(f"[api/notifications] member {member}")
 
                         if member is None:
-                            logging.debug(f'[api/notifications] try fetch member {int(record["dId"]}')
-                            member = await guild.fetch_member(int(record["dId"]))
+                            logging.debug(f'[api/notifications] try fetch member {int(record["dId"])}')
+                            try:
+                                member = await guild.fetch_member(int(record["dId"]))
+                            except BaseException as e:
+                                logging.debug(f'[api/notifications] try fetch member error {e}')
                             logging.debug(f"[api/notifications] try fetch member -> {member}")
 
                         if member is None:
