@@ -398,6 +398,8 @@ class API(commands.Cog):
                     async for record in con.cursor(sql, prefetch=100, timeout=2):
                         # get corresponding discord member
                         member = get(guild.members, id=int(record["dId"]))
+                        logging.debug(f"[api/notifications] member {member}")
+
                         if member is None:
                             member = await guild.fetch_member(int(record["dId"]))
 
@@ -406,6 +408,7 @@ class API(commands.Cog):
                             # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                             # await self.bot.send_log_main("member not found", headers=headers)
                             if self.bot.bot_id == 3:
+                                logging.warning(f"[api/notifications] reset notifications for tId {record["tId"]}")
                                 await self.bot.reset_notifications(record["tId"])
                             continue
 
@@ -589,12 +592,14 @@ class API(commands.Cog):
                                     notifications["travel"] = dict({})
 
                             # update notifications in YATA's database
+                            logging.debug(f'[api/notifications] updade (before)')
                             await con.execute('UPDATE player_player SET "notifications"=$1 WHERE "dId"=$2', json.dumps(notifications), member.id)
+                            logging.debug(f'[api/notifications] updade (after)')
 
                         except BaseException as e:
                             logging.error(f'[api/notifications] {member.nick} / {member}: {hide_key(e)}')
 
-            logging.info("[api/notifications] start task")
+            logging.info("[api/notifications] end task")
 
         except discord.Forbidden as e:
             logging.info("[api/notifications] permission error before loop")
