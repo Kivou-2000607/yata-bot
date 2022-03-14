@@ -401,14 +401,16 @@ class API(commands.Cog):
                         logging.debug(f"[api/notifications] member {member}")
 
                         if member is None:
+                            logging.debug(f'[api/notifications] try fetch member {int(record["dId"]}')
                             member = await guild.fetch_member(int(record["dId"]))
+                            logging.debug(f"[api/notifications] try fetch member -> {member}")
 
                         if member is None:
                             logging.warning(f'[api/notifications] reset notifications for discord [{record["dId"]}] torn [{record["tId"]}]')
                             # headers = {"error": "notifications", "discord": record["dId"], "torn": record["tId"]}
                             # await self.bot.send_log_main("member not found", headers=headers)
                             if self.bot.bot_id == 3:
-                                logging.warning(f"[api/notifications] reset notifications for tId {record["tId"]}")
+                                logging.warning(f'[api/notifications] reset notifications for tId {record["tId"]}')
                                 await self.bot.reset_notifications(record["tId"])
                             continue
 
@@ -417,6 +419,8 @@ class API(commands.Cog):
                             # get notifications preferences
                             logging.debug(f'[api/notifications] {member.nick} / {member}')
                             notifications = json.loads(record["notifications"])
+                            for k, v in notifications.items():
+                                logging.debug(f'[api/notifications] recorded notifications {k}: {v}')
 
                             # get selections for Torn API call
                             keys = []
