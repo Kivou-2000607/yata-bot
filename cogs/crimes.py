@@ -245,6 +245,10 @@ class Crimes(commands.Cog):
         crimes_fields = {"ready": [], "completed": [], "not_ready": [], "waiting": []}
         need_to_mention = False
         need_to_display = []
+
+        # hack beaucause empty crimes section returns a list and not a dict
+        if isinstance(response["crimes"], list):
+            response["crimes"] = {}
         for k, v in response["crimes"].items():
             # is already mentionned
             mentionned = True if str(k) in oc["mentions"] else False
