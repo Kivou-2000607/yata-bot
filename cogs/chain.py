@@ -257,7 +257,8 @@ class Chain(commands.Cog):
             if v["status"]["state"] in ["Hospital"]:
                 s = v["status"]
                 a = v["last_action"]
-                hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
+                # hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(a["timestamp"])]
+                hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(s["until"])]
 
         lst = [f'Members of **{cleanhtml(r["name"])} [{r["ID"]}]** hospitalized: {len(hosps)}']
         for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
