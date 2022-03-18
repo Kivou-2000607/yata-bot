@@ -261,7 +261,8 @@ class Chain(commands.Cog):
                 hosps[k] = [v["name"], s["description"], cleanhtml(s["details"]), a["relative"], int(s["until"])]
 
         lst = [f'Members of **{cleanhtml(r["name"])} [{r["ID"]}]** hospitalized: {len(hosps)}']
-        for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
+        # for k, v in sorted(hosps.items(), key=lambda x: -x[1][4]):
+        for k, v in sorted(hosps.items(), key=lambda x: x[1][4]):
             # line = f'**{v[0]}**: {v[1]} *{v[2]}* (last action {v[3]}) https://www.torn.com/profiles.php?XID={k}'
             line = f'**{v[0]}**: {v[1]}, *last action {v[3]}*, https://www.torn.com/profiles.php?XID={k}'
             lst.append(line)
