@@ -503,7 +503,7 @@ class Chain(commands.Cog):
                 description += "\nIt means that you don't have the required AA permission (AA for API access) for this API request."
                 description += "\nThis is an in-game permission that faction leader and co-leader can grant to their members."
 
-            if response["error"]["code"] in [1, 2, 6, 7, 10]:
+            if response["error"]["code"] in [1, 2, 6, 7, 10, 13, 16]:
                 foot = "STOP tracking"
                 color = my_red
                 ret = False
@@ -619,11 +619,11 @@ class Chain(commands.Cog):
                 embed_dict = retal_message.embeds[0].to_dict()
                 description = []
                 description.append('```')
-                description.append(f'str: {spy.get("strength", -1):>16,d}'.replace("-1", " -"))
-                description.append(f'def: {spy.get("defense", -1):>16,d}'.replace("-1", " -"))
-                description.append(f'spe: {spy.get("speed", -1):>16,d}'.replace("-1", " -"))
-                description.append(f'dex: {spy.get("dexterity", -1):>16,d}'.replace("-1", " -"))
-                description.append(f'tot: {spy.get("total", -1):>16,d}'.replace("-1", " -"))
+                description.append(f'str: {spy.get("strength", -1):>17,d}'.replace("-1", " -"))
+                description.append(f'def: {spy.get("defense", -1):>17,d}'.replace("-1", " -"))
+                description.append(f'spe: {spy.get("speed", -1):>17,d}'.replace("-1", " -"))
+                description.append(f'dex: {spy.get("dexterity", -1):>17,d}'.replace("-1", " -"))
+                description.append(f'tot: {spy.get("total", -1):>17,d}'.replace("-1", " -"))
                 description.append(f'```*{spy["src"]}*'.lower())
                 embed_dict["description"] = "\n".join(description)
                 embed = Embed.from_dict(embed_dict)
