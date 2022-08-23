@@ -127,6 +127,7 @@ bot.add_cog(Admin(bot))
 # bot ids:
 # 1: Chappie (dev bot)
 # 3: YATA (the public bot)
+# 6: YATA Legacy (the legacy public bot)
 
 if int(bot_id) in [1]:
     bot.add_cog(Misc(bot))
@@ -137,7 +138,7 @@ if int(bot_id) in [1]:
     # bot.add_cog(API(bot))
     # bot.add_cog(Elimination(bot, config("ELIM_API_TOKEN")))
 
-elif int(bot_id) in [3]:
+elif int(bot_id) in [3, 6]:
     bot.add_cog(Verify(bot))
     bot.add_cog(Loot(bot))
     bot.add_cog(Racket(bot))
