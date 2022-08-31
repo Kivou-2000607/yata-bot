@@ -169,7 +169,13 @@ class Racket(commands.Cog):
                     continue
 
                 for m in mentions:
-                    msg = await channel.send('' if role is None else f'Rackets update {role.mention}', embed=m)
+                    dmsg = await channel.send('' if role is None else f'Rackets update {role.mention}', embed=m)
+                    # publish if possible
+                    try:
+                        await dmsg.publish()
+                        logging.debug(f"[racket/notifications] guild {guild}: published.")
+                    except:
+                        logging.debug(f"[racket/notifications] guild {guild}: not published.")
 
             except discord.Forbidden as e:
                 logging.error(f'[racket/notifications] {guild} [{guild.id}]: {hide_key(e)}')

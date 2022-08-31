@@ -210,7 +210,13 @@ class Loot(commands.Cog):
                     role = self.bot.get_module_role(guild.roles, config.get(f"roles_alerts_{i}", {}))
                     logging.debug(f"[loot/notifications_{level}] guild {guild}: mention {m} -> send alert to role {role}")
                     msg = f'{m} {"" if role is None else role.mention}'
-                    await channel.send(msg, embed=e)
+                    dmsg = await channel.send(msg, embed=e)
+                    # publish if possible
+                    try:
+                        await dmsg.publish()
+                        logging.debug(f"[LOOT] guild {guild}: published.")
+                    except:
+                        logging.debug(f"[LOOT] guild {guild}: not published.")
 
             except discord.Forbidden as e:
                 logging.error(f'[loot/notifications_{level}] {guild} [{guild.id}]: {hide_key(e)}')
@@ -245,7 +251,7 @@ class Loot(commands.Cog):
     async def notify_5(self):
         await self.notify(5)
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=1)
     async def scheduled(self):
         logging.debug("[loot/scheduled] start task")
 
@@ -304,7 +310,16 @@ class Loot(commands.Cog):
                 for m, e in zip(mentions, embeds):
                     logging.debug(f"[LOOT] guild {guild}: mention {m}.")
                     msg = f'{m} {"" if role is None else role.mention}'
-                    await channel.send(msg, embed=e)
+                    dmsg = await channel.send(msg, embed=e)
+                    # publish if possible
+                    try:
+                        await dmsg.publish()
+                        logging.debug(f"[LOOT] guild {guild}: published.")
+                    except:
+                        logging.debug(f"[LOOT] guild {guild}: not published.")
+
+
+
 
             except discord.Forbidden as e:
                 logging.error(f'[loot/notifications] {guild} [{guild.id}]: {hide_key(e)}')

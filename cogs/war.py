@@ -206,7 +206,13 @@ class War(commands.Cog):
                     continue
 
                 for m in mentions:
-                    msg = await send(channel, '' if role is None else f'Wars update {role.mention}', embed=m)
+                    dmsg = await send(channel, '' if role is None else f'Wars update {role.mention}', embed=m)
+                    # publish if possible
+                    try:
+                        await dmsg.publish()
+                        logging.debug(f"[war/notifications] guild {guild}: published.")
+                    except:
+                        logging.debug(f"[war/notifications] guild {guild}: not published.")
 
             except discord.Forbidden as e:
                 logging.error(f'[war/notifications] {guild} [{guild.id}]: {hide_key(e)}')
