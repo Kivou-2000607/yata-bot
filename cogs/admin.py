@@ -102,7 +102,7 @@ class Admin(commands.Cog):
         await send(ctx, embed=eb)
 
         if str(ctx.author.id) not in server_admins:
-            updates.append("You need to be an administrator to continue, ask a @Staff for help on the [YATA discord server](https://yata.yt/discord).")
+            updates.append("You need to be an administrator to continue, check out: [host the legacy bot](https://yata.yt/bot/legacy).")
             eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_red)
             await send(ctx, embed=eb)
             return
@@ -189,7 +189,7 @@ class Admin(commands.Cog):
 
         if not len(updates):
             updates.append("None")
-        updates.append("\nCheck out [your dashboard](https://yata.yt/bot/dashboard/).")
+        updates.append("\nCheck out [your dashboard](https://yata.yt/bot/legacy/dashboard/).")
         eb = Embed(title="Dashboard synchronization", description="\n".join(updates), color=my_blue)
         await send(ctx, embed=eb)
 
@@ -374,12 +374,12 @@ class Admin(commands.Cog):
         logging.info(f'[admin/help] {ctx.guild}: {ctx.author.nick} / {ctx.author}')
 
         lst = [
-            "Have a look at the [online documentation](https://yata.yt/bot/documentation/) or browse the links.",
+            "Have a look at the [online documentation](https://yata.yt/bot/legacy/documentation/) or browse the links.",
             "If you need more information ping a @Staff in the [YATA server](https://yata.yt/discord).", ]
         embed = Embed(title="YATA bot help", description="\n".join(lst), color=550000)
 
-        lst = ["[General information](https://yata.yt/bot/)",
-               f"[Host the bot](https://yata.yt/bot/host/)",
+        lst = ["[General information](https://yata.yt/bot/legacy)",
+               f"[Host the bot](https://yata.yt/bot/legacy/host/)",
                # f"[Invite]({oauth_url(self.bot.user.id, discord.Permissions(permissions=8))}) / [Dashboard](https://yata.yt/bot/dashboard/)"
                # "[FAQ]() soon...",
                ]
@@ -393,7 +393,7 @@ class Admin(commands.Cog):
                "[Loot level timers](https://yata.yt/loot/)", ]
         embed.add_field(name='Loot', value='\n'.join(lst))
 
-        embed.set_thumbnail(url="https://yata.yt/media/yata.png")
+        embed.set_thumbnail(url=self.bot.user.avatar_url)
 
         await send(ctx, "", embed=embed)
 
@@ -585,7 +585,7 @@ class Admin(commands.Cog):
             msg.append(" ".join(discord_line))
 
         eb = Embed(description="\n".join(msg), color=my_blue)
-        # eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/documentation/", icon_url=self.bot.user.avatar_url)
+        # eb.set_author(name=self.bot.user.display_name, url="https://yata.yt/bot/legacy/documentation/", icon_url=self.bot.user.avatar_url)
         # eb.set_thumbnail(url=member.avatar_url)
         await send(welcome_channel, embed=eb)
 
