@@ -543,8 +543,8 @@ class YataBot(Bot):
                 server = await connection.fetchrow(f'SELECT * FROM bot_server WHERE bot_id = {self.bot_id} AND discord_id = {discord_id};')
                 if server is None:  # create if not in the db
                     await connection.execute('''
-                    INSERT INTO bot_server (bot_id, discord_id, name, configuration, secret) VALUES ($1, $2, $3, $4, $5)
-                    ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x')
+                    INSERT INTO bot_server (bot_id, discord_id, name, configuration, secret, start, end, n_donations, donations) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    ''', self.bot_id, discord_id, server_name, json.dumps(configuration), 'x', 0, 0, 0, json.dumps(dict()))
                 else:  # update otherwise
                     await connection.execute('''
                     UPDATE bot_server SET name = $3, configuration = $4 WHERE bot_id = $1 AND discord_id = $2
