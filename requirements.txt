@@ -1,4 +1,4 @@
-discord.py>=1.7.3
+discord.py==1.7.3
 requests
 pytz
 psycopg2-binary
@@ -15,3 +15,5 @@ sh
 # for xkcd
 xkcd
 lorem
+
+matplotlib

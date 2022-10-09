@@ -1,0 +1,14 @@
+[Unit]
+Description=YATA legacy discord bot
+After=network.target
+
+[Service]
+ExecStart=/home/kivou/.virtualenvs/yata-bot/bin/python yata.py .env-yata-legacy
+WorkingDirectory=/home/kivou/yata-bot/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=kivou
+
+[Install]
+WantedBy=multi-user.target
